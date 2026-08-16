@@ -32,7 +32,7 @@ export default async function PhotosPage() {
     admin.from('members').select('event_attendance, language').eq('id', user.id).maybeSingle(),
     admin.from('gallery_photos').select('id, album, album_date, caption, photo_url, original_url')
       .eq('category', 'event').order('created_at', { ascending: true }),
-    admin.from('gallery_photos').select('id, caption, photo_url, original_url')
+    admin.from('gallery_photos').select('id, album, caption, photo_url, original_url')
       .eq('category', 'personal').eq('member_id', user.id).order('created_at', { ascending: true }),
     admin.from('gallery_photo_tags').select('photo_id, member_id'),
     admin.from('members').select('id, name'),
@@ -63,11 +63,18 @@ export default async function PhotosPage() {
   }
   const eventAlbums = [...map.values()].sort((x, y) => (y.date || '0000').localeCompare(x.date || '0000'))
 
-  const personalAlbum = {
-    name: tt.myCarAndPersonal,
-    date: null,
-    photos: (personalPhotos || []).map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })),
+  // Personal photos split into folders (album). Null-album photos land in a
+  // default folder named like the column ("My Car & Personal") so members who
+  // have no folders see exactly what they saw before; named folders (e.g. a
+  // claimed non-member event) show alongside it.
+  const personalMap = new Map()
+  for (const p of (personalPhotos || [])) {
+    const key = p.album || '__general__'
+    if (!personalMap.has(key)) personalMap.set(key, { name: p.album || tt.myCarAndPersonal, date: null, photos: [] })
+    personalMap.get(key).photos.push({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption })
   }
+  const personalAlbums = [...personalMap.values()]
+  const personalPhotoCount = (personalPhotos || []).length
 
   // Independent of gallery_photos — a member may have attended an event
   // nothing's been posted for yet, and should still be able to reach this
@@ -80,7 +87,7 @@ export default async function PhotosPage() {
   // hit on this URL (bookmark, stale link) shouldn't land on an empty page
   // just because the nav correctly hid the link. Attended-but-photo-less
   // members still get in, so they can use the upload feature below.
-  if (eventAlbums.length === 0 && personalAlbum.photos.length === 0 && attendedEventNames.length === 0) redirect('/members/dashboard')
+  if (eventAlbums.length === 0 && personalPhotoCount === 0 && attendedEventNames.length === 0) redirect('/members/dashboard')
 
   return (
     <div>
@@ -114,7 +121,7 @@ export default async function PhotosPage() {
       </FadeUp>
 
       <FadeUp delay={220}>
-        <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbum={personalAlbum} attendedEventNames={attendedEventNames} lang={lang} />
+        <MembersGalleryTabs eventAlbums={eventAlbums} personalAlbums={personalAlbums} attendedEventNames={attendedEventNames} lang={lang} />
       </FadeUp>
     </div>
   )

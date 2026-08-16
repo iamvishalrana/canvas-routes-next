@@ -185,6 +185,7 @@ export default function PhotosClient() {
   const [deleteAlbum, setDeleteAlbum] = useState(null)
   const [armedPhoto, setArmedPhoto] = useState(null)
   const [personalMember, setPersonalMember] = useState(null)
+  const [personalFolder, setPersonalFolder] = useState('') // folder (album) new personal uploads go into
   const [notifyStatus, setNotifyStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | <error string> }
   const [submissionsCount, setSubmissionsCount] = useState(0)
   const [albumSearch, setAlbumSearch] = useState('')
@@ -267,7 +268,12 @@ export default function PhotosClient() {
   // snapshot, so deleting a photo from inside the lightbox stays in sync.
   const lightboxGroup = !lightbox ? []
     : lightbox.kind === 'event' ? (albums.find(a => a.name === lightbox.key)?.photos || [])
-    : photos.filter(p => p.category === 'personal' && p.member_id === lightbox.key)
+    : (() => {
+        // Personal photos are grouped into folders (album) in the grid, so the
+        // lightbox steps through just the folder that was opened.
+        const mp = photos.filter(p => p.category === 'personal' && p.member_id === lightbox.key)
+        return lightbox.folderKey ? mp.filter(p => (p.album || '__general__') === lightbox.folderKey) : mp
+      })()
   const lightboxPhotos = lightboxGroup.map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption }))
 
   // Uploads go browser → Supabase Storage directly via signed URLs (full-size
@@ -625,13 +631,13 @@ export default function PhotosClient() {
           {/* ── Car & Personal ─────────────────────────────────────────── */}
           <div style={{ marginBottom: '1.5rem' }}>
             <L>Find a member</L>
-            <MemberSearchSelect members={members} placeholder="Search by name or email…" onSelect={m => setPersonalMember(m)} />
+            <MemberSearchSelect members={members} placeholder="Search by name or email…" onSelect={m => { setPersonalMember(m); setPersonalFolder('') }} />
           </div>
 
           {personalMember && (
             <input ref={personalFilesRef} type="file" accept="image/*" multiple style={{ display: 'none' }}
               onChange={e => {
-                uploadFiles({ category: 'personal', memberId: personalMember.id, label: personalMember.name || personalMember.email }, e.target.files)
+                uploadFiles({ category: 'personal', album: personalFolder.trim(), memberId: personalMember.id, label: personalMember.name || personalMember.email }, e.target.files)
                 e.target.value = ''
               }} />
           )}
@@ -644,6 +650,12 @@ export default function PhotosClient() {
                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{personalMember.email}<CopyBtn value={personalMember.email} /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input list={`ph-folders-${personalMember.id}`} value={personalFolder} onChange={e => setPersonalFolder(e.target.value)}
+                    placeholder="Folder (optional)" maxLength={120} title="New photos go into this folder — leave blank for General"
+                    style={{ width: '150px', padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
+                  <datalist id={`ph-folders-${personalMember.id}`}>
+                    {[...new Set(photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id && p.album).map(p => p.album))].map(a => <option key={a} value={a} />)}
+                  </datalist>
                   <GhostBtn small disabled={!!upload} onClick={() => personalFilesRef.current?.click()}>+ Add Photos</GhostBtn>
                   <GhostBtn small disabled={notifyStatus[personalMember.id] === 'sending'} onClick={() => notifyMember(personalMember)}>
                     {notifyStatus[personalMember.id] === 'sending' ? 'Sending…'
@@ -651,22 +663,47 @@ export default function PhotosClient() {
                       : notifyStatus[personalMember.id] ? 'Retry'
                       : `Notify ${personalMember.name?.split(' ')[0] || 'member'}`}
                   </GhostBtn>
-                  <GhostBtn small onClick={() => setPersonalMember(null)}>Close</GhostBtn>
+                  <GhostBtn small onClick={() => { setPersonalMember(null); setPersonalFolder('') }}>Close</GhostBtn>
                 </div>
                 {notifyStatus[personalMember.id] && !['sending', 'sent'].includes(notifyStatus[personalMember.id]) && (
                   <div style={{ fontSize: '11px', color: '#93333E', width: '100%' }}>{notifyStatus[personalMember.id]}</div>
                 )}
               </div>
-              <div className="ph-grid" style={{ padding: '1.25rem' }}>
-                {photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id).length === 0 ? (
-                  <div style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#bbb', fontSize: '13px', padding: '1.5rem 0' }}>
-                    No photos yet — click Add Photos to upload.
-                  </div>
-                ) : photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id).map((photo, i) => (
-                  <PhotoTile key={photo.id} photo={photo} members={members}
-                    armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
-                    onImageClick={() => setLightbox({ kind: 'personal', key: personalMember.id, index: i })} />
-                ))}
+              <div style={{ padding: '1.25rem' }}>
+                {(() => {
+                  const mp = photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id)
+                  if (mp.length === 0) return (
+                    <div style={{ textAlign: 'center', color: '#bbb', fontSize: '13px', padding: '1.5rem 0' }}>
+                      No photos yet — type a folder name above (optional) and click Add Photos.
+                    </div>
+                  )
+                  // Group into folders (album); null-album photos are "General".
+                  const groups = new Map()
+                  for (const p of mp) {
+                    const key = p.album || '__general__'
+                    if (!groups.has(key)) groups.set(key, { key, name: p.album || 'General', photos: [] })
+                    groups.get(key).photos.push(p)
+                  }
+                  const folderList = [...groups.values()]
+                  const showHeaders = folderList.length > 1 || folderList[0].key !== '__general__'
+                  return folderList.map(folder => (
+                    <div key={folder.key} style={{ marginBottom: '1.25rem' }}>
+                      {showHeaders && (
+                        <div style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6535', marginBottom: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                          {folder.name} · {folder.photos.length}
+                        </div>
+                      )}
+                      <div className="ph-grid">
+                        {folder.photos.map((photo, i) => (
+                          <PhotoTile key={photo.id} photo={photo} members={members}
+                            armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
+                            onImageClick={() => setLightbox({ kind: 'personal', key: personalMember.id, folderKey: folder.key, index: i })} />
+                        ))}
+                      </div>
+                    </div>
+                  ))
+                })()}
               </div>
             </div>
           )}

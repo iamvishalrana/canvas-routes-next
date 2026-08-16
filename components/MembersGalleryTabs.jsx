@@ -23,9 +23,9 @@ function EmptyState({ title, body }) {
 // behind tabs — members attending an event still need the upload widget
 // visible without an extra click, and comparing "what's mine" vs "what's
 // shared" reads more naturally next to each other than switched between.
-export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attendedEventNames = [], lang = 'en' }) {
+export default function MembersGalleryTabs({ eventAlbums, personalAlbums = [], attendedEventNames = [], lang = 'en' }) {
   const t = membersPhotosT[lang]
-  const hasPersonal = personalAlbum.photos.length > 0
+  const hasPersonal = personalAlbums.some(a => a.photos.length > 0)
   const hasEvents = eventAlbums.length > 0
 
   const colHeading = {
@@ -55,7 +55,7 @@ export default function MembersGalleryTabs({ eventAlbums, personalAlbum, attende
         <div className="mgt-col">
           <h2 style={colHeading}>{t.myCarAndPersonal}</h2>
           {hasPersonal ? (
-            <MembersGallery albums={[personalAlbum]} lang={lang} />
+            <MembersGallery albums={personalAlbums} lang={lang} />
           ) : (
             <EmptyState title={t.personalEmptyTitle} body={t.personalEmptyBody} />
           )}

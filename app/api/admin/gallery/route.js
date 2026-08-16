@@ -67,6 +67,9 @@ export async function POST(request) {
     if (albumDate && !/^\d{4}-\d{2}-\d{2}$/.test(albumDate)) return Response.json({ error: 'Invalid event date.' }, { status: 400 })
   } else {
     if (!memberId) return Response.json({ error: 'A member must be selected.' }, { status: 400 })
+    // `album` is optional for personal photos — it's the folder name (null =
+    // ungrouped "General"). Only the length is bounded.
+    if (album.length > 120) return Response.json({ error: 'Folder name is too long.' }, { status: 400 })
   }
   if (!PATH_RE.test(originalPath || '') || !PATH_RE.test(displayPath || '')) {
     return Response.json({ error: 'Invalid storage path.' }, { status: 400 })
@@ -90,7 +93,8 @@ export async function POST(request) {
   const { data: row, error: insertErr } = await supabase.from('gallery_photos')
     .insert({
       category,
-      album: category === 'event' ? album : null,
+      // event → the event name; personal → optional folder name (null = General)
+      album: category === 'event' ? album : (album || null),
       album_date: category === 'event' ? (albumDate || null) : null,
       member_id: category === 'personal' ? memberId : null,
       caption: caption.slice(0, 300) || null,
