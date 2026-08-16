@@ -10,10 +10,18 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
-  const ALLOWED = ['expense_date', 'event_name', 'vendor', 'amount', 'tax_amount', 'gst_amount', 'qst_amount', 'province', 'payment_method', 'category', 'receipt_url', 'notes']
+  const ALLOWED = ['expense_date', 'event_name', 'vendor', 'amount', 'tax_amount', 'gst_amount', 'qst_amount', 'province', 'payment_method', 'category', 'receipt_url', 'receipt_urls', 'notes']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => ALLOWED.includes(k)))
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
   if ('notes' in update) update.notes = (update.notes || '').trim().slice(0, 1000) || null
+
+  // Multiple attachments: normalise the array and keep the legacy receipt_url
+  // (first element) in sync so single-receipt displays keep working.
+  if ('receipt_urls' in update) {
+    const list = (Array.isArray(update.receipt_urls) ? update.receipt_urls : []).filter(u => typeof u === 'string' && u).slice(0, 10)
+    update.receipt_urls = list
+    update.receipt_url = list[0] || null
+  }
 
   // Same rigor as POST — without this, clearing the date or typing a
   // negative amount hit the DB raw (empty string into a DATE column, no
@@ -35,13 +43,16 @@ export async function PATCH(request, { params }) {
 
   const supabase = createAdminClient()
 
-  // If the receipt is being replaced or cleared, remember the old file so it
-  // can be cleaned up after the update succeeds — otherwise every re-attach
-  // leaves the previous upload orphaned in storage forever.
-  let previousReceiptUrl = null
-  if ('receipt_url' in update) {
-    const { data: existing } = await supabase.from('expenses').select('receipt_url').eq('id', id).maybeSingle()
-    if (existing?.receipt_url && existing.receipt_url !== update.receipt_url) previousReceiptUrl = existing.receipt_url
+  // Any attachments removed by this edit must be cleaned out of storage after
+  // the update commits — otherwise every replace/remove orphans files forever.
+  // Compare the old attachment set (receipt_urls, falling back to the legacy
+  // single receipt_url) against the new one.
+  let removedUrls = []
+  if ('receipt_urls' in update || 'receipt_url' in update) {
+    const { data: existing } = await supabase.from('expenses').select('receipt_url, receipt_urls').eq('id', id).maybeSingle()
+    const oldSet = new Set([...(existing?.receipt_urls || []), existing?.receipt_url].filter(Boolean))
+    const newSet = new Set([...(update.receipt_urls || []), update.receipt_url].filter(Boolean))
+    removedUrls = [...oldSet].filter(u => !newSet.has(u))
   }
 
   const { data, error } = await supabase.from('expenses').update(update).eq('id', id).select('*').single()
@@ -49,7 +60,7 @@ export async function PATCH(request, { params }) {
     captureException(error, { context: 'admin-expenses-patch', id })
     return Response.json({ error: error.message }, { status: 500 })
   }
-  if (previousReceiptUrl) await deleteReceiptFile(supabase, previousReceiptUrl)
+  for (const u of removedUrls) await deleteReceiptFile(supabase, u)
   return Response.json(data)
 }
 
@@ -60,7 +71,7 @@ export async function DELETE(request, { params }) {
   const supabase = createAdminClient()
 
   const { data: expense } = await supabase
-    .from('expenses').select('receipt_url').eq('id', id).maybeSingle()
+    .from('expenses').select('receipt_url, receipt_urls').eq('id', id).maybeSingle()
 
   const { error } = await supabase.from('expenses').delete().eq('id', id)
   if (error) {
@@ -69,7 +80,10 @@ export async function DELETE(request, { params }) {
   }
 
   await logAdminAction(supabase, adminUser?.email, { action: 'expense.delete', entityType: 'expense', entityId: id })
-  await deleteReceiptFile(supabase, expense?.receipt_url)
+  // Remove every attachment (invoice + receipt + …), not just the primary.
+  for (const u of new Set([...(expense?.receipt_urls || []), expense?.receipt_url].filter(Boolean))) {
+    await deleteReceiptFile(supabase, u)
+  }
 
   return Response.json({ success: true })
 }

@@ -23,6 +23,11 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 })
   }
   const { expense_date, event_name, vendor, amount, gst_amount, qst_amount, category, receipt_url, province, payment_method, notes } = body
+  // Multiple attachments (invoice + receipt, etc.). Fall back to the single
+  // receipt_url for older callers. receipt_url is kept as the first element so
+  // existing single-receipt displays/queries still work.
+  const receiptUrls = (Array.isArray(body.receiptUrls) ? body.receiptUrls : (receipt_url ? [receipt_url] : []))
+    .filter(u => typeof u === 'string' && u).slice(0, 10)
   if (!expense_date) return Response.json({ error: 'Date is required.' }, { status: 400 })
   const amt = parseFloat(amount)
   if (isNaN(amt) || amt < 0) return Response.json({ error: 'Valid amount required.' }, { status: 400 })
@@ -45,7 +50,8 @@ export async function POST(request) {
     province:   province || 'QC',
     payment_method: VALID_PM.includes(payment_method) ? payment_method : null,
     category:   category || null,
-    receipt_url: receipt_url || null,
+    receipt_url: receiptUrls[0] || null,
+    receipt_urls: receiptUrls,
     notes:      notes?.trim().slice(0, 1000) || null,
   }).select('*').single()
 

@@ -56,6 +56,13 @@ function taxOf(e) {
   return split > 0 ? split : (parseFloat(e.tax_amount) || 0)
 }
 
+// All attachments on an expense (new receipt_urls list, falling back to the
+// legacy single receipt_url for older rows).
+function attachmentsOf(e) {
+  const urls = (Array.isArray(e.receipt_urls) && e.receipt_urls.length) ? e.receipt_urls : (e.receipt_url ? [e.receipt_url] : [])
+  return urls.filter(Boolean)
+}
+
 function fmt(n) { return `$${(parseFloat(n) || 0).toFixed(2)}` }
 function fmtDate(d) {
   if (!d) return '—'
@@ -137,7 +144,7 @@ export default function ExpensesClient() {
   const [uploadingFile, setUploadingFile] = useState(false)
   const [scanning, setScanning]         = useState(false)
   const [scanNotice, setScanNotice]     = useState(null) // { type: 'ok'|'warn', text }
-  const [receiptName, setReceiptName]   = useState('')
+  const [attachments, setAttachments]   = useState([]) // add-form attachments: [{ url, name }] — invoice + receipt, etc.
   const [filterMissing, setFilterMissing] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteErr, setDeleteErr] = useState(null)
@@ -176,8 +183,7 @@ export default function ExpensesClient() {
   // Tracks an uploaded-but-not-yet-saved receipt so it can be deleted from
   // Storage if it's replaced, removed, or the form/edit is abandoned before
   // saving — see deleteReceiptByUrl above.
-  const pendingReceiptRef = useRef(null)
-  const pendingEditReceiptRef = useRef(null)
+  const [editAttachments, setEditAttachments] = useState([]) // edit panel: [{ url, isNew }]
 
   const load = useCallback(() => {
     fetch('/api/admin/expenses')
@@ -437,15 +443,13 @@ export default function ExpensesClient() {
   function toggleGroup(name) { setOpenGroups(p => ({ ...p, [name]: !p[name] })) }
 
   function startEdit(expense) {
-    // Switching edit targets without saving abandons any receipt just
-    // replaced in the previous edit panel — flush it before starting fresh.
-    if (pendingEditReceiptRef.current) {
-      deleteReceiptByUrl(pendingEditReceiptRef.current)
-      pendingEditReceiptRef.current = null
-    }
+    // Switching edit targets without saving abandons any attachment just added
+    // in the previous edit panel — flush the unsaved ones before starting fresh.
+    editAttachments.filter(a => a.isNew).forEach(a => deleteReceiptByUrl(a.url))
     setEditingId(expense.id)
     setEditErr(null)
     setDeleteConfirm(null)
+    setEditAttachments(attachmentsOf(expense).map(url => ({ url, isNew: false })))
     setEditForm({
       expense_date:   expense.expense_date || '',
       event_name:     expense.event_name   || '',
@@ -456,25 +460,38 @@ export default function ExpensesClient() {
       province:       expense.province     || 'QC',
       category:       expense.category     || '',
       payment_method: expense.payment_method || '',
-      receipt_url:    expense.receipt_url  || '',
       notes:          expense.notes        || '',
     })
   }
 
   function cancelEdit() {
-    // A replaced-but-unsaved receipt is discarded with the rest of the edit
-    // — clean it up rather than leaving it orphaned in Storage.
-    if (pendingEditReceiptRef.current) {
-      deleteReceiptByUrl(pendingEditReceiptRef.current)
-      pendingEditReceiptRef.current = null
-    }
+    // Attachments added but not saved are discarded with the rest of the edit —
+    // clean them up rather than leaving them orphaned in Storage. Originals
+    // (isNew:false) are left alone.
+    editAttachments.filter(a => a.isNew).forEach(a => deleteReceiptByUrl(a.url))
+    setEditAttachments([])
     setEditingId(null); setEditErr(null)
+  }
+
+  // Remove one attachment from the edit panel. An unsaved (just-uploaded) one is
+  // deleted from storage now; an original is only removed from the list — the
+  // PATCH route cleans up removed originals after Save.
+  function removeEditAttachment(url) {
+    setEditAttachments(prev => {
+      const a = prev.find(x => x.url === url)
+      if (a?.isNew) deleteReceiptByUrl(url)
+      return prev.filter(x => x.url !== url)
+    })
   }
 
   // Copy an expense into the Add form — recurring purchases (fuel, coffee
   // supplies, the same vendor every event) become a two-tap entry
   function duplicateExpense(expense) {
     const total = parseFloat(expense.amount || 0) + taxOf(expense)
+    // Start the new draft with no attachments — discard any the current draft
+    // had uploaded-but-unsaved so they don't carry over or orphan.
+    attachments.forEach(a => deleteReceiptByUrl(a.url))
+    setAttachments([])
     taxManualRef.current = true
     folderManualRef.current = true
     provinceManualRef.current = true
@@ -521,7 +538,7 @@ export default function ExpensesClient() {
           category:       editForm.category || null,
           province:       editForm.province || 'QC',
           payment_method: editForm.payment_method || null,
-          receipt_url:    editForm.receipt_url || null,
+          receipt_urls:   editAttachments.map(a => a.url),
           notes:          editForm.notes || null,
           amount:         amtNum,
           gst_amount:     gstNum,
@@ -530,9 +547,8 @@ export default function ExpensesClient() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setEditErr(data.error || 'Failed to save.'); return }
-      // Now committed to the DB row — future cleanup goes through the PATCH
-      // route's old-vs-new diff, not this pending-upload tracker.
-      pendingEditReceiptRef.current = null
+      // Committed — the PATCH route already cleaned up any removed originals.
+      setEditAttachments([])
       setExpenses(prev => prev.map(e => e.id === id ? data : e))
       setEditingId(null)
     } catch { setEditErr('Network error.') }
@@ -540,47 +556,38 @@ export default function ExpensesClient() {
   }
 
   async function handleFileChange(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (fileRef.current) fileRef.current.value = ''
+    if (!files.length) return
     setUploadingFile(true); setFormErr(null)
     try {
+      // Attach one OR several files (invoice + receipt) — each appends to the
+      // list rather than replacing, so nothing you attach is lost.
       const uploadPath = slugify(folderEvent) + (form.expense_date ? `/${form.expense_date}` : '')
-      const url = await uploadReceipt(file, uploadPath)
-      // Retire the previous unsaved receipt ONLY after the new one lands.
-      // Deleting it first (as this used to) meant a failed upload wiped the
-      // existing file AND left form.receipt_url pointing at a dead URL, which
-      // then saved as a dangling receipt link.
-      const prev = pendingReceiptRef.current
-      pendingReceiptRef.current = url
-      setForm(p => ({ ...p, receipt_url: url }))
-      setReceiptName(file.name)
-      if (prev && prev !== url) deleteReceiptByUrl(prev)
+      for (const file of files) {
+        const url = await uploadReceipt(file, uploadPath)
+        setAttachments(prev => [...prev, { url, name: file.name }])
+      }
     } catch (err) { setFormErr(err.message || 'Upload failed.') }
     finally { setUploadingFile(false) }
   }
 
-  // Attach or replace a receipt on an existing expense from the edit panel.
-  // The actual old-file cleanup happens server-side on Save (PATCH diffs the
-  // receipt_url) so cancelling the edit here doesn't touch storage at all.
+  // Attach one or more files to an existing expense from the edit panel — each
+  // appends to the list (invoice + receipt). New (unsaved) attachments are
+  // cleaned up on Cancel; removed originals are cleaned up server-side on Save.
   async function handleEditFileChange(e) {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (editFileRef.current) editFileRef.current.value = ''
+    if (!files.length) return
     setEditUploading(true); setEditErr(null)
     try {
       const uploadPath = slugify(editForm.event_name || 'General') + (editForm.expense_date ? `/${editForm.expense_date}` : '')
-      const url = await uploadReceipt(file, uploadPath)
-      // Retire the previous unsaved replacement ONLY after the new one lands —
-      // a failed upload must never delete the file we're replacing or leave
-      // editForm.receipt_url pointing at a dead URL. `prev` is null when
-      // replacing the original DB receipt (that one is cleaned up server-side
-      // by the PATCH diff on Save), so this only ever removes a prior in-flight
-      // upload, never the committed original.
-      const prev = pendingEditReceiptRef.current
-      pendingEditReceiptRef.current = url
-      setEditForm(p => ({ ...p, receipt_url: url }))
-      if (prev && prev !== url) deleteReceiptByUrl(prev)
+      for (const file of files) {
+        const url = await uploadReceipt(file, uploadPath)
+        setEditAttachments(prev => [...prev, { url, isNew: true }])
+      }
     } catch (err) { setEditErr(err.message || 'Upload failed.') }
-    finally { setEditUploading(false); if (editFileRef.current) editFileRef.current.value = '' }
+    finally { setEditUploading(false) }
   }
 
   // Scan a receipt photo: Claude vision extracts the fields, we prefill the empty
@@ -667,17 +674,12 @@ export default function ExpensesClient() {
         notes:          p.notes          || data.notes    || '',
       }))
 
-      // Also store the scanned file so it's attached to the expense in one step
+      // Also attach the scanned file — APPENDED, so scanning an invoice and
+      // then its receipt keeps both on the expense instead of replacing.
       try {
         const path = slugify(folderEvent) + ((data.date || form.expense_date) ? `/${data.date || form.expense_date}` : '')
         const url = await uploadReceipt(file, path)
-        // Swap in the new receipt, then retire any prior unsaved one — never
-        // delete it up front, or a failed upload would strand form.receipt_url
-        // on a dead URL and save a dangling receipt link.
-        const prev = pendingReceiptRef.current
-        pendingReceiptRef.current = url
-        setForm(p => ({ ...p, receipt_url: url })); setReceiptName(file.name)
-        if (prev && prev !== url) deleteReceiptByUrl(prev)
+        setAttachments(prev => [...prev, { url, name: file.name }])
       } catch {
         // Fields were extracted fine, but the receipt image itself didn't
         // attach — this used to fail silently, leaving a green "Scanned ✓"
@@ -692,14 +694,15 @@ export default function ExpensesClient() {
   // receipt that was uploaded-but-never-saved (otherwise it orphans in storage)
   // and clear the form so a scanned-but-abandoned expense doesn't linger.
   function closeAddForm() {
-    if (pendingReceiptRef.current) { deleteReceiptByUrl(pendingReceiptRef.current); pendingReceiptRef.current = null }
+    // Discard every uploaded-but-unsaved attachment so nothing orphans.
+    attachments.forEach(a => deleteReceiptByUrl(a.url))
+    setAttachments([])
     setForm(EMPTY_FORM)
     setFolderEvent('General')
     folderManualRef.current = false
     taxManualRef.current = false
     provinceManualRef.current = false
     dupAckSigRef.current = null
-    setReceiptName('')
     setScanNotice(null)
     setFormErr(null)
     if (fileRef.current) fileRef.current.value = ''
@@ -746,7 +749,7 @@ export default function ExpensesClient() {
           event_name:     form.event_name,
           vendor:         form.vendor,
           category:       form.category,
-          receipt_url:    form.receipt_url,
+          receiptUrls:    attachments.map(a => a.url),
           province:       form.province,
           payment_method: form.payment_method,
           notes:          form.notes,
@@ -757,8 +760,9 @@ export default function ExpensesClient() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Failed to save.'); return }
-      // Now committed to the DB row — no longer this tracker's responsibility.
-      pendingReceiptRef.current = null
+      // Now committed to the DB row — the attachments are saved, so just clear
+      // the list (don't delete the files).
+      setAttachments([])
       setExpenses(prev => [data, ...prev])
       setNewIds(prev => new Set([...prev, data.id]))
       setTimeout(() => setNewIds(prev => { const n = new Set(prev); n.delete(data.id); return n }), 700)
@@ -775,7 +779,6 @@ export default function ExpensesClient() {
       taxManualRef.current = false
       provinceManualRef.current = false
       dupAckSigRef.current = null
-      setReceiptName('')
       setScanNotice(null)
       if (fileRef.current) fileRef.current.value = ''
     } catch { setFormErr('Network error.') }
@@ -1159,25 +1162,19 @@ export default function ExpensesClient() {
         </div>
 
         <div className="exp-actions-row" style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <input ref={fileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleFileChange} />
+          <input ref={fileRef} type="file" accept="image/*,.pdf" multiple style={{ display: 'none' }} onChange={handleFileChange} />
           <button type="button" className="exp-tap" onClick={() => fileRef.current?.click()} disabled={uploadingFile}
             style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 12px', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '6px', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
-            {uploadingFile ? 'Uploading…' : '↑ Attach receipt'}
+            {uploadingFile ? 'Uploading…' : `↑ Attach${attachments.length ? ' more' : ' invoice / receipt'}`}
           </button>
-          {receiptName && (
-            <span style={{ fontSize: '11px', color: '#3B6B2F', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-              ✓ {receiptName}
-              {form.receipt_url && (
-                <a href={form.receipt_url} target="_blank" rel="noopener noreferrer"
-                  style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none', letterSpacing: '0.04em' }}>View ↗</a>
-              )}
-              <button type="button" onClick={() => {
-                if (pendingReceiptRef.current) { deleteReceiptByUrl(pendingReceiptRef.current); pendingReceiptRef.current = null }
-                setForm(p => ({ ...p, receipt_url: '' })); setReceiptName(''); if (fileRef.current) fileRef.current.value = ''
-              }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, padding: '0 2px' }}>×</button>
+          {attachments.map(a => (
+            <span key={a.url} style={{ fontSize: '11px', color: '#3B6B2F', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(59,107,47,0.08)', border: '0.5px solid rgba(59,107,47,0.25)', borderRadius: '6px', padding: '3px 8px', maxWidth: '100%' }}>
+              ✓ <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '130px' }}>{a.name}</span>
+              <a href={a.url} target="_blank" rel="noopener noreferrer" style={{ color: '#c5a882', textDecoration: 'none' }}>↗</a>
+              <button type="button" aria-label={`Remove ${a.name}`} onClick={() => { deleteReceiptByUrl(a.url); setAttachments(prev => prev.filter(x => x.url !== a.url)) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '15px', lineHeight: 1, padding: '0 1px' }}>×</button>
             </span>
-          )}
+          ))}
           <div style={{ marginLeft: 'auto' }}>
             <button type="submit" className="exp-tap" disabled={submitting || uploadingFile || scanning}
               style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '10px 20px', background: submitting ? 'rgba(15,30,20,0.6)' : '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: submitting ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -1558,9 +1555,10 @@ export default function ExpensesClient() {
                                   <div style={{ minWidth: 0 }}>
                                   <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
                                     {expense.vendor || <span style={{ color: '#ccc' }}>No vendor</span>}
-                                    {expense.receipt_url && (
-                                      <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
-                                        style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none' }}>↗</a>
+                                    {attachmentsOf(expense).length > 0 && (
+                                      <a href={attachmentsOf(expense)[0]} target="_blank" rel="noopener noreferrer"
+                                        title={`${attachmentsOf(expense).length} attachment${attachmentsOf(expense).length > 1 ? 's' : ''}`}
+                                        style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none' }}>↗{attachmentsOf(expense).length > 1 ? ` ${attachmentsOf(expense).length}` : ''}</a>
                                     )}
                                   </div>
                                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
@@ -1593,9 +1591,10 @@ export default function ExpensesClient() {
                                 <div style={{ fontSize: '12px', color: '#333', minWidth: 0 }}>
                                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', flexWrap: 'wrap' }}>
                                     {expense.vendor || <span style={{ color: '#ddd' }}>—</span>}
-                                    {expense.receipt_url && (
-                                      <a href={expense.receipt_url} target="_blank" rel="noopener noreferrer"
-                                        style={{ fontSize: '10px', color: '#c5a882', textDecoration: 'none' }}>↗</a>
+                                    {attachmentsOf(expense).length > 0 && (
+                                      <a href={attachmentsOf(expense)[0]} target="_blank" rel="noopener noreferrer"
+                                        title={`${attachmentsOf(expense).length} attachment${attachmentsOf(expense).length > 1 ? 's' : ''}`}
+                                        style={{ fontSize: '10px', color: '#c5a882', textDecoration: 'none' }}>↗{attachmentsOf(expense).length > 1 ? ` ${attachmentsOf(expense).length}` : ''}</a>
                                     )}
                                     {expense.payment_method && (
                                       <span style={{ fontSize: '9px', color: '#aaa', letterSpacing: '0.04em' }}>· {PAYMENT_LABELS[expense.payment_method]}</span>
@@ -1698,37 +1697,23 @@ export default function ExpensesClient() {
                                   style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   Auto tax ({editForm.province})
                                 </button>
-                                <input ref={editFileRef} type="file" accept="image/*,.pdf" style={{ display: 'none' }} onChange={handleEditFileChange} />
-                                {editForm.receipt_url ? (
-                                  <>
-                                    <a href={editForm.receipt_url} target="_blank" rel="noopener noreferrer"
-                                      style={{ fontSize: '11px', color: '#c5a882', marginLeft: '0.25rem', textDecoration: 'none' }}>
-                                      View receipt ↗
-                                    </a>
-                                    <button type="button" onClick={() => editFileRef.current?.click()} disabled={editUploading}
-                                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                      {editUploading ? 'Uploading…' : 'Replace'}
-                                    </button>
-                                    <button type="button" onClick={() => {
-                                      // Only delete immediately if this is a not-yet-saved
-                                      // replacement — the originally-saved receipt is left
-                                      // alone so Cancel can still back out without side effects.
-                                      if (pendingEditReceiptRef.current && pendingEditReceiptRef.current === editForm.receipt_url) {
-                                        deleteReceiptByUrl(pendingEditReceiptRef.current); pendingEditReceiptRef.current = null
-                                      }
-                                      setEditForm(p => ({ ...p, receipt_url: '' }))
-                                    }}
-                                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: 'none', color: '#c99', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                      Remove
-                                    </button>
-                                  </>
-                                ) : (
-                                  <button type="button" onClick={() => editFileRef.current?.click()} disabled={editUploading}
-                                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                    {editUploading ? 'Uploading…' : '↑ Attach receipt'}
-                                  </button>
-                                )}
+                                <input ref={editFileRef} type="file" accept="image/*,.pdf" multiple style={{ display: 'none' }} onChange={handleEditFileChange} />
+                                <button type="button" onClick={() => editFileRef.current?.click()} disabled={editUploading}
+                                  style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  {editUploading ? 'Uploading…' : `↑ Attach${editAttachments.length ? ' more' : ' receipt'}`}
+                                </button>
                               </div>
+                              {editAttachments.length > 0 && (
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                                  {editAttachments.map((a, ai) => (
+                                    <span key={a.url} style={{ fontSize: '11px', color: '#3B6B2F', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(59,107,47,0.08)', border: '0.5px solid rgba(59,107,47,0.25)', borderRadius: '6px', padding: '3px 8px' }}>
+                                      <a href={a.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3B6B2F', textDecoration: 'none' }}>Receipt {ai + 1} ↗</a>
+                                      <button type="button" aria-label="Remove attachment" onClick={() => removeEditAttachment(a.url)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '15px', lineHeight: 1, padding: '0 1px' }}>×</button>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                               {editErr && <Err msg={editErr} />}
                             </div>
                           )}

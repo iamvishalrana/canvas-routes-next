@@ -41,7 +41,7 @@ Rules:
 - "gst" = the GST / TPS / HST-federal amount (federal, ~5%) only. "qst" = the QST / TVQ / PST / HST-provincial amount only. If a single combined tax line is shown (e.g. HST) and you can't split it, put the whole amount in "gst" and leave "qst" null.
 - "total" = the grand total actually paid.
 - "category" MUST be exactly one of: ${CATEGORIES.join(', ')}. Pick the best fit, or null if unclear.
-- "payment_method" MUST be exactly one of: cash, credit, debit, etransfer, other. Map the tender shown on the receipt: VISA/Mastercard/Amex/Discover/"CREDIT" → "credit"; Interac/"DEBIT"/"DÉBIT"/debit card → "debit"; "CASH"/"ESPÈCES" → "cash"; Interac e-Transfer → "etransfer"; anything else → "other". null if not shown.
+- "payment_method" MUST be exactly one of: cash, credit, debit, etransfer, other. Map the tender shown on the receipt, checking in this order: "CASH"/"ESPÈCES"/"COMPTANT" → "cash"; "Interac e-Transfer"/"Virement Interac" → "etransfer"; "INTERAC"/"DEBIT"/"DÉBIT"/"Débit"/debit card → "debit" (Interac by itself always means a debit card); VISA/Mastercard/Amex/Discover/"CREDIT"/"CRÉDIT" → "credit"; anything else → "other". null if not shown.
 - "province" = the 2-letter Canadian province/territory code of the MERCHANT's address (one of: ${PROVINCES.join(', ')}), or null if no Canadian address is visible.
 - "notes" = a very short (max ~90 chars) plain-text summary of the main items or purpose (e.g. "Fuel — 42L premium" or "Coffee & pastries for meetup"), or null.
 - Use null for anything not clearly present. All numbers must be plain decimals with no currency symbols (e.g. 12.34).`
