@@ -169,6 +169,8 @@ export default function ExpensesClient() {
   const scanRef = useRef(null)
   const scanBtnRef = useRef(null)
   const [scanHighlight, setScanHighlight] = useState(false)
+  const [dragActive, setDragActive] = useState(false)
+  const runScanRef = useRef(null) // always points at the latest runScan for the DnD listeners
   const editFileRef = useRef(null)
   // Tracks an uploaded-but-not-yet-saved receipt so it can be deleted from
   // Storage if it's replaced, removed, or the form/edit is abandoned before
@@ -215,6 +217,39 @@ export default function ExpensesClient() {
     check(); window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  // Keep the DnD listeners pointed at the latest runScan without re-binding them.
+  useEffect(() => { runScanRef.current = runScan })
+
+  // Drag-and-drop a receipt anywhere on the page to scan it (desktop only —
+  // touch devices have no file drag-and-drop, and drag events don't fire there,
+  // so the Scan button stays the path on mobile). Listeners live on window so a
+  // drop counts no matter where on the page it lands. A depth counter avoids the
+  // overlay flickering as the cursor crosses child elements.
+  useEffect(() => {
+    if (isMobile) return
+    let depth = 0
+    const hasFiles = e => Array.from(e.dataTransfer?.types || []).includes('Files')
+    const onEnter = e => { if (!hasFiles(e)) return; e.preventDefault(); depth++; setDragActive(true) }
+    const onOver  = e => { if (!hasFiles(e)) return; e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy' }
+    const onLeave = e => { if (!hasFiles(e)) return; depth = Math.max(0, depth - 1); if (depth === 0) setDragActive(false) }
+    const onDrop  = e => {
+      if (!hasFiles(e)) return
+      e.preventDefault(); depth = 0; setDragActive(false)
+      const file = e.dataTransfer.files?.[0]
+      if (file) runScanRef.current?.(file)
+    }
+    window.addEventListener('dragenter', onEnter)
+    window.addEventListener('dragover', onOver)
+    window.addEventListener('dragleave', onLeave)
+    window.addEventListener('drop', onDrop)
+    return () => {
+      window.removeEventListener('dragenter', onEnter)
+      window.removeEventListener('dragover', onOver)
+      window.removeEventListener('dragleave', onLeave)
+      window.removeEventListener('drop', onDrop)
+    }
+  }, [isMobile])
 
   // Sync folder selection to the form's event name unless user picked manually
   useEffect(() => {
@@ -550,8 +585,15 @@ export default function ExpensesClient() {
   // Scan a receipt photo: Claude vision extracts the fields, we prefill the empty
   // ones (never clobber what the admin already typed), then attach the same file.
   async function handleScan(e) {
-    const file = e.target.files?.[0]
+    await runScan(e.target.files?.[0])
+  }
+
+  // Core scan pipeline — shared by the Scan button (file input) and desktop
+  // drag-and-drop (drop a receipt anywhere on the page). Opens the add form so
+  // the fields it prefills are visible.
+  async function runScan(file) {
     if (!file) return
+    setShowAdd(true)
     setScanning(true); setFormErr(null); setScanNotice(null)
     try {
       // Claude's vision API doesn't need full camera resolution to read a
@@ -602,7 +644,11 @@ export default function ExpensesClient() {
           ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
           : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
 
-      if (data.gst != null || data.qst != null) taxManualRef.current = true
+      // The scan is authoritative about tax — including a receipt that has NONE
+      // (zero-rated groceries/food). Always lock out the auto-split effect after
+      // a scan so it can't impute GST/QST the receipt didn't actually charge.
+      // (To re-enable auto-split, the admin just changes the province.)
+      taxManualRef.current = true
       setForm(p => ({
         ...p,
         vendor:         p.vendor         || data.vendor   || '',
@@ -639,6 +685,25 @@ export default function ExpensesClient() {
       }
     } catch { setFormErr('Scan failed.') }
     finally { setScanning(false); if (scanRef.current) scanRef.current.value = '' }
+  }
+
+  // Close the Add form WITHOUT saving → discard the whole draft: delete any
+  // receipt that was uploaded-but-never-saved (otherwise it orphans in storage)
+  // and clear the form so a scanned-but-abandoned expense doesn't linger.
+  function closeAddForm() {
+    if (pendingReceiptRef.current) { deleteReceiptByUrl(pendingReceiptRef.current); pendingReceiptRef.current = null }
+    setForm(EMPTY_FORM)
+    setFolderEvent('General')
+    folderManualRef.current = false
+    taxManualRef.current = false
+    provinceManualRef.current = false
+    dupAckSigRef.current = null
+    setReceiptName('')
+    setScanNotice(null)
+    setFormErr(null)
+    if (fileRef.current) fileRef.current.value = ''
+    if (scanRef.current) scanRef.current.value = ''
+    setShowAdd(false)
   }
 
   async function handleSubmit(e) {
@@ -885,12 +950,24 @@ export default function ExpensesClient() {
       <datalist id="exp-event-names">{eventNames.map(n => <option key={n} value={n} />)}</datalist>
       <datalist id="exp-vendor-names">{vendorNames.map(n => <option key={n} value={n} />)}</datalist>
 
+      {/* Drag-and-drop scan overlay (desktop). pointer-events:none so the drop
+          still reaches the window listener that runs the scan. */}
+      {dragActive && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(15,30,20,0.55)', WebkitBackdropFilter: 'blur(2px)', backdropFilter: 'blur(2px)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', padding: '1.5rem' }}>
+          <div style={{ border: '2px dashed rgba(197,168,130,0.85)', borderRadius: '18px', padding: 'clamp(1.75rem, 5vw, 2.75rem) clamp(2rem, 6vw, 3.25rem)', background: 'rgba(15,30,20,0.9)', textAlign: 'center', color: '#F5F1EC', maxWidth: '90vw', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.7rem', letterSpacing: '0.04em', marginTop: '0.85rem', lineHeight: 1.1 }}>Drop to scan receipt</div>
+            <div style={{ fontSize: '12px', color: 'rgba(245,241,236,0.6)', marginTop: '0.35rem', fontFamily: 'var(--font-inter),sans-serif' }}>Release anywhere — we’ll auto-fill the expense</div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ marginBottom: '1.75rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
           <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Expenses</h1>
-          <button type="button" className="exp-tap" onClick={() => setShowAdd(f => !f)}
+          <button type="button" className="exp-tap" onClick={() => showAdd ? closeAddForm() : setShowAdd(true)}
             style={{ padding: '0.55rem 1.2rem', background: showAdd ? 'rgba(0,0,0,0.05)' : '#0F1E14', color: showAdd ? '#555' : '#F5F1EC', border: showAdd ? '0.5px solid rgba(0,0,0,0.15)' : 'none', borderRadius: '6px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
             {showAdd ? 'Close' : '+ Add Expense'}
           </button>
