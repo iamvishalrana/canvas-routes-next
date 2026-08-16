@@ -123,6 +123,7 @@ export async function GET() {
     }
 
     const card = (charge && typeof charge === 'object') ? charge.payment_method_details?.card : null
+    const outcome = (charge && typeof charge === 'object') ? charge.outcome : null
     // Matches app/admin/payments/page.jsx's SSR formula exactly — amount_received
     // is only meaningful once a PI has actually succeeded; for anything else
     // (authorized hold, canceled, failed) it's 0, so pi.amount (the real
@@ -161,6 +162,8 @@ export async function GET() {
       tax_gst:      receipt?.gst_amount ?? null,
       tax_qst:      receipt?.qst_amount ?? null,
       tax_discount: receipt?.discount_amount ?? null,
+      risk_level:   outcome?.risk_level || null,
+      risk_score:   outcome?.risk_score ?? null,
     }
   })
 

@@ -61,6 +61,7 @@ function PaymentDetails({ r }) {
     ['Refunded',   r.stripe_amount_refunded > 0 ? `−${fmt(r.stripe_amount_refunded)}` : null],
     ['Net',        r.stripe_amount_refunded > 0 ? fmt(net) : null],
     ['Paid with',  cardLabel],
+    ['Radar risk', r.risk_level ? `${r.risk_level}${r.risk_score != null ? ` · ${r.risk_score}/99` : ''}` : null],
     ['Date',       fmtDateTime(r.stripe_paid_at)],
     ['DOB',        m.dob],
     ['Car',        [m.car_year, m.car_model || m.car_make].filter(Boolean).join(' ')],
@@ -125,6 +126,23 @@ function StatusChip({ status }) {
   )
 }
 
+// Stripe Radar risk level on the charge outcome. Only the two actionable
+// tiers get a chip — 'normal' and 'not_assessed' (wallets are pre-authenticated,
+// so they never carry a score) render nothing to keep the list uncluttered.
+const RISK_STYLES = {
+  elevated: { bg: 'rgba(180,120,0,0.1)',  text: '#9a6a00', border: 'rgba(180,120,0,0.35)', label: 'Elevated risk' },
+  highest:  { bg: 'rgba(147,51,62,0.12)', text: '#93333E', border: 'rgba(147,51,62,0.4)',  label: 'High risk' },
+}
+function RiskChip({ level, score }) {
+  const s = RISK_STYLES[level]
+  if (!s) return null
+  return (
+    <span title="Stripe Radar risk assessment" style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: `0.5px solid ${s.border}`, background: s.bg, color: s.text, whiteSpace: 'nowrap' }}>
+      ⚠ {s.label}{score != null ? ` · ${score}` : ''}
+    </span>
+  )
+}
+
 const PI_BASE = 'https://dashboard.stripe.com/payments/'
 
 function Actions({ r, ctx }) {
@@ -145,6 +163,9 @@ function Actions({ r, ctx }) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minWidth: '230px' }}>
           <div style={{ fontSize: '11px', color: '#1a1a1a' }}>Capture ${((r.stripe_amount_paid || 0) / 100).toFixed(2)} or cancel hold?</div>
+          {(r.risk_level === 'elevated' || r.risk_level === 'highest') && (
+            <div style={{ fontSize: '11px', color: '#93333E', fontWeight: '500' }}>⚠ Radar: {r.risk_level === 'highest' ? 'high' : 'elevated'} risk{r.risk_score != null ? ` (${r.risk_score}/99)` : ''} — review in Stripe first.</div>
+          )}
           {authorizedErr[r.stripe_payment_intent_id] && <div style={{ fontSize: '11px', color: '#93333E' }}>{authorizedErr[r.stripe_payment_intent_id]}</div>}
           <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
             <GhostBtn small onClick={() => doCapture(r)} disabled={authorizedBusy === r.stripe_payment_intent_id}>
@@ -263,10 +284,15 @@ export default function PaymentsClient({ initialRecords = [] }) {
 
 
   async function doCapture(r) {
+    const risky = r.risk_level === 'elevated' || r.risk_level === 'highest'
     if (!(await confirm({
-      title: 'Capture this payment?',
+      title: risky ? 'Capture a flagged payment?' : 'Capture this payment?',
       message: `This charges the card hold for ${fmt(r.stripe_amount_paid || 0)} and emails ${r.email || 'the customer'} a confirmation. It can only be reversed by refunding.`,
+      details: risky
+        ? `⚠ Stripe Radar flagged this hold as ${r.risk_level === 'highest' ? 'HIGH' : 'elevated'} risk${r.risk_score != null ? ` (score ${r.risk_score}/99)` : ''}. Review it in Stripe before charging — capturing a fraudulent hold invites a chargeback.`
+        : undefined,
       confirmLabel: 'Yes, capture',
+      danger: risky,
     }))) return
     setAuthorizedBusy(r.stripe_payment_intent_id)
     setAuthorizedErr(p => ({ ...p, [r.stripe_payment_intent_id]: null }))
@@ -584,6 +610,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
               <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.5rem', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{r.email}<CopyBtn value={r.email} /></div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                 <StatusChip status={r.stripe_payment_status} />
+                <RiskChip level={r.risk_level} score={r.risk_score} />
                 {r.stripe_payment_type && <span style={{ fontSize: '11px', color: '#888' }}>{formatPaymentType(r.stripe_payment_type)}</span>}
                 <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
                   {fmtDate(r.stripe_paid_at)}
@@ -637,7 +664,12 @@ export default function PaymentsClient({ initialRecords = [] }) {
                       <div style={{ fontSize: '10px', color: '#4040aa', fontWeight: '400' }}>−{fmt(r.stripe_amount_refunded)}</div>
                     )}
                   </td>
-                  <td style={TD}><StatusChip status={r.stripe_payment_status} /></td>
+                  <td style={TD}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', alignItems: 'flex-start' }}>
+                      <StatusChip status={r.stripe_payment_status} />
+                      <RiskChip level={r.risk_level} score={r.risk_score} />
+                    </div>
+                  </td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{r.stripe_payment_type ? formatPaymentType(r.stripe_payment_type) : '—'}</td>
                   <td style={{ ...TD, fontSize: '12px', color: '#888' }}>{fmtDate(r.stripe_paid_at)}</td>
                   <td style={TD} onClick={e => e.stopPropagation()}><PiLink id={r.stripe_payment_intent_id} manual={r.manual} /></td>

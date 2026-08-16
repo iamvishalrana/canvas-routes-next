@@ -87,6 +87,11 @@ export default async function PaymentsPage() {
         const disputeStatus = disputeStatusByPi[pi.id] || null
         const receipt = receiptsByPi[pi.id] || null
         const card = (charge && typeof charge === 'object') ? charge.payment_method_details?.card : null
+        // Stripe Radar assessment (on the charge's outcome). risk_level is
+        // 'normal' | 'elevated' | 'highest' | 'not_assessed' (wallets like
+        // Apple/Google Pay are pre-authenticated → not_assessed). risk_score
+        // (0–99) is only present on higher Radar tiers, so it may be null.
+        const outcome = (charge && typeof charge === 'object') ? charge.outcome : null
 
         let stripe_payment_status
         if (disputeStatus)        stripe_payment_status = disputeStatus
@@ -128,6 +133,8 @@ export default async function PaymentsPage() {
           tax_gst:      receipt?.gst_amount ?? null,
           tax_qst:      receipt?.qst_amount ?? null,
           tax_discount: receipt?.discount_amount ?? null,
+          risk_level:   outcome?.risk_level || null,
+          risk_score:   outcome?.risk_score ?? null,
         })
       }
     } catch (e) {
