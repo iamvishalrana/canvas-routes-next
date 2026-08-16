@@ -74,16 +74,17 @@ export default function FolderClient() {
     }).catch(() => {})
   }
 
-  // Emails this person their private gallery link so they know the photos just
-  // uploaded are ready to view. Reuses the same send-link route the person page
-  // uses — surfaced here at the upload site so there's no need to navigate back.
-  async function emailPhotosLink() {
+  // Notifies this person that their photos are ready to view — same "Notify"
+  // action the member gallery uses, kept consistent across both. Emails their
+  // private gallery link via the send-link route, surfaced here at the upload
+  // site so there's no need to navigate back to the person page.
+  async function notifyPerson() {
     if (!person?.email) { setErr('This person has no email on file — add one on their page first.'); return }
     if (!(await confirm({
-      title: 'Email their photos to them?',
-      message: 'This emails this person their private gallery link so they can view the photos you just added.',
+      title: 'Notify this person?',
+      message: 'This emails them to let them know their photos are ready to view.',
       details: <><strong>{person.name || '—'}</strong>{person.email ? <> · {person.email}</> : null}</>,
-      confirmLabel: 'Yes, email link',
+      confirmLabel: 'Yes, notify',
     }))) return
     setNotifying(true); setNotifyResult(null)
     try {
@@ -290,8 +291,8 @@ export default function FolderClient() {
           {copied ? 'Copied ✓' : 'Copy link'}
         </button>
         <GhostBtn small onClick={handleRenew} disabled={renewing}>{renewing ? 'Renewing…' : 'Renew 30 days'}</GhostBtn>
-        <GhostBtn small onClick={emailPhotosLink} disabled={notifying || !!upload || !person?.email}>
-          {notifying ? 'Emailing…' : notifyResult?.ok ? 'Emailed ✓' : '✉ Email photos'}
+        <GhostBtn small onClick={notifyPerson} disabled={notifying || !!upload || !person?.email}>
+          {notifying ? 'Sending…' : notifyResult?.ok ? '✓ Sent' : notifyResult?.error ? 'Retry' : `Notify ${person?.name?.split(' ')[0] || 'them'}`}
         </GhostBtn>
         {notifyResult?.error && <span style={{ fontSize: '11px', color: '#93333E' }}>{notifyResult.error}</span>}
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFiles} />
