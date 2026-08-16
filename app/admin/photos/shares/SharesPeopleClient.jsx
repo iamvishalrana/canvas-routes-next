@@ -1,14 +1,16 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { inp, sel, L, PrimaryBtn, Err, CopyBtn } from '../../_components/shared'
+import { inp, sel, L, PrimaryBtn, GhostBtn, Err, CopyBtn } from '../../_components/shared'
+import { useConfirm } from '../../_components/ConfirmProvider'
 import ContactSearchSelect from '../../_components/ContactSearchSelect'
 
 const EMPTY_FORM = { name: '', email: '' }
 
 export default function SharesPeopleClient() {
   const router = useRouter()
+  const confirm = useConfirm()
   const [people, setPeople] = useState([])
   const [loading, setLoading] = useState(true)
   const [listErr, setListErr] = useState('')
@@ -19,13 +21,43 @@ export default function SharesPeopleClient() {
   const [form, setForm] = useState(EMPTY_FORM)
   const [formErr, setFormErr] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [reclaiming, setReclaiming] = useState(false)
+  const [reclaimMsg, setReclaimMsg] = useState(null)
 
-  useEffect(() => {
+  const loadPeople = useCallback(() => {
     fetch('/api/admin/photo-share-people')
       .then(r => r.ok ? r.json() : [])
       .then(data => { setPeople(Array.isArray(data) ? data : []); setLoading(false) })
       .catch(() => { setListErr('Failed to load people.'); setLoading(false) })
   }, [])
+
+  useEffect(() => { loadPeople() }, [loadPeople])
+
+  // Move shared photos into the accounts of any recipients who've since become
+  // members (and off the non-member link). Runs automatically at invite time
+  // and on a member's photos-page view — this is the on-demand trigger for
+  // members who joined before that existed.
+  async function handleReclaim() {
+    if (!(await confirm({
+      title: 'Move members’ shared photos into their accounts?',
+      message: 'For every share recipient who is now a member, this copies their photos into their permanent member gallery and removes them from the non-member link. Photos are only removed after the copy is confirmed, and it’s safe to run again.',
+      confirmLabel: 'Yes, move them',
+    }))) return
+    setReclaiming(true); setReclaimMsg(null)
+    try {
+      const res = await fetch('/api/admin/photos/reclaim-shares', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setReclaimMsg({ ok: false, text: data.error || 'Failed to move photos.' }); return }
+      setReclaimMsg({ ok: true, text: data.totalMoved > 0
+        ? `Moved ${data.totalMoved} photo${data.totalMoved === 1 ? '' : 's'} into ${data.processed} member account${data.processed === 1 ? '' : 's'}.`
+        : 'Nothing to move — all members’ photos are already in their accounts.' })
+      loadPeople()
+    } catch {
+      setReclaimMsg({ ok: false, text: 'Network error — please try again.' })
+    } finally {
+      setReclaiming(false)
+    }
+  }
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -75,7 +107,13 @@ export default function SharesPeopleClient() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+        {reclaimMsg && (
+          <span style={{ fontSize: '11.5px', color: reclaimMsg.ok ? '#3B6B2F' : '#93333E', marginRight: 'auto' }}>{reclaimMsg.text}</span>
+        )}
+        <GhostBtn onClick={handleReclaim} disabled={reclaiming}>
+          {reclaiming ? 'Moving…' : 'Move members’ photos to accounts'}
+        </GhostBtn>
         <PrimaryBtn onClick={() => { setCreating(v => !v); setFormErr('') }}>{creating ? 'Cancel' : '+ New Person'}</PrimaryBtn>
       </div>
 
