@@ -31,7 +31,7 @@ export async function POST(request) {
   if (!Number.isFinite(gstAmt) || gstAmt < 0) return Response.json({ error: 'GST must be a valid non-negative number.' }, { status: 400 })
   if (!Number.isFinite(qstAmt) || qstAmt < 0) return Response.json({ error: 'Tax must be a valid non-negative number.' }, { status: 400 })
 
-  const VALID_PM = ['cash', 'credit', 'etransfer', 'other']
+  const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
 
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('expenses').insert({

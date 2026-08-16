@@ -11,10 +11,11 @@ const CATEGORIES = EXPENSE_CATEGORIES
 const PAYMENT_METHODS = [
   { value: 'cash',      label: 'Cash' },
   { value: 'credit',    label: 'Credit card' },
+  { value: 'debit',     label: 'Debit card' },
   { value: 'etransfer', label: 'E-transfer' },
   { value: 'other',     label: 'Other' },
 ]
-const PAYMENT_LABELS = { cash: 'Cash', credit: 'Card', etransfer: 'E-transfer', other: 'Other' }
+const PAYMENT_LABELS = { cash: 'Cash', credit: 'Card', debit: 'Debit', etransfer: 'E-transfer', other: 'Other' }
 
 // Canadian sales tax by province/territory, split into the federal GST/HST-federal
 // portion (gst) and the provincial portion (prov: QST / PST / HST-provincial).
@@ -911,9 +912,20 @@ export default function ExpensesClient() {
         /* Grid cells must be allowed to shrink or they force page-level scroll on iOS */
         .exp-form-grid > div { min-width: 0; }
         .exp-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        /* iOS date/select/text inputs have an intrinsic min-width that overflows
+           narrow flex/grid cells (the "date field bleeding into the next" bug on
+           iPhone 13 Pro ≈ 390px). Force every field to shrink to its cell. */
+        .exp-wrap input, .exp-wrap select, .exp-wrap textarea { max-width: 100%; box-sizing: border-box; }
+        .exp-wrap input[type="date"] { min-width: 0; width: 100%; box-sizing: border-box; }
+        .exp-filters > div { min-width: 0; }
         @media (max-width: 640px) {
           .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
           .exp-actions-row { flex-wrap: wrap; }
+          /* Stack the filter controls cleanly instead of letting fixed widths
+             collide; date range stays two-up, everything else full width. */
+          .exp-filters { gap: 0.5rem !important; }
+          .exp-filters > div { flex: 1 1 100% !important; width: 100% !important; }
+          .exp-filters > .exp-filter-half { flex: 1 1 calc(50% - 0.25rem) !important; width: auto !important; }
         }
 
         /* Scan button — recurring gold shimmer sweep, plus a stronger attention
@@ -1204,18 +1216,18 @@ export default function ExpensesClient() {
           )}
 
           {/* Date range + category filters */}
-          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '0.85rem' }}>
+          <div className="exp-filters" style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '0.85rem' }}>
             <div style={{ width: isMobile ? '100%' : '190px' }}>
               <L>Search</L>
               <input style={inp} value={searchQuery} placeholder="Vendor, event, category, notes…"
                 onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <div style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
+            <div className="exp-filter-half" style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
               <L>From</L>
               <input type="date" style={inp} value={dateFrom} max={dateTo || today}
                 onChange={e => setDateFrom(e.target.value)} />
             </div>
-            <div style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
+            <div className="exp-filter-half" style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
               <L>To</L>
               <input type="date" style={inp} value={dateTo} min={dateFrom || undefined} max={today}
                 onChange={e => setDateTo(e.target.value)} />

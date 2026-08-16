@@ -28,7 +28,7 @@ export async function PATCH(request, { params }) {
       update[field] = n
     }
   }
-  const VALID_PM = ['cash', 'credit', 'etransfer', 'other']
+  const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
   if ('payment_method' in update && update.payment_method && !VALID_PM.includes(update.payment_method)) {
     return Response.json({ error: 'Invalid payment method.' }, { status: 400 })
   }
