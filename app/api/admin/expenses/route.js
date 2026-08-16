@@ -39,6 +39,9 @@ export async function POST(request) {
   if (!Number.isFinite(tipAmt) || tipAmt < 0) return Response.json({ error: 'Tip must be a valid non-negative number.' }, { status: 400 })
 
   const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
+  const currency = (typeof body.currency === 'string' && /^[A-Za-z]{3}$/.test(body.currency.trim())) ? body.currency.trim().toUpperCase() : 'CAD'
+  const origAmt = body.original_amount === undefined || body.original_amount === '' || body.original_amount === null ? null : parseFloat(body.original_amount)
+  if (origAmt !== null && (!Number.isFinite(origAmt) || origAmt < 0)) return Response.json({ error: 'Original amount must be a valid non-negative number.' }, { status: 400 })
 
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('expenses').insert({
@@ -55,6 +58,10 @@ export async function POST(request) {
     category:   category || null,
     receipt_url: receiptUrls[0] || null,
     receipt_urls: receiptUrls,
+    vendor_tax_id: body.vendor_tax_id?.trim().slice(0, 40) || null,
+    reconciled: body.reconciled === true,
+    currency,
+    original_amount: origAmt,
     notes:      notes?.trim().slice(0, 1000) || null,
   }).select('*').single()
 

@@ -31,7 +31,7 @@ const FALLBACK_MODEL = 'claude-sonnet-5'
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
 const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exactly these keys:
-{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"total":number|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
+{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"total":number|null,"currency":string|null,"vendor_tax_id":string|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
 
 Rules:
 - "is_receipt" = true ONLY if the image is clearly a purchase receipt, invoice, bill, or order confirmation showing amounts paid or payable. If it is anything else — an article, a menu, a screenshot, a random document, a photo, a business card — set is_receipt to false and EVERY other key to null. Never guess values from something that is not a receipt.
@@ -41,6 +41,8 @@ Rules:
 - "gst" = the GST / TPS / HST-federal amount (federal, ~5%) only. "qst" = the QST / TVQ / PST / HST-provincial amount only. If a single combined tax line is shown (e.g. HST) and you can't split it, put the whole amount in "gst" and leave "qst" null.
 - "tip" = the tip / gratuity / "Pourboire" / "Service" amount added on top of the taxed subtotal, if any (common on a restaurant's card/payment receipt but usually absent on the itemized bill). null if there is no tip line.
 - "total" = the grand total actually paid (this INCLUDES the tip when one is present).
+- "currency" = the 3-letter ISO code of the amounts shown (e.g. "USD", "EUR", "GBP") if the receipt is clearly NOT Canadian dollars; otherwise "CAD". Default "CAD" when unsure.
+- "vendor_tax_id" = the vendor's tax registration number if printed — a GST/HST number (9 digits + "RT" + 4 digits, e.g. "123456789 RT0001") or a QST/TVQ number (10 digits + "TQ" + 4 digits). Return it as printed, or null if not shown.
 - "category" MUST be exactly one of: ${CATEGORIES.join(', ')}. Pick the best fit, or null if unclear.
 - "payment_method" MUST be exactly one of: cash, credit, debit, etransfer, other. Map the tender shown on the receipt, checking in this order: "CASH"/"ESPÈCES"/"COMPTANT" → "cash"; "Interac e-Transfer"/"Virement Interac" → "etransfer"; "INTERAC"/"DEBIT"/"DÉBIT"/"Débit"/debit card → "debit" (Interac by itself always means a debit card); VISA/Mastercard/Amex/Discover/"CREDIT"/"CRÉDIT" → "credit"; anything else → "other". null if not shown.
 - "province" = the 2-letter Canadian province/territory code of the MERCHANT's address (one of: ${PROVINCES.join(', ')}), or null if no Canadian address is visible.
@@ -163,6 +165,9 @@ export async function POST(request) {
     const payment_method = PAYMENT_METHODS.includes(parsed.payment_method) ? parsed.payment_method : null
     const province = (typeof parsed.province === 'string' && PROVINCES.includes(parsed.province.toUpperCase())) ? parsed.province.toUpperCase() : null
     const notes = typeof parsed.notes === 'string' && parsed.notes.trim() ? parsed.notes.trim().slice(0, 200) : null
+    // 3-letter currency code (uppercase); default CAD.
+    const currency = (typeof parsed.currency === 'string' && /^[A-Za-z]{3}$/.test(parsed.currency.trim())) ? parsed.currency.trim().toUpperCase() : 'CAD'
+    const vendor_tax_id = (typeof parsed.vendor_tax_id === 'string' && parsed.vendor_tax_id.trim()) ? parsed.vendor_tax_id.trim().slice(0, 40) : null
 
     // A "receipt" with no usable numbers is another non-receipt signal
     if (amount == null && total == null) {
@@ -177,7 +182,7 @@ export async function POST(request) {
 
     return Response.json({
       vendor: typeof parsed.vendor === 'string' ? parsed.vendor.slice(0, 100) : null,
-      date, amount, gst, qst, tip, total, category, payment_method, province, notes, mismatch,
+      date, amount, gst, qst, tip, total, currency, vendor_tax_id, category, payment_method, province, notes, mismatch,
     })
   } catch (err) {
     captureException(err, { context: 'expenses-scan-receipt' })

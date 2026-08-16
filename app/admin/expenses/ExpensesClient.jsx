@@ -39,7 +39,12 @@ const PROVINCES = [
 const PROVINCE_MAP = Object.fromEntries(PROVINCES.map(p => [p.value, p]))
 const provLabelOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).provLabel
 
-const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', tip: '', province: 'QC', category: '', payment_method: '', receipt_url: '', notes: '' }
+const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', tip: '', province: 'QC', category: '', payment_method: '', vendor_tax_id: '', currency: 'CAD', original_amount: '', receipt_url: '', notes: '' }
+
+// Currencies offered for foreign purchases (US car parts, etc.). CAD is the
+// reporting currency — amount/gst/qst/tip are always stored in CAD; a non-CAD
+// currency just records what the receipt itself was in, with original_amount.
+const CURRENCIES = ['CAD', 'USD', 'EUR', 'GBP', 'Other']
 
 function round2(n) { return Math.round((parseFloat(n) || 0) * 100) / 100 }
 // Break a tax-INCLUDED total into { subtotal, gst, qst } for a province's rates.
@@ -150,6 +155,7 @@ export default function ExpensesClient() {
   const [scanNotice, setScanNotice]     = useState(null) // { type: 'ok'|'warn', text }
   const [attachments, setAttachments]   = useState([]) // add-form attachments: [{ url, name }] — invoice + receipt, etc.
   const [filterMissing, setFilterMissing] = useState(false)
+  const [filterUnreconciled, setFilterUnreconciled] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteErr, setDeleteErr] = useState(null)
   const [deleting, setDeleting]         = useState(null)
@@ -288,6 +294,7 @@ export default function ExpensesClient() {
     if (dateFrom && e.expense_date < dateFrom) return false
     if (dateTo && e.expense_date > dateTo) return false
     if (filterMissing && attachmentsOf(e).length) return false
+    if (filterUnreconciled && e.reconciled) return false
     if (searchTerm) {
       const haystack = `${e.vendor || ''} ${e.event_name || ''} ${e.category || ''} ${e.notes || ''}`.toLowerCase()
       if (!haystack.includes(searchTerm)) return false
@@ -488,6 +495,9 @@ export default function ExpensesClient() {
       province:       expense.province     || 'QC',
       category:       expense.category     || '',
       payment_method: expense.payment_method || '',
+      vendor_tax_id:  expense.vendor_tax_id || '',
+      currency:       expense.currency     || 'CAD',
+      original_amount: expense.original_amount != null ? String(expense.original_amount) : '',
       notes:          expense.notes        || '',
     })
   }
@@ -536,6 +546,9 @@ export default function ExpensesClient() {
       province:       expense.province || 'QC',
       category:       expense.category || '',
       payment_method: expense.payment_method || '',
+      vendor_tax_id:  expense.vendor_tax_id || '',
+      currency:       expense.currency || 'CAD',
+      original_amount: expense.original_amount != null ? String(expense.original_amount) : '',
     })
     setScanNotice({ type: 'ok', text: `Copied "${expense.vendor || 'expense'}" — set the date and save.` })
     setFormErr(null)
@@ -574,6 +587,9 @@ export default function ExpensesClient() {
           gst_amount:     gstNum,
           qst_amount:     qstNum,
           tip_amount:     tipNum,
+          vendor_tax_id:  editForm.vendor_tax_id || '',
+          currency:       editForm.currency || 'CAD',
+          original_amount: (editForm.currency && editForm.currency !== 'CAD') ? (editForm.original_amount || '') : '',
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -704,17 +720,24 @@ export default function ExpensesClient() {
         if (data.payment_method && form.payment_method && data.payment_method !== form.payment_method) diffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[form.payment_method] || form.payment_method}`)
       }
 
+      // Foreign-currency receipt (US car parts, etc.): we DON'T drop the foreign
+      // amounts into the CAD fields — the CAD figure is whatever the card was
+      // actually charged (from the statement). Record the currency + original
+      // total and prompt for the CAD amount.
+      const isForeign = !!(data.currency && data.currency !== 'CAD')
       setScanNotice(dup
         ? { type: 'warn', text: `Heads up — you already logged a ${fmt(sTotal)} expense from “${data.vendor}” on ${data.date}. Saving will add a second copy.` }
-        : diffs.length
-          ? { type: 'warn', text: `Second document differs from the first — ${diffs.join(' · ')}. The fields already filled were kept; adjust manually if this one is the correct source.` }
-          : tipAdded != null
-            ? { type: 'ok', text: `Payment receipt adds a ${fmt(tipAdded)} tip — total updated to ${fmt(total)}. ✓` }
-            : data.mismatch
-              ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
-              : isSubsequent
-                ? { type: 'ok', text: 'Second document scanned & attached — it matches the first. ✓' }
-                : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
+        : isForeign
+          ? { type: 'ok', text: `Scanned a ${data.currency} receipt — original total ${fmt(total)} ${data.currency} recorded. Enter the CAD amount your card was charged before saving.` }
+          : diffs.length
+            ? { type: 'warn', text: `Second document differs from the first — ${diffs.join(' · ')}. The fields already filled were kept; adjust manually if this one is the correct source.` }
+            : tipAdded != null
+              ? { type: 'ok', text: `Payment receipt adds a ${fmt(tipAdded)} tip — total updated to ${fmt(total)}. ✓` }
+              : data.mismatch
+                ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
+                : isSubsequent
+                  ? { type: 'ok', text: 'Second document scanned & attached — it matches the first. ✓' }
+                  : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
 
       // The scan is authoritative about tax — including a receipt that has NONE
       // (zero-rated groceries/food). Always lock out the auto-split effect after
@@ -726,13 +749,18 @@ export default function ExpensesClient() {
         vendor:         p.vendor         || data.vendor   || '',
         expense_date:   p.expense_date   || data.date     || '',
         category:       p.category       || data.category || '',
-        // When a later payment receipt adds a tip, bump the paid total to the
-        // tipped grand total; otherwise keep the first value (fill if empty).
-        paid:           tipAdded != null ? (total != null ? String(total) : p.paid) : (p.paid || (total != null ? String(total) : '')),
-        gst_amount:     p.gst_amount     || (data.gst != null ? String(data.gst) : ''),
-        qst_amount:     p.qst_amount     || (data.qst != null ? String(data.qst) : ''),
-        tip:            (parseFloat(p.tip) > 0 ? p.tip : (scanTip != null && scanTip > 0 ? String(scanTip) : p.tip)),
+        // Money fields fill from the scan ONLY for CAD receipts — a foreign
+        // receipt's amounts aren't CAD, so they're left for manual entry from
+        // the statement (see isForeign notice). When a later payment receipt
+        // adds a tip, bump paid to the tipped grand total; otherwise fill if empty.
+        paid:           isForeign ? p.paid : (tipAdded != null ? (total != null ? String(total) : p.paid) : (p.paid || (total != null ? String(total) : ''))),
+        gst_amount:     isForeign ? p.gst_amount : (p.gst_amount || (data.gst != null ? String(data.gst) : '')),
+        qst_amount:     isForeign ? p.qst_amount : (p.qst_amount || (data.qst != null ? String(data.qst) : '')),
+        tip:            isForeign ? p.tip : (parseFloat(p.tip) > 0 ? p.tip : (scanTip != null && scanTip > 0 ? String(scanTip) : p.tip)),
         payment_method: p.payment_method || data.payment_method || '',
+        vendor_tax_id:  p.vendor_tax_id  || data.vendor_tax_id || '',
+        currency:       (p.currency && p.currency !== 'CAD') ? p.currency : (data.currency || p.currency || 'CAD'),
+        original_amount: isForeign ? (p.original_amount || (total != null ? String(total) : '')) : p.original_amount,
         // Scanned province wins ONLY if the admin hasn't picked one by hand —
         // then a total-only receipt from, say, Ontario splits at ON rates, not
         // the QC default. Scanning never sets provinceManualRef, so re-scanning
@@ -825,6 +853,9 @@ export default function ExpensesClient() {
           gst_amount:     gstNum,
           qst_amount:     qstNum,
           tip_amount:     tipNum,
+          vendor_tax_id:  form.vendor_tax_id,
+          currency:       form.currency || 'CAD',
+          original_amount: form.currency !== 'CAD' ? form.original_amount : '',
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -852,6 +883,20 @@ export default function ExpensesClient() {
       if (fileRef.current) fileRef.current.value = ''
     } catch { setFormErr('Network error.') }
     finally { setSubmitting(false) }
+  }
+
+  // Tick an expense off against the bank/card statement (optimistic).
+  async function toggleReconciled(expense) {
+    const next = !expense.reconciled
+    setExpenses(prev => prev.map(e => e.id === expense.id ? { ...e, reconciled: next } : e))
+    try {
+      const res = await fetch(`/api/admin/expenses/${expense.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reconciled: next }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      setExpenses(prev => prev.map(e => e.id === expense.id ? { ...e, reconciled: !next } : e))
+    }
   }
 
   async function handleDelete(expense) {
@@ -925,14 +970,16 @@ export default function ExpensesClient() {
     // silently exported all-time data instead.
     const source = visibleExpenses
     const rows = [
-      ['Date', 'Event', 'Vendor', 'Category', 'Payment', 'Province', 'Amount', 'GST', 'QST', 'Tax', 'Tip', 'Total', 'Receipt', 'Notes'],
+      ['Date', 'Event', 'Vendor', 'Vendor Tax #', 'Category', 'Payment', 'Province', 'Currency', 'Original', 'Amount', 'GST', 'QST', 'Tax', 'Tip', 'Total', 'Reconciled', 'Receipt', 'Notes'],
       ...source.map(e => {
         const gst = parseFloat(e.gst_amount || 0), qst = parseFloat(e.qst_amount || 0)
         return [
-          e.expense_date, e.event_name || 'General', e.vendor || '', e.category || '',
+          e.expense_date, e.event_name || 'General', e.vendor || '', e.vendor_tax_id || '', e.category || '',
           PAYMENT_LABELS[e.payment_method] || '', e.province || 'QC',
+          e.currency || 'CAD', (e.original_amount != null ? parseFloat(e.original_amount).toFixed(2) : ''),
           parseFloat(e.amount || 0).toFixed(2), gst.toFixed(2), qst.toFixed(2), taxOf(e).toFixed(2),
           tipOf(e).toFixed(2), grandTotalOf(e).toFixed(2),
+          e.reconciled ? 'Yes' : 'No',
           attachmentsOf(e).join(' | '), e.notes || '',
         ]
       }),
@@ -1069,6 +1116,8 @@ export default function ExpensesClient() {
             { label: 'Expenses',        value: visibleExpenses.length,           color: '#1a1a1a' },
             // Tapping toggles a receipt-less-only filter so the gaps are one tap away
             { label: filterMissing ? 'Missing Receipts · filtering' : 'Missing Receipts', value: missingReceiptCount, color: missingReceiptCount > 0 ? '#93333E' : '#3B6B2F', onClick: () => setFilterMissing(f => !f), active: filterMissing },
+            // Tap to show only expenses not yet ticked off against a statement
+            (() => { const n = visibleExpenses.filter(e => !e.reconciled).length; return { label: filterUnreconciled ? 'Unreconciled · filtering' : 'Unreconciled', value: n, color: n > 0 ? '#8A6535' : '#3B6B2F', onClick: () => setFilterUnreconciled(f => !f), active: filterUnreconciled } })(),
           ].map(s => (
             <div key={s.label} className="exp-stat-card" onClick={s.onClick}
               role={s.onClick ? 'button' : undefined}
@@ -1193,6 +1242,36 @@ export default function ExpensesClient() {
             &nbsp;·&nbsp; {provLabelOf(form.province)} <span style={{ color: '#555' }}>{fmt(qstNum)}</span>
             {tipNum > 0 && <>&nbsp;·&nbsp; Tip <span style={{ color: '#555' }}>{fmt(tipNum)}</span></>}
             &nbsp;·&nbsp; Total <span style={{ color: '#1a1a1a' }}>{fmt(paidNum)}</span>
+          </div>
+        )}
+
+        {/* Currency · original total · vendor tax number */}
+        <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.6rem', marginBottom: '0.35rem' }}>
+          <div>
+            <L>Currency</L>
+            <div style={{ position: 'relative' }}>
+              <select style={sel} value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}>
+                {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <SelectChevron />
+            </div>
+          </div>
+          {form.currency !== 'CAD' && (
+            <div>
+              <L>Original total ({form.currency})</L>
+              <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.original_amount} placeholder="0.00"
+                onChange={e => setForm(p => ({ ...p, original_amount: e.target.value }))} />
+            </div>
+          )}
+          <div>
+            <L>Vendor tax # (opt.)</L>
+            <input style={inp} value={form.vendor_tax_id} placeholder="GST/QST reg. #" maxLength={40}
+              onChange={e => setForm(p => ({ ...p, vendor_tax_id: e.target.value }))} />
+          </div>
+        </div>
+        {form.currency !== 'CAD' && (
+          <div style={{ fontSize: '10.5px', color: '#8a7a5c', marginBottom: '0.85rem', lineHeight: 1.5 }}>
+            The amounts above should be in <strong>CAD</strong> (what your card was actually charged) — the original {form.currency} total is recorded for the receipt.
           </div>
         )}
 
@@ -1376,7 +1455,7 @@ export default function ExpensesClient() {
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>
               {visibleExpenses.length} expense{visibleExpenses.length !== 1 ? 's' : ''}
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
-              {(hasDateFilter || filterCategory !== 'all' || filterPayment !== 'all' || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
+              {(hasDateFilter || filterCategory !== 'all' || filterPayment !== 'all' || filterMissing || filterUnreconciled || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
@@ -1646,6 +1725,10 @@ export default function ExpensesClient() {
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', alignItems: 'center' }}>
                           {!isPendingDelete && !isEditing && (
                             <>
+                              <button onClick={() => toggleReconciled(expense)} title={expense.reconciled ? 'Reconciled against statement — tap to unmark' : 'Mark reconciled (matched to card/bank statement)'}
+                                style={{ background: expense.reconciled ? 'rgba(59,107,47,0.1)' : 'none', border: `0.5px solid ${expense.reconciled ? 'rgba(59,107,47,0.4)' : 'rgba(0,0,0,0.14)'}`, borderRadius: '6px', cursor: 'pointer', color: expense.reconciled ? '#3B6B2F' : '#ccc', fontSize: '12px', padding: isMobile ? '7px 11px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>
+                                ✓
+                              </button>
                               <button onClick={() => duplicateExpense(expense)} title="Copy into the Add Expense form"
                                 style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '7px 12px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
                                 ⧉
@@ -1692,6 +1775,7 @@ export default function ExpensesClient() {
                                     {flat && <> · <span style={{ color: '#8A6535' }}>{expense.event_name || 'General'}</span></>}
                                     {expense.category && <> · {expense.category}</>}
                                     {expense.payment_method && <> · {PAYMENT_LABELS[expense.payment_method]}</>}
+                                    {expense.currency && expense.currency !== 'CAD' && <> · <span style={{ color: '#8A6535' }}>{expense.currency}{expense.original_amount ? ` ${fmt(expense.original_amount)}` : ''}</span></>}
                                   </div>
                                   {expense.notes && (
                                     <div style={{ fontSize: '11px', color: '#aaa', fontStyle: 'italic', marginTop: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{expense.notes}</div>
@@ -1811,6 +1895,27 @@ export default function ExpensesClient() {
                                   <L>Tip ($)</L>
                                   <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.tip || ''} placeholder="0.00"
                                     onChange={e => setEditForm(p => ({ ...p, tip: e.target.value }))} />
+                                </div>
+                                <div>
+                                  <L>Currency</L>
+                                  <div style={{ position: 'relative' }}>
+                                    <select style={sel} value={editForm.currency || 'CAD'} onChange={e => setEditForm(p => ({ ...p, currency: e.target.value }))}>
+                                      {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                                    </select>
+                                    <SelectChevron />
+                                  </div>
+                                </div>
+                                {editForm.currency && editForm.currency !== 'CAD' && (
+                                  <div>
+                                    <L>Original ({editForm.currency})</L>
+                                    <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.original_amount || ''} placeholder="0.00"
+                                      onChange={e => setEditForm(p => ({ ...p, original_amount: e.target.value }))} />
+                                  </div>
+                                )}
+                                <div>
+                                  <L>Vendor tax #</L>
+                                  <input style={inp} value={editForm.vendor_tax_id || ''} placeholder="—" maxLength={40}
+                                    onChange={e => setEditForm(p => ({ ...p, vendor_tax_id: e.target.value }))} />
                                 </div>
                               </div>
                               <div style={{ marginBottom: '0.6rem' }}>

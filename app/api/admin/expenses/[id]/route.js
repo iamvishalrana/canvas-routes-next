@@ -10,10 +10,18 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
-  const ALLOWED = ['expense_date', 'event_name', 'vendor', 'amount', 'tax_amount', 'gst_amount', 'qst_amount', 'tip_amount', 'province', 'payment_method', 'category', 'receipt_url', 'receipt_urls', 'notes']
+  const ALLOWED = ['expense_date', 'event_name', 'vendor', 'amount', 'tax_amount', 'gst_amount', 'qst_amount', 'tip_amount', 'province', 'payment_method', 'category', 'receipt_url', 'receipt_urls', 'vendor_tax_id', 'reconciled', 'currency', 'original_amount', 'notes']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => ALLOWED.includes(k)))
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
   if ('notes' in update) update.notes = (update.notes || '').trim().slice(0, 1000) || null
+  if ('vendor_tax_id' in update) update.vendor_tax_id = (update.vendor_tax_id || '').trim().slice(0, 40) || null
+  if ('reconciled' in update) update.reconciled = update.reconciled === true
+  if ('currency' in update) update.currency = (typeof update.currency === 'string' && /^[A-Za-z]{3}$/.test(update.currency.trim())) ? update.currency.trim().toUpperCase() : 'CAD'
+  if ('original_amount' in update) {
+    const oa = update.original_amount === '' || update.original_amount === null ? null : parseFloat(update.original_amount)
+    if (oa !== null && (!Number.isFinite(oa) || oa < 0)) return Response.json({ error: 'Original amount must be a valid non-negative number.' }, { status: 400 })
+    update.original_amount = oa
+  }
 
   // Multiple attachments: normalise the array and keep the legacy receipt_url
   // (first element) in sync so single-receipt displays keep working.
