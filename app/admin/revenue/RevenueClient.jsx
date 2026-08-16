@@ -286,6 +286,34 @@ function ChartCard({ title, note, children }) {
   )
 }
 
+// Small "i" info button with a tap-toggled popover — mobile-friendly (tap, not
+// hover). Explains a metric or section in plain language. stopPropagation so
+// tapping it inside a clickable card never also triggers the card's own click.
+function InfoTip({ text, label = 'More info', align = 'left' }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    const onDoc = e => { if (!e.target.closest?.('[data-infotip]')) setOpen(false) }
+    const onKey = e => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('click', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('click', onDoc); document.removeEventListener('keydown', onKey) }
+  }, [open])
+  return (
+    <span data-infotip style={{ position: 'relative', display: 'inline-flex', verticalAlign: 'middle' }}>
+      <button type="button" aria-label={label} aria-expanded={open}
+        onClick={e => { e.stopPropagation(); setOpen(o => !o) }}
+        style={{ width: '15px', height: '15px', borderRadius: '50%', border: `0.5px solid ${open ? '#8A6535' : 'rgba(0,0,0,0.28)'}`, background: open ? '#8A6535' : 'transparent', color: open ? '#fff' : '#999', fontSize: '10px', fontFamily: 'Georgia, serif', fontStyle: 'italic', textTransform: 'none', lineHeight: 1, cursor: 'pointer', padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent' }}>i</button>
+      {open && (
+        <span role="tooltip" onClick={e => e.stopPropagation()}
+          style={{ position: 'absolute', top: 'calc(100% + 6px)', [align === 'right' ? 'right' : 'left']: 0, zIndex: 50, width: 'max-content', maxWidth: 'min(260px, 78vw)', background: '#0F1E14', color: '#F5F1EC', fontSize: '11px', lineHeight: 1.55, letterSpacing: 'normal', textTransform: 'none', fontWeight: 400, padding: '0.6rem 0.75rem', borderRadius: '8px', boxShadow: '0 8px 24px rgba(15,30,20,0.28)', textAlign: 'left' }}>
+          {text}
+        </span>
+      )}
+    </span>
+  )
+}
+
 function MemberBadge({ isMember }) {
   const map = isMember === true
     ? { t: 'Member', c: '#3B6B2F', b: 'rgba(59,107,47,0.09)', br: 'rgba(59,107,47,0.28)' }
@@ -626,6 +654,37 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   // paying Stripe. Full coverage now that totalRevenue itself is ex-tax.
   const netAfterFees = totalRevenue - totalFees
 
+  // Refunds returned to customers in the selected range. Already excluded from
+  // revenue above (every figure works on net amounts) — surfaced here only so
+  // the total given back is visible at a glance, with a drill-down.
+  const refundedPayments = filteredPayments.filter(p => (p.refunded || 0) > 0)
+  const totalRefunded = refundedPayments.reduce((s, p) => s + p.refunded, 0)
+
+  // Period-over-period: when an explicit date range is selected, compare this
+  // range's ex-tax revenue against the immediately preceding window of the same
+  // length. Null (no chip) for all-time, an invalid range, or when the prior
+  // window earned $0 (a %-change off zero is meaningless).
+  const revenueDelta = useMemo(() => {
+    if (!dateFrom || !dateTo) return null
+    const from = new Date(dateFrom + 'T12:00:00Z')
+    const to = new Date(dateTo + 'T12:00:00Z')
+    if (isNaN(from.getTime()) || isNaN(to.getTime()) || to < from) return null
+    const lenDays = Math.round((to - from) / 86400000) + 1
+    const prevTo = new Date(from.getTime() - 86400000)
+    const prevFrom = new Date(prevTo.getTime() - (lenDays - 1) * 86400000)
+    const prevFromKey = prevFrom.toISOString().slice(0, 10)
+    const prevToKey = prevTo.toISOString().slice(0, 10)
+    let prev = 0
+    for (const p of payments) {
+      if (!p.date) continue
+      const k = montrealDateKey(p.date)
+      if (k < prevFromKey || k > prevToKey) continue
+      prev += exTaxOf(p)
+    }
+    if (prev <= 0) return null
+    return { pct: ((totalRevenue - prev) / prev) * 100, up: totalRevenue >= prev, prev }
+  }, [payments, dateFrom, dateTo, totalRevenue])
+
   const byType = useMemo(() => {
     const map = new Map()
     for (const p of filteredPayments) {
@@ -690,6 +749,37 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue)
   }, [filteredPayments])
 
+  // On-page revenue splits (ex-tax) — the same member/method breakdowns the
+  // drill-down modal shows, surfaced at the top level for the whole range so
+  // the mix is visible without opening anything.
+  const memberSplit = useMemo(() => {
+    const revOf = arr => arr.reduce((s, p) => s + exTaxOf(p), 0)
+    const members = filteredPayments.filter(p => p.isMember === true)
+    const nonMembers = filteredPayments.filter(p => p.isMember === false)
+    const unknown = filteredPayments.filter(p => p.isMember == null)
+    return {
+      show: members.length > 0 || nonMembers.length > 0,
+      data: [
+        { label: 'Members', value: revOf(members), color: CHART.member },
+        { label: 'Non-members', value: revOf(nonMembers), color: CHART.nonmember },
+        ...(unknown.length ? [{ label: 'Unknown', value: revOf(unknown), color: CHART.unknown }] : []),
+      ],
+    }
+  }, [filteredPayments])
+
+  const methodSplit = useMemo(() => {
+    const revOf = arr => arr.reduce((s, p) => s + exTaxOf(p), 0)
+    const card = filteredPayments.filter(p => !p.manual)
+    const etransfer = filteredPayments.filter(p => p.manual)
+    return {
+      show: card.length > 0 && etransfer.length > 0,
+      data: [
+        { label: 'Card', value: revOf(card), color: CHART.card },
+        { label: 'E-transfer', value: revOf(etransfer), color: CHART.etransfer },
+      ],
+    }
+  }, [filteredPayments])
+
   // Not date-filtered — these are live holds that need attention right now,
   // independent of whatever historical range is selected above.
   const pendingTotal = pendingPayments.reduce((s, p) => s + p.amount, 0)
@@ -704,14 +794,14 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
     // government's behalf is backed out (see exTaxOf()), not counted as if it
     // were earned. "Collected" below is the old tax-inclusive number, kept
     // only for reconciling against what Stripe/the bank actually shows.
-    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: 'ex-tax · refunds excluded' },
+    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: revenueDelta ? 'ex-tax · vs previous period' : 'ex-tax · refunds excluded', delta: revenueDelta, info: 'The real amount you earned: the pre-tax subtotal of every completed payment, with refunds removed. GST/QST collected for the government is not counted here.' },
     { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false },
     { label: 'Avg. Payment', value: fmt(totalPaid ? totalRevenue / totalPaid : 0), color: '#1a1a1a', big: false, sub: 'ex-tax per transaction' },
-    { label: 'Collected (incl. tax)', value: fmt(totalCollected), color: '#1a1a1a', big: false, sub: 'before Stripe fees' },
-    ...(totalTaxCollected > 0 ? [{ label: 'Tax Collected', value: fmt(totalTaxCollected), color: '#1a1a1a', big: false, sub: 'GST + QST, owed to gov’t' }] : []),
+    { label: 'Collected (incl. tax)', value: fmt(totalCollected), color: '#1a1a1a', big: false, sub: 'before Stripe fees', info: 'Everything that actually hit your Stripe balance, taxes included, before Stripe fees. Use it to reconcile against your bank — it is not your earnings.' },
+    ...(totalTaxCollected > 0 ? [{ label: 'Tax Collected', value: fmt(totalTaxCollected), color: '#1a1a1a', big: false, sub: 'GST + QST, owed to gov’t', info: 'GST + QST charged on top of your prices. This is owed to Revenu Québec / the CRA — not money you keep.' }] : []),
     ...(feePayments.length ? [
-      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: `${effectiveFeeRate.toFixed(1)}% of card volume` },
-      { label: 'Net After Fees', value: fmt(netAfterFees), color: '#3B6B2F', big: false, sub: 'ex-tax, what you actually keep' },
+      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: `${effectiveFeeRate.toFixed(1)}% of card volume`, info: 'Stripe’s processing cut, taken from each card charge. Stripe keeps it even if the payment is later refunded.' },
+      { label: 'Net After Fees', value: fmt(netAfterFees), color: '#3B6B2F', big: false, sub: 'ex-tax, what you actually keep', info: 'Your true take-home for the range: ex-tax revenue minus Stripe fees.' },
     ] : []),
     { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
     { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
@@ -782,12 +872,38 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
         {stats.map(s => (
           <div key={s.label} style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
-            <div style={{ fontSize: s.big ? '1.7rem' : '1.5rem', fontWeight: '400', color: s.color, lineHeight: 1.1, fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", letterSpacing: '0.03em', wordBreak: 'break-word' }}>{s.value}</div>
-            <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.5rem' }}>{s.label}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <div style={{ fontSize: s.big ? '1.7rem' : '1.5rem', fontWeight: '400', color: s.color, lineHeight: 1.1, fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", letterSpacing: '0.03em', wordBreak: 'break-word' }}>{s.value}</div>
+              {s.delta && (
+                <span title="vs the previous period of the same length" style={{ fontSize: '11px', fontWeight: '500', color: s.delta.up ? '#3B6B2F' : '#93333E', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                  {s.delta.up ? '▲' : '▼'} {Math.abs(s.delta.pct).toFixed(0)}%
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginTop: '0.5rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+              {s.label}{s.info && <InfoTip text={s.info} label={`About ${s.label}`} />}
+            </div>
             {s.sub && <div style={{ fontSize: '10px', color: '#bbb', marginTop: '3px' }}>{s.sub}</div>}
           </div>
         ))}
       </div>
+
+      {/* Revenue split donuts — member status + payment method, ex-tax, for the
+          whole selected range. Only shown when there's a real mix to split. */}
+      {(memberSplit.show || methodSplit.show) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          {memberSplit.show && (
+            <ChartCard title="Revenue by Member Status" note="Ex-tax revenue in range">
+              <Donut data={memberSplit.data} centerTop={fmt(totalRevenue)} centerBottom="ex-tax" />
+            </ChartCard>
+          )}
+          {methodSplit.show && (
+            <ChartCard title="Revenue by Payment Method" note="Card vs e-transfer, ex-tax">
+              <Donut data={methodSplit.data} centerTop={fmt(totalRevenue)} centerBottom="ex-tax" />
+            </ChartCard>
+          )}
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
         {/* Monthly breakdown */}
@@ -849,7 +965,10 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
         {/* By type — each row opens a full drill-down for that route/type */}
         <div style={{ ...CARD }}>
           <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
-            <div style={SECTION_LABEL}>By Payment Type</div>
+            <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              By Payment Type
+              <InfoTip text="Ex-tax revenue grouped by what was sold — memberships, each route, events. Tap a row to drill into that type's members, methods, taxes and coupons." />
+            </div>
             <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.2rem' }}>Tap a route for a full breakdown</div>
           </div>
           {byType.length === 0 ? (
@@ -888,7 +1007,10 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
             everywhere else on this page, scoped to that one member's payments. */}
         <div style={{ ...CARD }}>
           <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
-            <div style={SECTION_LABEL}>Top Members</div>
+            <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              Top Members
+              <InfoTip text="Everyone ranked by total ex-tax spend in the selected range, across every payment type — not just one route or month. Keyed by email, so a person's payments stay merged even if a name is missing." />
+            </div>
             <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.2rem' }}>Tap a member for their full payment history</div>
           </div>
           {topMembers.length === 0 ? (
@@ -952,7 +1074,10 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
           onClick={() => setDetail({ title: 'Stripe Processing Fees', filenameBase: 'stripe-fees', payments: feePayments })}>
           <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
             <div style={{ minWidth: 0 }}>
-              <div style={SECTION_LABEL}>Stripe Processing Fees {(dateFrom || dateTo) ? '(in range)' : '(all time)'}</div>
+              <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                Stripe Processing Fees {(dateFrom || dateTo) ? '(in range)' : '(all time)'}
+                <InfoTip text="What Stripe actually deducted from each card charge, read straight from the balance transaction. Stripe keeps this even on refunded payments, so it's never added back. E-transfers have no fee." />
+              </div>
               <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', letterSpacing: '0.03em', color: '#93333E', lineHeight: 1.05 }}>−{fmt(totalFees)}</div>
               <div style={{ fontSize: '11px', color: '#999', marginTop: '0.35rem', lineHeight: 1.6 }}>
                 {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · {effectiveFeeRate.toFixed(1)}% of card volume · net after tax + fees <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
@@ -966,12 +1091,39 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
         </div>
       )}
 
+      {/* Refunds — money returned to customers. Already excluded from revenue
+          everywhere above; this card just totals it, with a full drill-down. */}
+      {refundedPayments.length > 0 && (
+        <div style={{ ...CARD, marginBottom: '2rem', cursor: 'pointer' }} className="rev-type-row"
+          onClick={() => setDetail({ title: 'Refunded Payments', filenameBase: 'refunds', payments: refundedPayments })}>
+          <div style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ ...SECTION_LABEL, marginBottom: '0.6rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                Refunds {(dateFrom || dateTo) ? '(in range)' : '(all time)'}
+                <InfoTip text="Money returned to customers. These amounts are already excluded from your revenue above — this card just totals what was given back, with a per-payment drill-down." />
+              </div>
+              <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', letterSpacing: '0.03em', color: '#93333E', lineHeight: 1.05 }}>−{fmt(totalRefunded)}</div>
+              <div style={{ fontSize: '11px', color: '#999', marginTop: '0.35rem' }}>
+                Across {refundedPayments.length} payment{refundedPayments.length === 1 ? '' : 's'} · not counted in revenue above
+              </div>
+            </div>
+            <div style={{ fontSize: '11px', color: '#8A6535', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
+              View refunds
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18" /></svg>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pending / authorized holds — money committed but not yet captured.
           Kept visually and numerically separate from realized revenue above. */}
       {pendingPayments.length > 0 && (
         <div style={{ ...CARD, marginBottom: '2rem' }}>
           <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
-            <div style={SECTION_LABEL}>Pending / Authorized Holds</div>
+            <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              Pending / Authorized Holds
+              <InfoTip text="Card holds that are authorized but not yet captured — the money is committed but hasn't moved, so it's deliberately left out of every revenue figure. Capture or cancel each from the member's application. Holds expire automatically if untouched." />
+            </div>
             <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.2rem' }}>
               Authorized on card but not yet captured — {fmt(pendingTotal)} across {pendingPayments.length} hold{pendingPayments.length === 1 ? '' : 's'}. Not counted in revenue above.
             </div>
