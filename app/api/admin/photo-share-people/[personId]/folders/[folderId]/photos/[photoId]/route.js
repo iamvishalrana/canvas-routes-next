@@ -4,6 +4,26 @@ import { captureException } from '../../../../../../../../../lib/sentry'
 
 const BUCKET = 'photo-shares'
 
+// Edit a non-member photo's caption (shown on their gallery). Verifies the
+// photo belongs to this person's folder before writing.
+export async function PATCH(request, { params }) {
+  const adminUser = await requireAdmin()
+  if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
+  const { personId, folderId, photoId } = await params
+  const body = await request.json().catch(() => ({}))
+  if (!('caption' in body)) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
+  const caption = (body.caption ?? '').toString().trim().slice(0, 300) || null
+
+  const supabase = createAdminClient()
+  const { data: folder } = await supabase.from('photo_share_folders').select('id').eq('id', folderId).eq('person_id', personId).maybeSingle()
+  if (!folder) return Response.json({ error: 'Folder not found.' }, { status: 404 })
+
+  const { data, error } = await supabase.from('photo_share_items')
+    .update({ caption }).eq('id', photoId).eq('folder_id', folderId).select('id, caption').single()
+  if (error) return Response.json({ error: error.message }, { status: 500 })
+  return Response.json(data)
+}
+
 export async function DELETE(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })

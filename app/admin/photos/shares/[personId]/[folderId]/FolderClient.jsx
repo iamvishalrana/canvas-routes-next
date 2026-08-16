@@ -139,6 +139,15 @@ export default function FolderClient() {
     setUpload(u => u && u.errors.length ? u : null)
   }
 
+  async function handleSaveCaption(photoId, caption) {
+    const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/photos/${photoId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ caption }),
+    })
+    if (!res.ok) { setErr('Failed to save caption.'); return }
+    const data = await res.json().catch(() => ({}))
+    setPhotos(prev => prev.map(p => p.id === photoId ? { ...p, caption: data.caption ?? null } : p))
+  }
+
   async function handleDeletePhoto(photoId) {
     try {
       const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/photos/${photoId}`, { method: 'DELETE' })
@@ -242,7 +251,7 @@ export default function FolderClient() {
   }
 
   const left = daysLeft(folder.expires_at)
-  const lightboxPhotos = photos.map(p => ({ id: p.id, url: p.url, originalUrl: p.originalUrl }))
+  const lightboxPhotos = photos.map(p => ({ id: p.id, url: p.url, originalUrl: p.originalUrl, caption: p.caption }))
 
   return (
     <div className="shp-wrap" style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -367,7 +376,9 @@ export default function FolderClient() {
         </div>
       )}
 
-      <AdminPhotoLightbox photos={lightboxPhotos} openIndex={lightboxIndex} onNavigate={setLightboxIndex} onClose={() => setLightboxIndex(null)} onDelete={handleDeletePhoto} />
+      <AdminPhotoLightbox photos={lightboxPhotos} openIndex={lightboxIndex} onNavigate={setLightboxIndex} onClose={() => setLightboxIndex(null)} onDelete={handleDeletePhoto} onSaveCaption={handleSaveCaption} />
+
+      <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.75rem' }}>Tip: tap a photo to view it full-size and add a caption — captions show on their gallery.</div>
     </div>
   )
 }
