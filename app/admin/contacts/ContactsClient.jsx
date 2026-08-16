@@ -9,6 +9,7 @@ import {
   GhostBtn, PrimaryBtn, DangerBtn, Err, AttendanceToggle, DateRangeMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
+import ActivityTimeline from '../_components/ActivityTimeline'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 // ─── App sources (shared with Applications tab) ───────────────────────────────
@@ -946,6 +947,15 @@ export default function ContactsClient() {
                   {/* Admin Notes */}
                   {editingContact !== c.contact_id && (
                     <AppAdminNotes key={c.id} appId={c.id} initialNotes={c.admin_notes} onSaved={notes => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, admin_notes: notes } : x))} />
+                  )}
+
+                  {/* Activity timeline — read-only history threaded from every
+                      timestamped event in the CRM. Mounts (and fetches) only
+                      while the row is expanded. */}
+                  {editingContact !== c.contact_id && (
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                      <ActivityTimeline email={c.email} />
+                    </div>
                   )}
 
                   {/* Action row */}
