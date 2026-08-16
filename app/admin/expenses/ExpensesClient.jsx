@@ -476,14 +476,17 @@ export default function ExpensesClient() {
     if (!file) return
     setUploadingFile(true); setFormErr(null)
     try {
-      // Replacing an already-attached-but-unsaved receipt would otherwise
-      // orphan it in Storage — nothing else ever points at that exact path.
-      if (pendingReceiptRef.current) await deleteReceiptByUrl(pendingReceiptRef.current)
       const uploadPath = slugify(folderEvent) + (form.expense_date ? `/${form.expense_date}` : '')
       const url = await uploadReceipt(file, uploadPath)
+      // Retire the previous unsaved receipt ONLY after the new one lands.
+      // Deleting it first (as this used to) meant a failed upload wiped the
+      // existing file AND left form.receipt_url pointing at a dead URL, which
+      // then saved as a dangling receipt link.
+      const prev = pendingReceiptRef.current
       pendingReceiptRef.current = url
       setForm(p => ({ ...p, receipt_url: url }))
       setReceiptName(file.name)
+      if (prev && prev !== url) deleteReceiptByUrl(prev)
     } catch (err) { setFormErr(err.message || 'Upload failed.') }
     finally { setUploadingFile(false) }
   }
@@ -496,14 +499,18 @@ export default function ExpensesClient() {
     if (!file) return
     setEditUploading(true); setEditErr(null)
     try {
-      // Replacing an already-replaced-but-unsaved receipt would otherwise
-      // orphan the previous upload — the PATCH diff on Save only ever
-      // compares against what's already in the DB, not this in-flight one.
-      if (pendingEditReceiptRef.current) await deleteReceiptByUrl(pendingEditReceiptRef.current)
       const uploadPath = slugify(editForm.event_name || 'General') + (editForm.expense_date ? `/${editForm.expense_date}` : '')
       const url = await uploadReceipt(file, uploadPath)
+      // Retire the previous unsaved replacement ONLY after the new one lands —
+      // a failed upload must never delete the file we're replacing or leave
+      // editForm.receipt_url pointing at a dead URL. `prev` is null when
+      // replacing the original DB receipt (that one is cleaned up server-side
+      // by the PATCH diff on Save), so this only ever removes a prior in-flight
+      // upload, never the committed original.
+      const prev = pendingEditReceiptRef.current
       pendingEditReceiptRef.current = url
       setEditForm(p => ({ ...p, receipt_url: url }))
+      if (prev && prev !== url) deleteReceiptByUrl(prev)
     } catch (err) { setEditErr(err.message || 'Upload failed.') }
     finally { setEditUploading(false); if (editFileRef.current) editFileRef.current.value = '' }
   }
@@ -537,12 +544,28 @@ export default function ExpensesClient() {
       const res = await fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || (res.status === 413 ? 'That file is too large to scan.' : 'Scan failed.')); return }
-      setScanNotice(data.mismatch
-        ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
-        : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — $${data.total.toFixed(2)}` : ''}. Review the fields before saving.` })
 
       const total = data.total != null ? data.total
         : (data.amount != null ? round2((data.amount || 0) + (data.gst || 0) + (data.qst || 0)) : null)
+
+      // Scan-time duplicate check — warn right away if this vendor + date + total
+      // already exists, so the same receipt isn't scanned and saved twice. Mirrors
+      // the Save-time guard in handleSubmit, just caught earlier.
+      const sVendor = (data.vendor || '').trim().toLowerCase()
+      const sTotal = total != null ? round2(total) : null
+      const dup = (sVendor && data.date && sTotal != null)
+        ? expenses.find(x =>
+            (x.vendor || '').trim().toLowerCase() === sVendor &&
+            x.expense_date === data.date &&
+            Math.abs((parseFloat(x.amount || 0) + taxOf(x)) - sTotal) < 0.01)
+        : null
+
+      setScanNotice(dup
+        ? { type: 'warn', text: `Heads up — you already logged a ${fmt(sTotal)} expense from “${data.vendor}” on ${data.date}. Saving will add a second copy.` }
+        : data.mismatch
+          ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
+          : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
+
       if (data.gst != null || data.qst != null) taxManualRef.current = true
       setForm(p => ({
         ...p,
@@ -563,11 +586,15 @@ export default function ExpensesClient() {
 
       // Also store the scanned file so it's attached to the expense in one step
       try {
-        if (pendingReceiptRef.current) await deleteReceiptByUrl(pendingReceiptRef.current)
         const path = slugify(folderEvent) + ((data.date || form.expense_date) ? `/${data.date || form.expense_date}` : '')
         const url = await uploadReceipt(file, path)
+        // Swap in the new receipt, then retire any prior unsaved one — never
+        // delete it up front, or a failed upload would strand form.receipt_url
+        // on a dead URL and save a dangling receipt link.
+        const prev = pendingReceiptRef.current
         pendingReceiptRef.current = url
         setForm(p => ({ ...p, receipt_url: url })); setReceiptName(file.name)
+        if (prev && prev !== url) deleteReceiptByUrl(prev)
       } catch {
         // Fields were extracted fine, but the receipt image itself didn't
         // attach — this used to fail silently, leaving a green "Scanned ✓"
@@ -984,6 +1011,10 @@ export default function ExpensesClient() {
           {receiptName && (
             <span style={{ fontSize: '11px', color: '#3B6B2F', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
               ✓ {receiptName}
+              {form.receipt_url && (
+                <a href={form.receipt_url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: '11px', color: '#c5a882', textDecoration: 'none', letterSpacing: '0.04em' }}>View ↗</a>
+              )}
               <button type="button" onClick={() => {
                 if (pendingReceiptRef.current) { deleteReceiptByUrl(pendingReceiptRef.current); pendingReceiptRef.current = null }
                 setForm(p => ({ ...p, receipt_url: '' })); setReceiptName(''); if (fileRef.current) fileRef.current.value = ''
