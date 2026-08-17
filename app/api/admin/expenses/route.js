@@ -29,14 +29,17 @@ export async function POST(request) {
   const receiptUrls = (Array.isArray(body.receiptUrls) ? body.receiptUrls : (receipt_url ? [receipt_url] : []))
     .filter(u => typeof u === 'string' && u).slice(0, 10)
   if (!expense_date) return Response.json({ error: 'Date is required.' }, { status: 400 })
+  // Upper bound guards the NUMERIC(10,2) columns (max 99,999,999.99) — without
+  // it an absurd value throws a raw "numeric field overflow" 500.
+  const MAX_AMT = 99999999.99
   const amt = parseFloat(amount)
-  if (isNaN(amt) || amt < 0) return Response.json({ error: 'Valid amount required.' }, { status: 400 })
+  if (isNaN(amt) || amt < 0 || amt > MAX_AMT) return Response.json({ error: 'Valid amount required.' }, { status: 400 })
   const gstAmt = gst_amount === undefined || gst_amount === '' ? 0 : parseFloat(gst_amount)
   const qstAmt = qst_amount === undefined || qst_amount === '' ? 0 : parseFloat(qst_amount)
   const tipAmt = body.tip_amount === undefined || body.tip_amount === '' ? 0 : parseFloat(body.tip_amount)
-  if (!Number.isFinite(gstAmt) || gstAmt < 0) return Response.json({ error: 'GST must be a valid non-negative number.' }, { status: 400 })
-  if (!Number.isFinite(qstAmt) || qstAmt < 0) return Response.json({ error: 'Tax must be a valid non-negative number.' }, { status: 400 })
-  if (!Number.isFinite(tipAmt) || tipAmt < 0) return Response.json({ error: 'Tip must be a valid non-negative number.' }, { status: 400 })
+  if (!Number.isFinite(gstAmt) || gstAmt < 0 || gstAmt > MAX_AMT) return Response.json({ error: 'GST must be a valid non-negative number.' }, { status: 400 })
+  if (!Number.isFinite(qstAmt) || qstAmt < 0 || qstAmt > MAX_AMT) return Response.json({ error: 'Tax must be a valid non-negative number.' }, { status: 400 })
+  if (!Number.isFinite(tipAmt) || tipAmt < 0 || tipAmt > MAX_AMT) return Response.json({ error: 'Tip must be a valid non-negative number.' }, { status: 400 })
 
   const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
   // Accept a 3-letter ISO code (uppercased) or a short label like "Other" from

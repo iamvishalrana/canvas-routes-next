@@ -10,7 +10,10 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
-  const ALLOWED = ['expense_date', 'event_name', 'vendor', 'amount', 'tax_amount', 'gst_amount', 'qst_amount', 'tip_amount', 'province', 'payment_method', 'category', 'receipt_url', 'receipt_urls', 'vendor_tax_id', 'reconciled', 'currency', 'original_amount', 'notes']
+  // Note: receipt_url is intentionally NOT directly settable — it's always
+  // derived from receipt_urls[0] below. Allowing a raw receipt_url edit could
+  // delete still-referenced secondary attachments via the cleanup diff.
+  const ALLOWED = ['expense_date', 'event_name', 'vendor', 'amount', 'tax_amount', 'gst_amount', 'qst_amount', 'tip_amount', 'province', 'payment_method', 'category', 'receipt_urls', 'vendor_tax_id', 'reconciled', 'currency', 'original_amount', 'notes']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => ALLOWED.includes(k)))
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })
   if ('notes' in update) update.notes = (update.notes || '').trim().slice(0, 1000) || null
@@ -42,15 +45,15 @@ export async function PATCH(request, { params }) {
   }
   for (const field of ['amount', 'gst_amount', 'qst_amount', 'tip_amount', 'tax_amount']) {
     if (field in update) {
-      const n = parseFloat(update[field])
-      if (!Number.isFinite(n) || n < 0) return Response.json({ error: `${field.replace('_', ' ')} must be a valid non-negative number.` }, { status: 400 })
+      // Empty → 0, matching POST (clearing a tax/tip field shouldn't 400).
+      const n = (update[field] === '' || update[field] === null || update[field] === undefined) ? 0 : parseFloat(update[field])
+      if (!Number.isFinite(n) || n < 0 || n > 99999999.99) return Response.json({ error: `${field.replace('_', ' ')} must be a valid non-negative number.` }, { status: 400 })
       update[field] = n
     }
   }
   const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
-  if ('payment_method' in update && update.payment_method && !VALID_PM.includes(update.payment_method)) {
-    return Response.json({ error: 'Invalid payment method.' }, { status: 400 })
-  }
+  // Coerce any empty/invalid value to null (the DB CHECK rejects '') — matches POST.
+  if ('payment_method' in update) update.payment_method = VALID_PM.includes(update.payment_method) ? update.payment_method : null
 
   const supabase = createAdminClient()
 

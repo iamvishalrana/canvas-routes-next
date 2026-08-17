@@ -38,8 +38,16 @@ export async function DELETE(request) {
   if (!url) return Response.json({ error: 'Missing url.' }, { status: 400 })
 
   const supabase = createAdminClient()
-  const { data: inUse } = await supabase.from('expenses').select('id').eq('receipt_url', url).maybeSingle()
-  if (inUse) return Response.json({ error: 'Receipt is attached to a saved expense.' }, { status: 400 })
+  // Refuse if the URL is attached to any saved expense — as the primary
+  // receipt_url OR as any element of the receipt_urls array (a secondary
+  // attachment). Checking only receipt_url would let a stale client delete a
+  // live secondary attachment. Two properly-encoded queries (a raw URL in a
+  // PostgREST .or() string could break the filter parser).
+  const [{ data: byPrimary }, { data: byArray }] = await Promise.all([
+    supabase.from('expenses').select('id').eq('receipt_url', url).limit(1).maybeSingle(),
+    supabase.from('expenses').select('id').contains('receipt_urls', [url]).limit(1).maybeSingle(),
+  ])
+  if (byPrimary || byArray) return Response.json({ error: 'Receipt is attached to a saved expense.' }, { status: 400 })
 
   await deleteReceiptFile(supabase, url)
   return Response.json({ success: true })
