@@ -318,11 +318,14 @@ export default function ExpensesClient() {
     return arr.sort((a, b) => d(b).localeCompare(d(a)))
   }
   const sortEventGroups = evs => {
+    // Guard the date key like sortItems does — a null/blank expense_date would
+    // otherwise throw on .localeCompare and blank the whole list.
+    const gd = g => g.items[0]?.expense_date || ''
     if (sortBy === 'vendor_az')   return evs.sort((a, b) => a.name.localeCompare(b.name))
     if (sortBy === 'amount_desc') return evs.sort((a, b) => (b.total + b.totalTax + b.totalTip) - (a.total + a.totalTax + a.totalTip))
     if (sortBy === 'amount_asc')  return evs.sort((a, b) => (a.total + a.totalTax + a.totalTip) - (b.total + b.totalTax + b.totalTip))
-    if (sortBy === 'date_asc')    return evs.sort((a, b) => a.items[0].expense_date.localeCompare(b.items[0].expense_date))
-    return evs.sort((a, b) => b.items[0].expense_date.localeCompare(a.items[0].expense_date))
+    if (sortBy === 'date_asc')    return evs.sort((a, b) => gd(a).localeCompare(gd(b)))
+    return evs.sort((a, b) => gd(b).localeCompare(gd(a)))
   }
 
   // Groups: all events (used for the filter chips and totals)
@@ -1115,11 +1118,11 @@ export default function ExpensesClient() {
             ...(grandTotalTip > 0 ? [{ label: 'Tips', value: fmt(grandTotalTip), color: '#8A6535' }] : []),
             { label: 'Expenses',        value: visibleExpenses.length,           color: '#1a1a1a' },
             // Tapping toggles a receipt-less-only filter so the gaps are one tap away
-            { label: filterMissing ? 'Missing Receipts · filtering' : 'Missing Receipts', value: missingReceiptCount, color: missingReceiptCount > 0 ? '#93333E' : '#3B6B2F', onClick: () => setFilterMissing(f => !f), active: filterMissing },
+            { key: 'missing', label: filterMissing ? 'Missing Receipts · filtering' : 'Missing Receipts', value: missingReceiptCount, color: missingReceiptCount > 0 ? '#93333E' : '#3B6B2F', onClick: () => setFilterMissing(f => !f), active: filterMissing },
             // Tap to show only expenses not yet ticked off against a statement
-            (() => { const n = visibleExpenses.filter(e => !e.reconciled).length; return { label: filterUnreconciled ? 'Unreconciled · filtering' : 'Unreconciled', value: n, color: n > 0 ? '#8A6535' : '#3B6B2F', onClick: () => setFilterUnreconciled(f => !f), active: filterUnreconciled } })(),
+            (() => { const n = visibleExpenses.filter(e => !e.reconciled).length; return { key: 'unreconciled', label: filterUnreconciled ? 'Unreconciled · filtering' : 'Unreconciled', value: n, color: n > 0 ? '#8A6535' : '#3B6B2F', onClick: () => setFilterUnreconciled(f => !f), active: filterUnreconciled } })(),
           ].map(s => (
-            <div key={s.label} className="exp-stat-card" onClick={s.onClick}
+            <div key={s.key || s.label} className="exp-stat-card" onClick={s.onClick}
               role={s.onClick ? 'button' : undefined}
               style={{ background: '#fff', border: s.active ? '0.5px solid rgba(147,51,62,0.5)' : '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: s.active ? '0 2px 12px rgba(147,51,62,0.12)' : '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem', cursor: s.onClick ? 'pointer' : 'default', WebkitTapHighlightColor: 'transparent' }}>
               <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '1.55rem', fontWeight: '400', color: s.color, lineHeight: 1.1, letterSpacing: '0.03em', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{s.value}</div>
