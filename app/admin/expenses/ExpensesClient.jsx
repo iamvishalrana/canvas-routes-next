@@ -1586,7 +1586,7 @@ export default function ExpensesClient() {
 
           {!bulkConfirm ? (
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginLeft: 'auto' }}>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', flex: '1 1 130px', minWidth: 0 }}>
                 <select value={bulkCategoryPick} disabled={bulkBusy}
                   onChange={e => {
                     const v = e.target.value
@@ -1599,7 +1599,7 @@ export default function ExpensesClient() {
                   {CATEGORIES.map(c => <option key={c} value={c} style={{ color: '#1a1a1a' }}>{c}</option>)}
                 </select>
               </div>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', flex: '1 1 130px', minWidth: 0 }}>
                 <select value={bulkEventPick} disabled={bulkBusy}
                   onChange={e => {
                     const v = e.target.value
@@ -1657,7 +1657,7 @@ export default function ExpensesClient() {
                 {/* Year folder header — hidden in flat (date) view */}
                 {!flat && (
                 <button onClick={() => setOpenYears(p => ({ ...p, [yg.year]: !yearOpen }))} className="exp-tap"
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.7rem 0.35rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem 0.6rem', padding: '0.7rem 0.35rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
                   <ChevronIcon open={yearOpen} />
                   <span style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '21px', fontWeight: 400, color: '#1a1a1a', lineHeight: 1 }}>{yg.year}</span>
                   <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
@@ -1683,7 +1683,7 @@ export default function ExpensesClient() {
                 {/* Group header — hidden in flat (date) view */}
                 {!flat && (
                 <button onClick={() => toggleGroup(gKey)} className="exp-tap"
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.1rem', background: '#fafaf9', border: 'none', borderRadius: isOpen ? '12px 12px 0 0' : '12px', borderBottom: isOpen ? '0.5px solid rgba(0,0,0,0.07)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.35rem 0.6rem', padding: '0.85rem 1.1rem', background: '#fafaf9', border: 'none', borderRadius: isOpen ? '12px 12px 0 0' : '12px', borderBottom: isOpen ? '0.5px solid rgba(0,0,0,0.07)' : 'none', cursor: 'pointer', textAlign: 'left' }}>
                   <ChevronIcon open={isOpen} />
                   <span style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', flex: 1, minWidth: 0 }}>{group.name}</span>
                   <span style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.08em', textTransform: 'uppercase', marginRight: '0.5rem', whiteSpace: 'nowrap' }}>
@@ -1721,24 +1721,26 @@ export default function ExpensesClient() {
                       const isEditing       = editingId === expense.id
                       const isNew           = newIds.has(expense.id)
 
+                      // 44px touch targets on mobile (iOS), compact on desktop.
+                      const touch = isMobile ? { minHeight: '44px', minWidth: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' } : {}
                       const actionButtons = (
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: isMobile ? '0.5rem' : '0.4rem', alignItems: 'center' }}>
                           {!isPendingDelete && !isEditing && (
                             <>
                               <button onClick={() => toggleReconciled(expense)} title={expense.reconciled ? 'Reconciled against statement — tap to unmark' : 'Mark reconciled (matched to card/bank statement)'}
-                                style={{ background: expense.reconciled ? 'rgba(59,107,47,0.1)' : 'none', border: `0.5px solid ${expense.reconciled ? 'rgba(59,107,47,0.4)' : 'rgba(0,0,0,0.14)'}`, borderRadius: '6px', cursor: 'pointer', color: expense.reconciled ? '#3B6B2F' : '#ccc', fontSize: '12px', padding: isMobile ? '7px 11px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>
+                                style={{ ...touch, background: expense.reconciled ? 'rgba(59,107,47,0.1)' : 'none', border: `0.5px solid ${expense.reconciled ? 'rgba(59,107,47,0.4)' : 'rgba(0,0,0,0.14)'}`, borderRadius: '6px', cursor: 'pointer', color: expense.reconciled ? '#3B6B2F' : '#ccc', fontSize: '12px', padding: isMobile ? '0 12px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>
                                 ✓
                               </button>
                               <button onClick={() => duplicateExpense(expense)} title="Copy into the Add Expense form"
-                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '7px 12px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
+                                style={{ ...touch, background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '0 12px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
                                 ⧉
                               </button>
                               <button onClick={() => startEdit(expense)}
-                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '7px 16px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
+                                style={{ ...touch, background: 'none', border: '0.5px solid rgba(0,0,0,0.14)', borderRadius: '6px', cursor: 'pointer', color: '#777', fontSize: '11px', padding: isMobile ? '0 16px' : '4px 8px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>
                                 Edit
                               </button>
                               <button onClick={() => { setDeleteConfirm(expense.id); setEditingId(null) }} aria-label="Delete expense"
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#c99', fontSize: '18px', padding: isMobile ? '4px 10px' : '2px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
+                                style={{ ...touch, background: 'none', border: 'none', cursor: 'pointer', color: '#c99', fontSize: '18px', padding: isMobile ? '0 10px' : '2px 6px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
                             </>
                           )}
                           {isEditing && (
