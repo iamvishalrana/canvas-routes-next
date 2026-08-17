@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import JSZip from 'jszip'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
@@ -70,6 +71,11 @@ function grandTotalOf(e) { return (parseFloat(e.amount) || 0) + taxOf(e) + tipOf
 function attachmentsOf(e) {
   const urls = (Array.isArray(e.receipt_urls) && e.receipt_urls.length) ? e.receipt_urls : (e.receipt_url ? [e.receipt_url] : [])
   return urls.filter(Boolean)
+}
+// File extension from a storage URL (defaults to jpg).
+function receiptExt(url) {
+  const x = (url.split('?')[0].split('.').pop() || '').toLowerCase()
+  return /^[a-z0-9]{2,5}$/.test(x) ? x : 'jpg'
 }
 
 function fmt(n) { return `$${(parseFloat(n) || 0).toFixed(2)}` }
@@ -156,6 +162,8 @@ export default function ExpensesClient() {
   const [attachments, setAttachments]   = useState([]) // add-form attachments: [{ url, name }] — invoice + receipt, etc.
   const [filterMissing, setFilterMissing] = useState(false)
   const [filterUnreconciled, setFilterUnreconciled] = useState(false)
+  const [zippingReceipts, setZippingReceipts] = useState(null) // { done, total, failed } | null
+  const [copiedReceipt, setCopiedReceipt] = useState(null) // url just copied
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteErr, setDeleteErr] = useState(null)
   const [deleting, setDeleting]         = useState(null)
@@ -994,7 +1002,58 @@ export default function ExpensesClient() {
     a.click(); URL.revokeObjectURL(a.href)
   }
 
+  // Every attachment across the currently-filtered expenses, with a meaningful
+  // filename (date_vendor, unique-suffixed). Powers the bulk "Download receipts"
+  // zip (accountant handoff) and the per-expense download.
+  function receiptItemsFor(source) {
+    const items = []
+    let n = 0
+    for (const e of source) {
+      const atts = attachmentsOf(e)
+      atts.forEach((url, i) => {
+        n += 1
+        const vend = slugify(e.vendor || 'receipt')
+        const suffix = atts.length > 1 ? `-${i + 1}` : ''
+        items.push({ url, name: `${e.expense_date || 'undated'}_${vend}${suffix}_${String(n).padStart(3, '0')}.${receiptExt(url)}` })
+      })
+    }
+    return items
+  }
+
+  // Client-side zip of receipt files — same pattern as the photo gallery's
+  // Download All (fetch each, package with JSZip, skip failures). No server
+  // endpoint. `items` = [{ url, name }].
+  async function zipUrls(items, zipName) {
+    if (!items.length) return
+    setZippingReceipts({ done: 0, total: items.length, failed: 0 })
+    try {
+      const zip = new JSZip()
+      for (let i = 0; i < items.length; i++) {
+        try {
+          const res = await fetch(items[i].url)
+          if (!res.ok) throw new Error('fetch failed')
+          zip.file(items[i].name, await res.blob())
+        } catch { setZippingReceipts(z => z ? { ...z, failed: z.failed + 1 } : z) }
+        setZippingReceipts(z => z ? { ...z, done: i + 1 } : z)
+      }
+      const content = await zip.generateAsync({ type: 'blob' })
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(content)
+      a.download = `${zipName}.zip`
+      a.click(); URL.revokeObjectURL(a.href)
+    } finally { setZippingReceipts(null) }
+  }
+  const downloadReceiptsZip = (source, zipName) => zipUrls(receiptItemsFor(source), zipName)
+
+  function copyReceiptLink(url) {
+    if (!navigator.clipboard?.writeText) return
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedReceipt(url); setTimeout(() => setCopiedReceipt(c => c === url ? null : c), 1800)
+    }).catch(() => {})
+  }
+
   const today = new Date().toISOString().slice(0, 10)
+  const visibleReceiptCount = visibleExpenses.reduce((n, e) => n + attachmentsOf(e).length, 0)
 
   // Live breakdown for the add form
   const paidNum = parseFloat(form.paid) || 0
@@ -1469,8 +1528,18 @@ export default function ExpensesClient() {
                 style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
                 Export CSV
               </button>
+              {visibleReceiptCount > 0 && (
+                <button onClick={() => downloadReceiptsZip(visibleExpenses, `canvas-routes-receipts-${today}`)} disabled={!!zippingReceipts} className="exp-tap"
+                  title="Download all receipt files in view as a .zip (for your accountant)"
+                  style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: zippingReceipts ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: zippingReceipts ? 0.6 : 1 }}>
+                  {zippingReceipts ? `Zipping ${zippingReceipts.done}/${zippingReceipts.total}…` : `⬇ Receipts (${visibleReceiptCount})`}
+                </button>
+              )}
             </div>
           </div>
+          {zippingReceipts && zippingReceipts.failed > 0 && (
+            <div style={{ fontSize: '10.5px', color: '#93333E', textAlign: 'right', marginTop: '0.4rem' }}>{zippingReceipts.failed} file{zippingReceipts.failed === 1 ? '' : 's'} couldn’t be fetched — skipped.</div>
+          )}
 
           {/* Summary panel */}
           {showSummary && (
@@ -1945,14 +2014,24 @@ export default function ExpensesClient() {
                                 </button>
                               </div>
                               {editAttachments.length > 0 && (
-                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.5rem', alignItems: 'center' }}>
                                   {editAttachments.map((a, ai) => (
-                                    <span key={a.url} style={{ fontSize: '11px', color: '#3B6B2F', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(59,107,47,0.08)', border: '0.5px solid rgba(59,107,47,0.25)', borderRadius: '6px', padding: '3px 8px' }}>
-                                      <a href={a.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3B6B2F', textDecoration: 'none' }}>Receipt {ai + 1} ↗</a>
+                                    <span key={a.url} style={{ fontSize: '11px', color: '#3B6B2F', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: 'rgba(59,107,47,0.08)', border: '0.5px solid rgba(59,107,47,0.25)', borderRadius: '6px', padding: '3px 6px' }}>
+                                      <a href={a.url} target="_blank" rel="noopener noreferrer" title="View" style={{ color: '#3B6B2F', textDecoration: 'none' }}>Receipt {ai + 1} ↗</a>
+                                      <a href={`${a.url}?download=${editForm.expense_date || 'undated'}_${slugify(editForm.vendor || 'receipt')}${ai > 0 ? `-${ai + 1}` : ''}.${receiptExt(a.url)}`} title="Download"
+                                        style={{ color: '#8A6535', textDecoration: 'none', fontSize: '13px', padding: '0 2px' }}>⬇</a>
+                                      <button type="button" title="Copy link" onClick={() => copyReceiptLink(a.url)}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: copiedReceipt === a.url ? '#3B6B2F' : '#999', fontSize: '12px', lineHeight: 1, padding: '0 2px' }}>{copiedReceipt === a.url ? '✓' : '⧉'}</button>
                                       <button type="button" aria-label="Remove attachment" onClick={() => removeEditAttachment(a.url)}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '17px', lineHeight: 1, padding: '5px 8px', display: 'inline-flex', alignItems: 'center' }}>×</button>
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#999', fontSize: '16px', lineHeight: 1, padding: '3px 5px', display: 'inline-flex', alignItems: 'center' }}>×</button>
                                     </span>
                                   ))}
+                                  {editAttachments.length > 1 && (
+                                    <button type="button" onClick={() => zipUrls(editAttachments.map((a, i) => ({ url: a.url, name: `${editForm.expense_date || 'undated'}_${slugify(editForm.vendor || 'receipt')}-${i + 1}.${receiptExt(a.url)}` })), `${slugify(editForm.vendor || 'receipt')}-${editForm.expense_date || 'undated'}`)} disabled={!!zippingReceipts}
+                                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 10px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: zippingReceipts ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                      {zippingReceipts ? '…' : '⬇ All'}
+                                    </button>
+                                  )}
                                 </div>
                               )}
                               {editErr && <Err msg={editErr} />}
