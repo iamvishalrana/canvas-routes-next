@@ -16,7 +16,10 @@ export async function PATCH(request, { params }) {
   if ('notes' in update) update.notes = (update.notes || '').trim().slice(0, 1000) || null
   if ('vendor_tax_id' in update) update.vendor_tax_id = (update.vendor_tax_id || '').trim().slice(0, 40) || null
   if ('reconciled' in update) update.reconciled = update.reconciled === true
-  if ('currency' in update) update.currency = (typeof update.currency === 'string' && /^[A-Za-z]{3}$/.test(update.currency.trim())) ? update.currency.trim().toUpperCase() : 'CAD'
+  if ('currency' in update) {
+    const cur = typeof update.currency === 'string' ? update.currency.trim() : ''
+    update.currency = /^[A-Za-z]{3}$/.test(cur) ? cur.toUpperCase() : (/^[A-Za-z]{2,10}$/.test(cur) ? cur : 'CAD')
+  }
   if ('original_amount' in update) {
     const oa = update.original_amount === '' || update.original_amount === null ? null : parseFloat(update.original_amount)
     if (oa !== null && (!Number.isFinite(oa) || oa < 0)) return Response.json({ error: 'Original amount must be a valid non-negative number.' }, { status: 400 })

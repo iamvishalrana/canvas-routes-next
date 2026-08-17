@@ -39,7 +39,10 @@ export async function POST(request) {
   if (!Number.isFinite(tipAmt) || tipAmt < 0) return Response.json({ error: 'Tip must be a valid non-negative number.' }, { status: 400 })
 
   const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
-  const currency = (typeof body.currency === 'string' && /^[A-Za-z]{3}$/.test(body.currency.trim())) ? body.currency.trim().toUpperCase() : 'CAD'
+  // Accept a 3-letter ISO code (uppercased) or a short label like "Other" from
+  // the dropdown; anything else falls back to CAD.
+  const curRaw = typeof body.currency === 'string' ? body.currency.trim() : ''
+  const currency = /^[A-Za-z]{3}$/.test(curRaw) ? curRaw.toUpperCase() : (/^[A-Za-z]{2,10}$/.test(curRaw) ? curRaw : 'CAD')
   const origAmt = body.original_amount === undefined || body.original_amount === '' || body.original_amount === null ? null : parseFloat(body.original_amount)
   if (origAmt !== null && (!Number.isFinite(origAmt) || origAmt < 0)) return Response.json({ error: 'Original amount must be a valid non-negative number.' }, { status: 400 })
 
