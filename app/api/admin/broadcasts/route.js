@@ -44,7 +44,7 @@ export async function POST(request) {
   const ip = getClientIp(request)
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
-  const { subject, html, body_html, audience, specificEmails, excludeEmails, fromEmail, attachments } = await request.json()
+  const { subject, html, body_html, audience, specificEmails, excludeEmails, includeEmails, fromEmail, attachments } = await request.json()
 
   // Validate attachments: base64 payloads passed straight to Resend. The 3 MB
   // original-size cap (≈4.1 MB base64) keeps the request under Vercel's limit.
@@ -166,6 +166,19 @@ export async function POST(request) {
   if (Array.isArray(excludeEmails) && excludeEmails.length > 0) {
     const excludeSet = new Set(excludeEmails.map(e => e.toLowerCase().trim()))
     recipients = recipients.filter(r => !excludeSet.has(r.email.toLowerCase()))
+  }
+
+  // Add manually included emails (extra recipients beyond the audience), deduped
+  // against the list. They still pass through the unsubscribe filter below —
+  // an opted-out address is never emailed, even if typed here.
+  if (Array.isArray(includeEmails) && includeEmails.length > 0) {
+    const have = new Set(recipients.map(r => r.email.toLowerCase()))
+    for (const raw of includeEmails) {
+      const email = (raw || '').toString().toLowerCase().trim()
+      if (email && email.includes('@') && email.includes('.') && !have.has(email)) {
+        have.add(email); recipients.push({ email, name: '' })
+      }
+    }
   }
 
   // Filter out anyone who has unsubscribed. Fail closed: if the list can't be

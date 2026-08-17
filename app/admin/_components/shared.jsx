@@ -75,9 +75,9 @@ export function SelectWrap({ value, onChange, options }) {
   )
 }
 
-export function PrimaryBtn({ onClick, disabled, type = 'button', children }) {
+export function PrimaryBtn({ onClick, disabled, type = 'button', className = '', children }) {
   return (
-    <button type={type} onClick={onClick} disabled={disabled} className="admin-btn"
+    <button type={type} onClick={onClick} disabled={disabled} className={`admin-btn${className ? ` ${className}` : ''}`}
       style={{ padding: '0.65rem 1.4rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: disabled ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: disabled ? 0.5 : 1 }}>
       {children}
     </button>

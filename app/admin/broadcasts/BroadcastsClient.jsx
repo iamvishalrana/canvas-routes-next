@@ -179,7 +179,7 @@ function ChipInput({ chips, onAdd, onRemove }) {
       onClick={() => inputRef.current?.focus()}
     >
       {chips.map(email => (
-        <span key={email} style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(0,0,0,0.05)', border: '0.5px solid rgba(0,0,0,0.1)', padding: '2px 4px 2px 8px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#444' }}>
+        <span key={email} className="bc-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', background: 'rgba(0,0,0,0.05)', border: '0.5px solid rgba(0,0,0,0.1)', padding: '2px 4px 2px 8px', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', color: '#444' }}>
           {email}
           <button
             onClick={e => { e.stopPropagation(); onRemove(email) }}
@@ -359,6 +359,8 @@ export default function BroadcastsClient() {
   const [fromEmail, setFromEmail]               = useState('info@canvasroutes.com')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
   const [excludeChipEmails, setExcludeChipEmails] = useState([])        // exclude list
+  const [includeChipEmails, setIncludeChipEmails] = useState([])        // include list (extra recipients beyond the audience)
+  const [emailMode, setEmailMode]               = useState(null)        // null | 'exclude' | 'include' — greyed until one is picked
   const [subject, setSubject]                   = useState('')
   const [bodyHtml, setBodyHtml]                 = useState('')          // explicit state for draft save
   const [sending, setSending]                   = useState(false)
@@ -428,6 +430,8 @@ export default function BroadcastsClient() {
       if (saved.fromEmail) setFromEmail(saved.fromEmail)
       if (Array.isArray(saved.chipEmails) && saved.chipEmails.length) setChipEmails(saved.chipEmails)
       if (Array.isArray(saved.excludeChipEmails) && saved.excludeChipEmails.length) setExcludeChipEmails(saved.excludeChipEmails)
+      if (Array.isArray(saved.includeChipEmails) && saved.includeChipEmails.length) setIncludeChipEmails(saved.includeChipEmails)
+      if (saved.emailMode === 'exclude' || saved.emailMode === 'include') setEmailMode(saved.emailMode)
       if (saved.bodyHtml && saved.bodyHtml !== '<p></p>') {
         editor.commands.setContent(saved.bodyHtml)
         setBodyHtml(saved.bodyHtml)
@@ -438,8 +442,8 @@ export default function BroadcastsClient() {
   // 4. Auto-save draft to localStorage on any change
   useEffect(() => {
     if (!draftRestoredRef.current) return
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, excludeChipEmails, fromEmail })) } catch {}
-  }, [subject, bodyHtml, audience, chipEmails, excludeChipEmails, fromEmail])
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, excludeChipEmails, includeChipEmails, emailMode, fromEmail })) } catch {}
+  }, [subject, bodyHtml, audience, chipEmails, excludeChipEmails, includeChipEmails, emailMode, fromEmail])
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -638,7 +642,9 @@ export default function BroadcastsClient() {
           audience,
           fromEmail,
           ...(audience === 'specific_emails' ? { specificEmails: parsedEmails } : {}),
-          ...(excludeChipEmails.length > 0 ? { excludeEmails: excludeChipEmails } : {}),
+          // Only the actively-selected mode is applied (the other stays greyed/unused).
+          ...(emailMode === 'exclude' && excludeChipEmails.length > 0 ? { excludeEmails: excludeChipEmails } : {}),
+          ...(emailMode === 'include' && includeChipEmails.length > 0 ? { includeEmails: includeChipEmails } : {}),
           ...(attachments.length > 0 ? { attachments: attachmentPayload() } : {}),
         }),
       })
@@ -773,6 +779,35 @@ export default function BroadcastsClient() {
         .bc-reuse-btn { opacity: 0.5; transition: opacity 0.1s; }
         .bc-history-row:hover .bc-reuse-btn { opacity: 1; }
         @media (hover: none) { .bc-reuse-btn { opacity: 1; } }
+
+        /* ── Broadcast animations ── */
+        @keyframes bc-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bc-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        @keyframes bc-shimmer { 0% { left: -60%; } 16% { left: 130%; } 100% { left: 130%; } }
+        /* Compose cards + preview rise in with a light stagger on mount / tab-in */
+        .bc-compose-col > div { animation: bc-fade-up 0.42s cubic-bezier(0.16,1,0.3,1) both; }
+        .bc-compose-col > div:nth-child(1) { animation-delay: 0.03s; }
+        .bc-compose-col > div:nth-child(2) { animation-delay: 0.08s; }
+        .bc-compose-col > div:nth-child(3) { animation-delay: 0.13s; }
+        .bc-compose-col > div:nth-child(4) { animation-delay: 0.18s; }
+        .bc-compose-col > div:nth-child(n+5) { animation-delay: 0.22s; }
+        .bc-preview-sticky { animation: bc-fade-up 0.42s cubic-bezier(0.16,1,0.3,1) 0.12s both; }
+        /* Email chips pop in as they're added */
+        .bc-chip { animation: bc-pop 0.18s cubic-bezier(0.16,1,0.3,1) both; }
+        /* Send button — hover lift + a periodic shimmer sweep */
+        .bc-send-btn { position: relative; overflow: hidden; transition: transform 0.18s cubic-bezier(0.23,1,0.32,1), box-shadow 0.18s ease; }
+        .bc-send-btn::after {
+          content: ''; position: absolute; top: 0; left: -60%; width: 45%; height: 100%;
+          background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.22) 50%, transparent 80%);
+          transform: skewX(-14deg); animation: bc-shimmer 5s ease-in-out 1.4s infinite; pointer-events: none;
+        }
+        @media (hover: hover) {
+          .bc-send-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(15,30,20,0.28); }
+          .bc-seg-btn:not(:disabled):hover { box-shadow: inset 0 0 0 20px rgba(197,168,130,0.08); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .bc-compose-col > div, .bc-preview-sticky, .bc-chip, .bc-send-btn::after { animation: none; }
+        }
       `}</style>
 
       {/* Page header */}
@@ -1035,7 +1070,7 @@ export default function BroadcastsClient() {
             <div className="bc-grid">
 
               {/* ── Left column ── */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="bc-compose-col" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
 
                 {/* From */}
                 <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
@@ -1067,27 +1102,63 @@ export default function BroadcastsClient() {
                     </div>
                     {audience !== 'specific_emails' && (
                       <div style={{ fontSize: '11px', color: countLoading ? '#ccc' : '#3B6B2F', minHeight: '16px' }}>
-                        {countLoading ? 'Counting…' : recipientCount !== null ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}${recipientCount > MAX_RECIPIENTS ? ` (capped at ${MAX_RECIPIENTS})` : ''}` : ''}
+                        {countLoading ? 'Counting…' : recipientCount !== null
+                          ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`
+                            + (emailMode === 'include' && includeChipEmails.length ? ` + ${includeChipEmails.length} extra` : '')
+                            + (emailMode === 'exclude' && excludeChipEmails.length ? ` − ${excludeChipEmails.length} excluded` : '')
+                            + (recipientCount > MAX_RECIPIENTS ? ` (capped at ${MAX_RECIPIENTS})` : '')
+                          : ''}
                       </div>
                     )}
-                    {/* Exclude emails — visible for all non-specific audiences */}
+                    {/* Include / Exclude extra recipients — greyed until a mode is picked */}
                     {audience !== 'specific_emails' && (
                       <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.4rem' }}>Exclude emails</div>
-                        <ChipInput
-                          chips={excludeChipEmails}
-                          onAdd={email => setExcludeChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
-                          onRemove={email => setExcludeChipEmails(prev => prev.filter(e => e !== email))}
-                        />
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem' }}>
-                          <span style={{ fontSize: '11px', color: excludeChipEmails.length > 0 ? '#8A6535' : '#ccc' }}>
-                            {excludeChipEmails.length > 0 ? `${excludeChipEmails.length} excluded` : 'None'}
-                          </span>
-                          {excludeChipEmails.length > 0 && (
-                            <button onClick={() => setExcludeChipEmails([])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>
-                              Clear
-                            </button>
-                          )}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
+                          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb' }}>Extra recipients</span>
+                          <div style={{ marginLeft: 'auto', display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '7px', overflow: 'hidden' }}>
+                            {[['exclude', 'Exclude'], ['include', 'Include']].map(([m, label]) => (
+                              <button key={m} type="button" className="bc-seg-btn" onClick={() => setEmailMode(cur => cur === m ? null : m)}
+                                style={{ padding: '5px 13px', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', transition: 'background 0.18s, color 0.18s', background: emailMode === m ? '#0F1E14' : '#fff', color: emailMode === m ? '#F5F1EC' : '#888' }}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Exclude field — greyed unless Exclude is selected */}
+                        <div style={{ opacity: emailMode === 'exclude' ? 1 : 0.4, pointerEvents: emailMode === 'exclude' ? 'auto' : 'none', marginBottom: '0.7rem', transition: 'opacity 0.2s ease' }}>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Exclude these members</div>
+                          <ChipInput
+                            chips={excludeChipEmails}
+                            onAdd={email => setExcludeChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
+                            onRemove={email => setExcludeChipEmails(prev => prev.filter(e => e !== email))}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem' }}>
+                            <span style={{ fontSize: '11px', color: excludeChipEmails.length > 0 ? '#8A6535' : '#ccc' }}>
+                              {excludeChipEmails.length > 0 ? `${excludeChipEmails.length} excluded` : 'None'}
+                            </span>
+                            {excludeChipEmails.length > 0 && (
+                              <button onClick={() => setExcludeChipEmails([])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Clear</button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Include field — greyed unless Include is selected */}
+                        <div style={{ opacity: emailMode === 'include' ? 1 : 0.4, pointerEvents: emailMode === 'include' ? 'auto' : 'none', transition: 'opacity 0.2s ease' }}>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Also send to these extra emails</div>
+                          <ChipInput
+                            chips={includeChipEmails}
+                            onAdd={email => setIncludeChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
+                            onRemove={email => setIncludeChipEmails(prev => prev.filter(e => e !== email))}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem' }}>
+                            <span style={{ fontSize: '11px', color: includeChipEmails.length > 0 ? '#8A6535' : '#ccc' }}>
+                              {includeChipEmails.length > 0 ? `${includeChipEmails.length} extra recipient${includeChipEmails.length !== 1 ? 's' : ''}` : 'None'}
+                            </span>
+                            {includeChipEmails.length > 0 && (
+                              <button onClick={() => setIncludeChipEmails([])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Clear</button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -1229,7 +1300,7 @@ export default function BroadcastsClient() {
                 <Err msg={error} />
 
                 {/* Send — the Yes/No gate is a popup (see handleSendClick) */}
-                <PrimaryBtn onClick={handleSendClick} disabled={sending}>
+                <PrimaryBtn onClick={handleSendClick} disabled={sending} className="bc-send-btn">
                   {sending ? 'Sending…' : 'Send Broadcast'}
                 </PrimaryBtn>
               </div>
