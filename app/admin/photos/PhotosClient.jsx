@@ -19,28 +19,6 @@ function formatDate(d) {
   return new Date(d + 'T12:00:00').toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-function CaptionInput({ photo, onSaved }) {
-  const [value, setValue] = useState(photo.caption || '')
-  async function save() {
-    if (value.trim() === (photo.caption || '')) return
-    try {
-      const res = await fetch(`/api/admin/gallery/${photo.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ caption: value }),
-      })
-      if (res.ok) onSaved(await res.json())
-    } catch {}
-  }
-  return (
-    <input
-      style={{ ...inp, padding: '0.35rem 0.5rem', fontSize: '11px', borderRadius: '6px', border: '0.5px solid rgba(0,0,0,0.1)' }}
-      placeholder="Caption…" value={value} maxLength={300}
-      onChange={e => setValue(e.target.value)} onBlur={save}
-      onKeyDown={e => { if (e.key === 'Enter') e.target.blur() }}
-    />
-  )
-}
-
 // Multi-select popover for tagging which members appear in an event photo.
 // Tags don't gate who can view the photo (attendance does that) — they let
 // members filter "photos of X" within an album they already have access to.
@@ -164,7 +142,6 @@ function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDele
           </span>
         )}
       </button>
-      <CaptionInput photo={photo} onSaved={onSaved} />
       {showTags && <TagPicker photo={photo} members={members} onSaved={onSaved} />}
     </div>
   )
@@ -386,6 +363,18 @@ export default function PhotosClient() {
 
   function savePhoto(row) {
     setPhotos(prev => prev.map(p => p.id === row.id ? { ...p, ...row } : p))
+  }
+
+  // Caption editing happens in the lightbox — same as the non-member share
+  // side (AdminPhotoLightbox's onSaveCaption), so both admin photo areas edit
+  // captions identically.
+  async function handleSaveCaption(photoId, caption) {
+    try {
+      const res = await fetch(`/api/admin/gallery/${photoId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ caption }),
+      })
+      if (res.ok) savePhoto(await res.json())
+    } catch {}
   }
 
   async function notifyMember(m) {
@@ -736,7 +725,8 @@ export default function PhotosClient() {
       <AdminPhotoLightbox photos={lightboxPhotos} openIndex={lightbox?.index ?? null}
         onNavigate={i => setLightbox(l => l ? { ...l, index: i } : l)}
         onClose={() => setLightbox(null)}
-        onDelete={id => handleDeletePhoto({ id })} />
+        onDelete={id => handleDeletePhoto({ id })}
+        onSaveCaption={handleSaveCaption} />
     </div>
   )
 }
