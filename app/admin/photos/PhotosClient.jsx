@@ -109,7 +109,7 @@ function MemberSearchSelect({ members, onSelect, placeholder }) {
   )
 }
 
-function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDeletePhoto, onSaved, onImageClick }) {
+function PhotoTile({ photo, members, showTags, selected, onToggleSelect, onSaved, onImageClick }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
       <button type="button" onClick={onImageClick}
@@ -118,22 +118,19 @@ function PhotoTile({ photo, members, showTags, armedPhoto, armDelete, handleDele
         <img src={photo.photo_url} alt={photo.caption || photo.album || ''} loading="lazy"
           onError={onImgError(photo.original_url)}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        {/* Select for bulk delete — same affordance as the non-member share grid.
+            Single delete lives in the lightbox. */}
         <span
-          onClick={e => { e.stopPropagation(); armedPhoto === photo.id ? handleDeletePhoto(photo) : armDelete(photo.id) }}
-          role="button" aria-label={armedPhoto === photo.id ? 'Confirm delete' : 'Delete photo'}
+          onClick={e => { e.stopPropagation(); onToggleSelect(photo.id) }}
+          role="button" aria-label={selected ? 'Deselect photo' : 'Select photo'}
           style={{
-            position: 'absolute', top: '6px', right: '6px', width: armedPhoto === photo.id ? 'auto' : '26px', height: '26px',
-            padding: armedPhoto === photo.id ? '0 10px' : 0,
-            borderRadius: '99px', border: 'none', cursor: 'pointer',
-            background: armedPhoto === photo.id ? '#93333E' : 'rgba(15,30,20,0.65)',
-            color: '#fff', fontSize: armedPhoto === photo.id ? '10px' : '14px',
-            letterSpacing: armedPhoto === photo.id ? '0.08em' : 0,
-            fontFamily: 'var(--font-inter),sans-serif',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1,
+            position: 'absolute', top: '6px', right: '6px', width: '24px', height: '24px', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            background: selected ? '#45643C' : 'rgba(15,30,20,0.55)', border: '1.5px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
           }}>
-          {armedPhoto === photo.id ? 'Delete?' : '×'}
+          {selected && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
         </span>
-        {photo.original_url && armedPhoto !== photo.id && (
+        {photo.original_url && (
           <span
             onClick={e => { e.stopPropagation(); const a = document.createElement('a'); a.href = `${photo.original_url}?download`; a.rel = 'noreferrer'; a.click() }}
             role="button" aria-label="Download original"
@@ -160,7 +157,8 @@ export default function PhotosClient() {
   const [upload, setUpload] = useState(null) // { label, done, total, errors: [] }
   const [editing, setEditing] = useState(null) // { orig, name, date }
   const [deleteAlbum, setDeleteAlbum] = useState(null)
-  const [armedPhoto, setArmedPhoto] = useState(null)
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState(() => new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
   const [personalMember, setPersonalMember] = useState(null)
   const [personalFolder, setPersonalFolder] = useState('') // folder (album) new personal uploads go into
   const [notifyStatus, setNotifyStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | <error string> }
@@ -176,7 +174,6 @@ export default function PhotosClient() {
   const addFilesRef = useRef(null)
   const addTargetRef = useRef(null)
   const personalFilesRef = useRef(null)
-  const armTimerRef = useRef(null)
 
   useEffect(() => {
     Promise.all([
@@ -192,7 +189,6 @@ export default function PhotosClient() {
     fetch('/api/admin/gallery-submissions').then(r => r.ok ? r.json() : []).then(d => setSubmissionsCount(Array.isArray(d) ? d.length : 0)).catch(() => {})
   }, [])
 
-  useEffect(() => () => clearTimeout(armTimerRef.current), [])
 
   const albums = useMemo(() => {
     const map = new Map()
@@ -346,19 +342,32 @@ export default function PhotosClient() {
     } catch { setListErr('Network error — album not deleted.') }
   }
 
-  function armDelete(id) {
-    clearTimeout(armTimerRef.current)
-    setArmedPhoto(id)
-    armTimerRef.current = setTimeout(() => setArmedPhoto(null), 3000)
+  function togglePhotoSelect(id) {
+    setSelectedPhotoIds(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
   }
 
   async function handleDeletePhoto(photo) {
-    setArmedPhoto(null)
     try {
       const res = await fetch(`/api/admin/gallery/${photo.id}`, { method: 'DELETE' })
       if (!res.ok) { const d = await res.json().catch(() => ({})); setListErr(d.error || 'Failed to delete photo.'); return }
       setPhotos(prev => prev.filter(p => p.id !== photo.id))
+      setSelectedPhotoIds(prev => { if (!prev.has(photo.id)) return prev; const n = new Set(prev); n.delete(photo.id); return n })
     } catch { setListErr('Network error — photo not deleted.') }
+  }
+
+  // Bulk delete the selected photos — same model as the non-member share grid.
+  async function bulkDeletePhotos() {
+    const ids = [...selectedPhotoIds]
+    if (!ids.length) return
+    setBulkDeleting(true); setListErr('')
+    const results = await Promise.allSettled(ids.map(id =>
+      fetch(`/api/admin/gallery/${id}`, { method: 'DELETE' }).then(r => { if (!r.ok) throw new Error() })))
+    const okIds = new Set(ids.filter((id, i) => results[i].status === 'fulfilled'))
+    setPhotos(prev => prev.filter(p => !okIds.has(p.id)))
+    const failed = ids.length - okIds.size
+    setSelectedPhotoIds(new Set())
+    setBulkDeleting(false)
+    if (failed > 0) setListErr(`${failed} of ${ids.length} photo${ids.length === 1 ? '' : 's'} couldn’t be deleted.`)
   }
 
   function savePhoto(row) {
@@ -467,6 +476,21 @@ export default function PhotosClient() {
       </div>
 
       {listErr && <Err msg={listErr} />}
+
+      {/* Bulk-delete bar — same select-then-delete model as the non-member grid */}
+      {selectedPhotoIds.size > 0 && (
+        <div style={{ position: 'sticky', top: '0.5rem', zIndex: 6, background: '#0F1E14', color: '#F5F1EC', borderRadius: '10px', padding: '0.7rem 1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', boxShadow: '0 4px 16px rgba(0,0,0,0.18)' }}>
+          <span style={{ fontSize: '12px', fontWeight: 500 }}>{selectedPhotoIds.size} selected</span>
+          <button onClick={() => setSelectedPhotoIds(new Set())} disabled={bulkDeleting}
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '4px 8px', background: 'none', border: 'none', color: 'rgba(245,241,236,0.6)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Clear
+          </button>
+          <button onClick={bulkDeletePhotos} disabled={bulkDeleting}
+            style={{ marginLeft: 'auto', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '7px 14px', background: '#93333E', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: bulkDeleting ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+            {bulkDeleting ? 'Deleting…' : `Delete ${selectedPhotoIds.size}`}
+          </button>
+        </div>
+      )}
 
       {/* ── Upload progress (shared) ───────────────────────────────────── */}
       {upload && (
@@ -590,7 +614,7 @@ export default function PhotosClient() {
                     <div className="ph-grid" style={{ padding: '1.25rem' }}>
                       {album.photos.map((photo, i) => (
                         <PhotoTile key={photo.id} photo={photo} members={members} showTags
-                          armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
+                          selected={selectedPhotoIds.has(photo.id)} onToggleSelect={togglePhotoSelect} onSaved={savePhoto}
                           onImageClick={() => setLightbox({ kind: 'event', key: album.name, index: i })} />
                       ))}
                     </div>
@@ -686,7 +710,7 @@ export default function PhotosClient() {
                       <div className="ph-grid">
                         {folder.photos.map((photo, i) => (
                           <PhotoTile key={photo.id} photo={photo} members={members}
-                            armedPhoto={armedPhoto} armDelete={armDelete} handleDeletePhoto={handleDeletePhoto} onSaved={savePhoto}
+                            selected={selectedPhotoIds.has(photo.id)} onToggleSelect={togglePhotoSelect} onSaved={savePhoto}
                             onImageClick={() => setLightbox({ kind: 'personal', key: personalMember.id, folderKey: folder.key, index: i })} />
                         ))}
                       </div>

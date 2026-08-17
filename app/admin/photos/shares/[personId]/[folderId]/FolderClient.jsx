@@ -305,7 +305,7 @@ export default function FolderClient() {
         </GhostBtn>
         {notifyResult?.error && <span style={{ fontSize: '11px', color: '#93333E' }}>{notifyResult.error}</span>}
         <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleFiles} />
-        <PrimaryBtn onClick={() => fileRef.current?.click()} disabled={!!upload}>+ Add Photos</PrimaryBtn>
+        <GhostBtn small onClick={() => fileRef.current?.click()} disabled={!!upload}>+ Add Photos</GhostBtn>
         {!deleteConfirm ? (
           <button type="button" onClick={() => setDeleteConfirm(true)}
             style={{ background: 'none', border: 'none', color: '#c99', fontSize: '11px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -370,6 +370,12 @@ export default function FolderClient() {
                   style={{ position: 'absolute', top: '6px', right: '6px', width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: isSelected ? '#45643C' : 'rgba(0,0,0,0.35)', border: '1.5px solid #fff', boxShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
                   {isSelected && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
                 </button>
+                {/* Download original — matches the member gallery tile */}
+                <span role="button" aria-label="Download original"
+                  onClick={() => { const a = document.createElement('a'); a.href = `${photo.originalUrl || photo.url}?download`; a.rel = 'noreferrer'; a.click() }}
+                  style={{ position: 'absolute', bottom: '6px', right: '6px', width: '26px', height: '26px', borderRadius: '99px', background: 'rgba(15,30,20,0.65)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                </span>
               </div>
             )
           })}
