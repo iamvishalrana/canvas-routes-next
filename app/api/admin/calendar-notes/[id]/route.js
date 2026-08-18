@@ -1,6 +1,7 @@
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
+import { logAdminAction } from '../../../../../lib/adminAudit.js'
 
 export async function PATCH(request, { params }) {
   const adminUser = await requireAdmin()
@@ -28,6 +29,10 @@ export async function PATCH(request, { params }) {
     captureException(error, { context: 'admin-calendar-notes-patch', id })
     return Response.json({ error: error.message }, { status: 500 })
   }
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'calendar_note.update', entityType: 'calendar_note', entityId: id,
+    entityName: data.note_date, metadata: { fields: Object.keys(update) },
+  })
   return Response.json(data)
 }
 
@@ -36,10 +41,15 @@ export async function DELETE(request, { params }) {
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const { id } = await params
   const supabase = createAdminClient()
+  const { data: existing } = await supabase.from('admin_calendar_notes').select('note_date').eq('id', id).maybeSingle()
   const { error } = await supabase.from('admin_calendar_notes').delete().eq('id', id)
   if (error) {
     captureException(error, { context: 'admin-calendar-notes-delete', id })
     return Response.json({ error: error.message }, { status: 500 })
   }
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'calendar_note.delete', entityType: 'calendar_note', entityId: id,
+    entityName: existing?.note_date || null,
+  })
   return Response.json({ success: true })
 }

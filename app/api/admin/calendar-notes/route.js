@@ -1,10 +1,12 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
+import { logAdminAction } from '../../../../lib/adminAudit.js'
 
-// Optional ?from=YYYY-MM-DD&to=YYYY-MM-DD range — the calendar page requests
-// just the visible month (plus lead/trail days) instead of every note ever
-// written. Omit both to get everything (used by the .ics feed).
+// Optional ?from=YYYY-MM-DD&to=YYYY-MM-DD range, for a future caller that
+// wants just one month instead of the full history. Both the calendar page
+// and the .ics feed currently omit them and fetch everything — note volume
+// for a single admin is small enough that this hasn't been worth doing yet.
 export async function GET(request) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -43,5 +45,9 @@ export async function POST(request) {
     captureException(error, { context: 'admin-calendar-notes-insert' })
     return Response.json({ error: error.message }, { status: 500 })
   }
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'calendar_note.create', entityType: 'calendar_note', entityId: data.id,
+    entityName: note_date, metadata: { note_date },
+  })
   return Response.json(data)
 }

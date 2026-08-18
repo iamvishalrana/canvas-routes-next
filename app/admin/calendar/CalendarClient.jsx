@@ -6,6 +6,22 @@ const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const pad2 = (n) => String(n).padStart(2, '0')
 const ymd = (y, m, d) => `${y}-${pad2(m + 1)}-${pad2(d)}`
 
+const FEEDS = [
+  { key: 'all',       label: 'Everything',      desc: 'Events + birthdays + notes combined' },
+  { key: 'events',    label: 'Events only',     desc: 'Every meet & road trip, past and future' },
+  { key: 'birthdays', label: 'Birthdays only',  desc: "Everyone's birthday, every year" },
+  { key: 'notes',     label: 'Notes only',      desc: 'Just what you write on this calendar' },
+]
+
+function ChevronIcon({ open }) {
+  return (
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
+      style={{ transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
 export default function CalendarClient() {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
@@ -21,11 +37,19 @@ export default function CalendarClient() {
   const [editDraft, setEditDraft] = useState('')
   const [deleteConfirm, setDeleteConfirm] = useState(null) // note id
   const [notesErr, setNotesErr] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
 
-  const [sync, setSync] = useState(null) // { token, url, webcalUrl } | null
+  const [syncOpen, setSyncOpen] = useState(false)
+  const [sync, setSync] = useState(null) // { token, feeds: {...} } | null
   const [syncErr, setSyncErr] = useState(null)
   const [regenConfirm, setRegenConfirm] = useState(false)
   const [regenBusy, setRegenBusy] = useState(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check(); window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -59,8 +83,12 @@ export default function CalendarClient() {
   }
 
   // Index events/birthdays/notes by day-of-month for the CURRENTLY VIEWED
-  // month/year, so the grid render is a cheap lookup instead of filtering
-  // the full list per cell.
+  // month/year — cheap lookup for rendering the grid cells (which only ever
+  // show days from that same month). The day-detail panel below deliberately
+  // does NOT use these — it filters the full lists by the exact selected
+  // date instead, so picking a day and then navigating to a different month
+  // can't make the panel silently show a different month's data under the
+  // still-correct-looking selected-date heading.
   const eventsByDay = useMemo(() => {
     const map = {}
     for (const e of events) {
@@ -107,7 +135,6 @@ export default function CalendarClient() {
   function goToday() { setYear(now.getFullYear()); setMonth(now.getMonth()); setSelectedDate(ymd(now.getFullYear(), now.getMonth(), now.getDate())) }
 
   const isTodayCell = (day) => year === now.getFullYear() && month === now.getMonth() && day === now.getDate()
-  const selectedDay = selectedDate ? parseInt(selectedDate.slice(8, 10), 10) : null
   const selectedInView = selectedDate && selectedDate.slice(0, 7) === `${year}-${pad2(month + 1)}`
 
   async function addNote() {
@@ -151,77 +178,134 @@ export default function CalendarClient() {
     } catch { setNotesErr('Failed to delete note.') }
   }
 
-  const dayEvents = selectedDate ? (eventsByDay[selectedDay] || []) : []
-  const dayBirthdays = selectedDate ? (birthdaysByDay[selectedDay] || []) : []
-  const dayNotes = selectedDate ? (notes.filter(n => n.note_date === selectedDate)) : []
+  // Filtered directly from the exact selected date — see the comment above
+  // eventsByDay for why this can't reuse the month-indexed maps.
+  const dayEvents = useMemo(() => selectedDate ? events.filter(e => e.date === selectedDate) : [], [events, selectedDate])
+  const dayBirthdays = useMemo(() => {
+    if (!selectedDate) return []
+    const [, m, d] = selectedDate.split('-').map(Number)
+    return birthdays.filter(b => b.month === m && b.day === d)
+  }, [birthdays, selectedDate])
+  const dayNotes = useMemo(() => selectedDate ? notes.filter(n => n.note_date === selectedDate) : [], [notes, selectedDate])
 
   return (
-    <div style={{ padding: 'clamp(1.25rem, 3vw, 2.5rem)' }}>
+    <div className="cal-wrap" style={{ padding: 'clamp(1rem, 3vw, 2.5rem)' }}>
+      <style>{`
+        @keyframes calFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes calFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes calPanelIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes calPop { 0% { transform: scale(0.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+        .cal-wrap { animation: calFadeIn 0.3s ease both; }
+        .cal-grid-body { animation: calFadeUp 0.24s cubic-bezier(0.16,1,0.3,1) both; }
+        .cal-sync-body { animation: calPanelIn 0.2s ease both; }
+        .cal-detail-body { animation: calFadeUp 0.22s cubic-bezier(0.16,1,0.3,1) both; }
+        .cal-day-dot { animation: calPop 0.25s ease both; }
+        .cal-tap { min-height: 44px; }
+        .cal-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        .cal-daycell { transition: background 0.15s ease, transform 0.1s ease; }
+        .cal-daycell:active { transform: scale(0.97); }
+        @media (hover: hover) {
+          .cal-daycell:hover { background: rgba(197,168,130,0.08) !important; }
+          .cal-feed-row:hover { background: rgba(0,0,0,0.015); }
+        }
+        /* iOS zooms in when a focused input's font-size is under 16px */
+        @media (pointer: coarse) {
+          .cal-wrap input, .cal-wrap textarea { font-size: 16px !important; }
+        }
+        .cal-wrap input, .cal-wrap textarea { max-width: 100%; box-sizing: border-box; }
+        @media (max-width: 860px) {
+          .cal-layout { grid-template-columns: 1fr !important; }
+          .cal-detail-panel { position: static !important; }
+        }
+        @media (max-width: 480px) {
+          .cal-daycell { min-height: 56px !important; padding: 0.3rem 0.2rem !important; }
+          .cal-day-num { width: 18px !important; height: 18px !important; font-size: 10px !important; }
+          .cal-feed-row { flex-direction: column !important; align-items: flex-start !important; }
+          .cal-feed-actions { width: 100%; }
+          .cal-feed-url { max-width: none !important; flex: 1 1 auto; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .cal-wrap, .cal-grid-body, .cal-sync-body, .cal-detail-body, .cal-day-dot { animation: none !important; }
+        }
+      `}</style>
+
       {/* Header */}
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: '1.25rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em' }}>Calendar</h1>
+        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(24px, 5vw, 30px)', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em' }}>Calendar</h1>
       </div>
 
-      {/* Sync panel */}
-      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', marginBottom: '1.5rem' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.6rem' }}>Sync to your iPhone</div>
-        {syncErr ? <Err msg={syncErr} /> : !sync ? (
-          <div style={{ fontSize: '12px', color: '#bbb' }}>Loading your link…</div>
-        ) : (
-          <>
-            <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.6, marginBottom: '0.85rem' }}>
-              These links are personal. Subscribe to "Everything" for one combined calendar, or subscribe to any combination of the three below instead — iOS shows each as its own calendar in Settings → Calendar → Accounts, with its own on/off checkbox, so you can display just birthdays, just notes, or just events. Whichever you pick, it re-checks for changes roughly once or twice a day, not instantly.
-            </div>
+      {/* Sync panel — collapsed by default; tap the header to expand */}
+      <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', marginBottom: '1.25rem', overflow: 'hidden' }}>
+        <button onClick={() => setSyncOpen(o => !o)} className="cal-tap"
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.85rem 1.1rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+            <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '12px', fontWeight: 500, color: '#1a1a1a' }}>Sync to your iPhone</div>
+            {!syncOpen && <div style={{ fontSize: '10.5px', color: '#999', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>4 personal links — tap to view</div>}
+          </div>
+          <ChevronIcon open={syncOpen} />
+        </button>
 
-            {[
-              { key: 'all',       label: 'Everything',      desc: 'Events + birthdays + notes combined' },
-              { key: 'events',    label: 'Events only',     desc: 'Every meet & road trip, past and future' },
-              { key: 'birthdays', label: 'Birthdays only',  desc: "Everyone's birthday, every year" },
-              { key: 'notes',     label: 'Notes only',      desc: 'Just what you write on this calendar' },
-            ].map(f => (
-              <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 0', borderTop: f.key === 'all' ? 'none' : '0.5px solid rgba(0,0,0,0.05)' }}>
-                <div style={{ minWidth: '140px', flex: '0 0 auto' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 500, color: '#1a1a1a' }}>{f.label}</div>
-                  <div style={{ fontSize: '10.5px', color: '#999' }}>{f.desc}</div>
+        {syncOpen && (
+          <div className="cal-sync-body" style={{ padding: '0 1.1rem 1.1rem' }}>
+            {syncErr ? <Err msg={syncErr} /> : !sync ? (
+              <div style={{ fontSize: '12px', color: '#bbb' }}>Loading your link…</div>
+            ) : (
+              <>
+                <div style={{ fontSize: '11.5px', color: '#666', lineHeight: 1.6, marginBottom: '0.75rem' }}>
+                  These links are personal. Subscribe to "Everything" for one combined calendar, or pick any combination of the three below — iOS shows each as its own calendar in Settings → Calendar → Accounts, with its own on/off checkbox, so you can display just birthdays, just notes, or just events. It re-checks for changes roughly once or twice a day, not instantly.
                 </div>
-                <a href={sync.feeds[f.key].webcalUrl}
-                  style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '7px', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
-                  Subscribe
-                </a>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '10.5px', color: '#888', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '7px', padding: '0.4rem 0.6rem', maxWidth: '100%' }}>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', fontFamily: 'monospace', fontSize: '10px' }}>{sync.feeds[f.key].url}</span>
-                  <CopyBtn value={sync.feeds[f.key].url} />
-                </div>
-              </div>
-            ))}
 
-            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-              {!regenConfirm ? (
-                <button onClick={() => setRegenConfirm(true)} style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 10px', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', color: '#999', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                  Regenerate all links
-                </button>
-              ) : (
-                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '11px', color: '#93333E' }}>All four links above stop working (including any already subscribed). Sure?</span>
-                  <DangerBtn small onClick={regenerateLink} disabled={regenBusy}>{regenBusy ? '…' : 'Yes'}</DangerBtn>
-                  <GhostBtn small onClick={() => setRegenConfirm(false)}>Cancel</GhostBtn>
+                {FEEDS.map(f => (
+                  <div key={f.key} className="cal-feed-row" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.55rem 0.3rem', borderRadius: '8px', borderTop: f.key === 'all' ? 'none' : '0.5px solid rgba(0,0,0,0.05)' }}>
+                    <div style={{ minWidth: '130px', flex: '1 1 130px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 500, color: '#1a1a1a' }}>{f.label}</div>
+                      <div style={{ fontSize: '10px', color: '#999' }}>{f.desc}</div>
+                    </div>
+                    <div className="cal-feed-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <a href={sync.feeds[f.key].webcalUrl} className="cal-tap"
+                        style={{ display: 'inline-flex', alignItems: 'center', padding: '0 0.9rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '7px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+                        Subscribe
+                      </a>
+                      <div className="cal-feed-url" style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '10.5px', color: '#888', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '7px', padding: '0.4rem 0.6rem', maxWidth: '220px' }}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'monospace', fontSize: '10px' }}>{sync.feeds[f.key].url}</span>
+                        <CopyBtn value={sync.feeds[f.key].url} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                  {!regenConfirm ? (
+                    <button onClick={() => setRegenConfirm(true)} className="cal-tap" style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 10px', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', color: '#999', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Regenerate all links
+                    </button>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '11px', color: '#93333E' }}>All four links above stop working (including any already subscribed). Sure?</span>
+                      <DangerBtn small onClick={regenerateLink} disabled={regenBusy}>{regenBusy ? '…' : 'Yes'}</DangerBtn>
+                      <GhostBtn small onClick={() => setRegenConfirm(false)}>Cancel</GhostBtn>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </>
+              </>
+            )}
+          </div>
         )}
       </div>
 
       {/* Month nav */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-        <button onClick={() => changeMonth(-1)} aria-label="Previous month"
-          style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', width: '32px', height: '32px', cursor: 'pointer', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+        <button onClick={() => changeMonth(-1)} aria-label="Previous month" className="cal-tap"
+          style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', width: '38px', cursor: 'pointer', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
-        <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '22px', fontWeight: 400, color: '#1a1a1a', minWidth: '170px' }}>{MONTHS[month]} {year}</div>
-        <button onClick={() => changeMonth(1)} aria-label="Next month"
-          style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', width: '32px', height: '32px', cursor: 'pointer', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div key={`${year}-${month}`} style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 400, color: '#1a1a1a', minWidth: '150px', textAlign: 'center', animation: 'calFadeIn 0.2s ease both' }}>{MONTHS[month]} {year}</div>
+        <button onClick={() => changeMonth(1)} aria-label="Next month" className="cal-tap"
+          style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', width: '38px', cursor: 'pointer', color: '#555', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
         <GhostBtn small onClick={goToday}>Today</GhostBtn>
@@ -232,43 +316,59 @@ export default function CalendarClient() {
       ) : (
         <div className="cal-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(260px, 340px)', gap: '1.25rem', alignItems: 'flex-start' }}>
           {/* Month grid */}
-          <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+          <div key={`grid-${year}-${month}`} className="cal-grid-body" style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
               {DOW.map(d => (
-                <div key={d} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', textAlign: 'center', padding: '0.5rem 0' }}>{d}</div>
+                <div key={d} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', textAlign: 'center', padding: '0.5rem 0' }}>{isMobile ? d[0] : d}</div>
               ))}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)' }}>
               {slots.map((day, i) => {
-                if (!day) return <div key={i} style={{ minHeight: '92px', borderRight: (i % 7 !== 6) ? '0.5px solid rgba(0,0,0,0.04)' : 'none', borderBottom: '0.5px solid rgba(0,0,0,0.04)', background: '#fbfbfa' }} />
+                if (!day) return <div key={i} style={{ minHeight: isMobile ? '56px' : '92px', borderRight: (i % 7 !== 6) ? '0.5px solid rgba(0,0,0,0.04)' : 'none', borderBottom: '0.5px solid rgba(0,0,0,0.04)', background: '#fbfbfa' }} />
                 const dateStr = ymd(year, month, day)
                 const dEvents = eventsByDay[day] || []
                 const dBdays = birthdaysByDay[day] || []
                 const dNotes = notesByDay[day] || []
                 const isSelected = selectedDate === dateStr
                 return (
-                  <button key={i} onClick={() => setSelectedDate(dateStr)}
+                  <button key={i} onClick={() => setSelectedDate(dateStr)} className="cal-daycell"
                     style={{
-                      minHeight: '92px', textAlign: 'left', padding: '0.4rem', border: 'none', cursor: 'pointer',
+                      minHeight: isMobile ? '56px' : '92px', textAlign: 'left', padding: isMobile ? '0.3rem 0.25rem' : '0.4rem', border: 'none', cursor: 'pointer',
                       borderRight: (i % 7 !== 6) ? '0.5px solid rgba(0,0,0,0.04)' : 'none',
                       borderBottom: '0.5px solid rgba(0,0,0,0.04)',
-                      background: isSelected ? 'rgba(197,168,130,0.12)' : '#fff',
-                      display: 'flex', flexDirection: 'column', gap: '2px', fontFamily: 'var(--font-inter),sans-serif',
+                      background: isSelected ? 'rgba(197,168,130,0.14)' : '#fff',
+                      display: 'flex', flexDirection: 'column', gap: isMobile ? '3px' : '2px', fontFamily: 'var(--font-inter),sans-serif',
                     }}>
-                    <span style={{
+                    <span className="cal-day-num" style={{
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       width: '20px', height: '20px', borderRadius: '50%', fontSize: '11px',
                       background: isTodayCell(day) ? '#0F1E14' : 'transparent',
                       color: isTodayCell(day) ? '#F5F1EC' : '#333', fontWeight: isTodayCell(day) ? 600 : 400,
                     }}>{day}</span>
-                    {dEvents.slice(0, 2).map(e => (
-                      <div key={e.id} style={{ fontSize: '9.5px', color: '#8A6535', background: 'rgba(197,168,130,0.15)', borderRadius: '3px', padding: '1px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
-                    ))}
-                    {dBdays.slice(0, 2).map((b, bi) => (
-                      <div key={bi} style={{ fontSize: '9.5px', color: '#93333E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🎂 {b.name}</div>
-                    ))}
-                    {dNotes.length > 0 && (
-                      <div style={{ fontSize: '9.5px', color: '#3B6B2F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📝 {dNotes.length > 1 ? `${dNotes.length} notes` : dNotes[0].content}</div>
+
+                    {isMobile ? (
+                      // Compact dots instead of text pills — an iPhone 13 Pro
+                      // column is ~50px wide at this grid, too narrow for
+                      // readable event-name text without wrapping/overflow.
+                      (dEvents.length > 0 || dBdays.length > 0 || dNotes.length > 0) && (
+                        <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap', marginTop: '1px' }}>
+                          {dEvents.length > 0 && <span className="cal-day-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#c5a882' }} />}
+                          {dBdays.length > 0 && <span className="cal-day-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#93333E' }} />}
+                          {dNotes.length > 0 && <span className="cal-day-dot" style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#3B6B2F' }} />}
+                        </div>
+                      )
+                    ) : (
+                      <>
+                        {dEvents.slice(0, 2).map(e => (
+                          <div key={e.id} style={{ fontSize: '9.5px', color: '#8A6535', background: 'rgba(197,168,130,0.15)', borderRadius: '3px', padding: '1px 4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
+                        ))}
+                        {dBdays.slice(0, 2).map((b, bi) => (
+                          <div key={bi} style={{ fontSize: '9.5px', color: '#93333E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🎂 {b.name}</div>
+                        ))}
+                        {dNotes.length > 0 && (
+                          <div style={{ fontSize: '9.5px', color: '#3B6B2F', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📝 {dNotes.length > 1 ? `${dNotes.length} notes` : dNotes[0].content}</div>
+                        )}
+                      </>
                     )}
                   </button>
                 )
@@ -277,11 +377,11 @@ export default function CalendarClient() {
           </div>
 
           {/* Day detail panel */}
-          <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', position: 'sticky', top: '1rem' }}>
+          <div className="cal-detail-panel" style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', position: 'sticky', top: '1rem' }}>
             {!selectedDate ? (
               <div style={{ fontSize: '12px', color: '#bbb' }}>Tap a day to see its events, birthdays, and notes.</div>
             ) : (
-              <>
+              <div key={selectedDate} className="cal-detail-body">
                 <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '0.9rem' }}>
                   {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: selectedInView ? undefined : 'numeric' })}
                 </div>
@@ -328,7 +428,7 @@ export default function CalendarClient() {
                       ) : (
                         <>
                           <div style={{ fontSize: '12px', color: '#333', whiteSpace: 'pre-wrap', marginBottom: '0.4rem' }}>{n.content}</div>
-                          <div style={{ display: 'flex', gap: '0.7rem' }}>
+                          <div style={{ display: 'flex', gap: '0.9rem' }}>
                             <button onClick={() => startEditNote(n)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8a7a5c', fontFamily: 'var(--font-inter),sans-serif' }}>Edit</button>
                             <button onClick={() => setDeleteConfirm(n.id)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c99', fontFamily: 'var(--font-inter),sans-serif' }}>Delete</button>
                           </div>
@@ -344,20 +444,11 @@ export default function CalendarClient() {
                   </div>
                   <Err msg={notesErr} />
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
       )}
-
-      <style>{`
-        @media (max-width: 860px) {
-          .cal-layout { grid-template-columns: 1fr !important; }
-        }
-        @media (pointer: coarse) {
-          textarea { font-size: 16px !important; }
-        }
-      `}</style>
     </div>
   )
 }

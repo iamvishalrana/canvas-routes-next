@@ -43,12 +43,27 @@ export async function GET() {
   const { data: existing } = await supabase.from('settings').select('value').eq('key', KEY).maybeSingle()
   let token = existing?.value
   if (!token) {
-    token = newToken()
-    const { error } = await supabase.from('settings').upsert({ key: KEY, value: token, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+    // Insert-or-ignore, not a blind upsert: if two requests race here (e.g.
+    // the calendar page opened in two tabs before this row has ever been
+    // created), a plain upsert would let the second write silently clobber
+    // the first — whichever tab read the response first would then be
+    // holding a token that's already invalid. ON CONFLICT DO NOTHING means
+    // whichever request's INSERT lands first wins and the other's is a
+    // no-op; reading back afterward (below) always returns the one that
+    // actually stuck, for both requests.
+    const candidate = newToken()
+    const { error } = await supabase.from('settings')
+      .upsert({ key: KEY, value: candidate, updated_at: new Date().toISOString() }, { onConflict: 'key', ignoreDuplicates: true })
     if (error) {
       captureException(error, { context: 'admin-calendar-token-create' })
       return Response.json({ error: error.message }, { status: 500 })
     }
+    const { data: row, error: readErr } = await supabase.from('settings').select('value').eq('key', KEY).maybeSingle()
+    if (readErr || !row?.value) {
+      captureException(readErr || new Error('admin_calendar_token missing after insert'), { context: 'admin-calendar-token-readback' })
+      return Response.json({ error: 'Failed to create sync link.' }, { status: 500 })
+    }
+    token = row.value
   }
   return Response.json({ token, feeds: urlsFor(token) })
 }
