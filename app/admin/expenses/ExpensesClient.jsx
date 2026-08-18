@@ -3,56 +3,17 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import JSZip from 'jszip'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
+import { EXPENSE_PAYMENT_METHODS, EXPENSE_PAYMENT_LABELS } from '../../../lib/expensePaymentMethods'
+import { EXPENSE_PROVINCES, EXPENSE_PROVINCE_MAP } from '../../../lib/expenseProvinces'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { compressImageClient } from '../../../lib/compressImageClient'
 import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
 
 const CATEGORIES = EXPENSE_CATEGORIES
-
-const PAYMENT_METHODS = [
-  { value: 'cash',      label: 'Cash' },
-  { value: 'credit',    label: 'Credit card' },
-  { value: 'debit',     label: 'Debit card' },
-  { value: 'etransfer', label: 'E-transfer' },
-  { value: 'other',     label: 'Other' },
-]
-const PAYMENT_LABELS = { cash: 'Cash', credit: 'Card', debit: 'Debit', etransfer: 'E-transfer', other: 'Other' }
-
-// Canadian sales tax by province/territory, split into the federal GST/HST-federal
-// portion (gst) and the provincial portion (prov: QST / PST / HST-provincial).
-// Quebec is the default. "No tax / Other" covers non-taxable or foreign spend.
-// `provRecoverable` marks whether the PROVINCIAL portion is claimable as an
-// input tax credit alongside GST. It is for QST (Quebec's parallel ITC/ITR
-// mechanism) and the provincial slice of HST (it's federally harmonized, so
-// it flows through the same GST/HST return) — but NOT for a standalone
-// Retail Sales Tax (BC/MB/SK PST), which a GST/HST registrant cannot claim
-// back. GST itself is always recoverable regardless of province.
-const PROVINCES = [
-  { value: 'QC',   label: 'Quebec',                 gst: 0.05, prov: 0.09975, provLabel: 'QST', provRecoverable: true },
-  { value: 'ON',   label: 'Ontario',                gst: 0.05, prov: 0.08,    provLabel: 'HST', provRecoverable: true },
-  { value: 'BC',   label: 'British Columbia',       gst: 0.05, prov: 0.07,    provLabel: 'PST', provRecoverable: false },
-  { value: 'AB',   label: 'Alberta',                gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
-  { value: 'MB',   label: 'Manitoba',               gst: 0.05, prov: 0.07,    provLabel: 'PST', provRecoverable: false },
-  { value: 'SK',   label: 'Saskatchewan',           gst: 0.05, prov: 0.06,    provLabel: 'PST', provRecoverable: false },
-  { value: 'NS',   label: 'Nova Scotia',            gst: 0.05, prov: 0.09,    provLabel: 'HST', provRecoverable: true },
-  { value: 'NB',   label: 'New Brunswick',          gst: 0.05, prov: 0.10,    provLabel: 'HST', provRecoverable: true },
-  { value: 'NL',   label: 'Newfoundland & Lab.',    gst: 0.05, prov: 0.10,    provLabel: 'HST', provRecoverable: true },
-  { value: 'PE',   label: 'Prince Edward Island',   gst: 0.05, prov: 0.10,    provLabel: 'HST', provRecoverable: true },
-  { value: 'YT',   label: 'Yukon',                  gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
-  { value: 'NT',   label: 'Northwest Territories',  gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
-  { value: 'NU',   label: 'Nunavut',                gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
-  // Border US states for road trips that cross into New England/NY. No GST —
-  // it's a single state sales tax — and never recoverable (no Canadian ITC on
-  // a foreign purchase). NY's rate varies by locality (4%–8.875%); 8.52% is
-  // the commonly-cited state+average-local combined rate — adjust per-receipt
-  // via the GST/Sales Tax field if the actual receipt shows a different cut.
-  { value: 'VT',   label: 'Vermont, USA',           gst: 0,    prov: 0.06,    provLabel: 'Sales Tax', provRecoverable: false },
-  { value: 'NH',   label: 'New Hampshire, USA',     gst: 0,    prov: 0,       provLabel: 'Sales Tax', provRecoverable: false },
-  { value: 'ME',   label: 'Maine, USA',             gst: 0,    prov: 0.055,   provLabel: 'Sales Tax', provRecoverable: false },
-  { value: 'NY',   label: 'New York, USA',          gst: 0,    prov: 0.0852,  provLabel: 'Sales Tax', provRecoverable: false },
-  { value: 'NONE', label: 'No tax / Other',         gst: 0,    prov: 0,       provLabel: 'Tax', provRecoverable: false },
-]
-const PROVINCE_MAP = Object.fromEntries(PROVINCES.map(p => [p.value, p]))
+const PAYMENT_METHODS = EXPENSE_PAYMENT_METHODS
+const PAYMENT_LABELS = EXPENSE_PAYMENT_LABELS
+const PROVINCES = EXPENSE_PROVINCES
+const PROVINCE_MAP = EXPENSE_PROVINCE_MAP
 const provLabelOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).provLabel
 const provinceNameOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).label
 const paymentLabelOf = (code) => code ? (PAYMENT_LABELS[code] || code) : '—'

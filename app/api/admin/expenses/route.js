@@ -2,6 +2,7 @@ import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
+import { EXPENSE_PAYMENT_METHOD_VALUES } from '../../../../lib/expensePaymentMethods'
 
 export async function GET() {
   const adminUser = await requireAdmin()
@@ -41,7 +42,7 @@ export async function POST(request) {
   if (!Number.isFinite(qstAmt) || qstAmt < 0 || qstAmt > MAX_AMT) return Response.json({ error: 'Tax must be a valid non-negative number.' }, { status: 400 })
   if (!Number.isFinite(tipAmt) || tipAmt < 0 || tipAmt > MAX_AMT) return Response.json({ error: 'Tip must be a valid non-negative number.' }, { status: 400 })
 
-  const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
+  const VALID_PM = EXPENSE_PAYMENT_METHOD_VALUES
   // Accept a 3-letter ISO code (uppercased) or a short label like "Other" from
   // the dropdown; anything else falls back to CAD.
   const curRaw = typeof body.currency === 'string' ? body.currency.trim() : ''

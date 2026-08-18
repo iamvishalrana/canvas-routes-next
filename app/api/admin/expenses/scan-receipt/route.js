@@ -3,6 +3,8 @@ import { getAnthropic } from '../../../../../lib/anthropic'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { captureException } from '../../../../../lib/sentry'
 import { EXPENSE_CATEGORIES } from '../../../../../lib/expenseCategories'
+import { EXPENSE_PAYMENT_METHOD_VALUES } from '../../../../../lib/expensePaymentMethods'
+import { EXPENSE_PROVINCE_VALUES } from '../../../../../lib/expenseProvinces'
 
 // Vision-capable image types Anthropic accepts. HEIC (common on iPhone) is NOT
 // supported by the vision API, so it's rejected with a clear message below.
@@ -15,18 +17,23 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf
 const MAX_BYTES = 4 * 1024 * 1024 // 4 MB
 
 const CATEGORIES = EXPENSE_CATEGORIES
-// Canadian province/territory codes, plus the US border states road trips
-// commonly cross into (Vermont, New Hampshire, Maine, New York) — used to
-// validate the scanned merchant address so the client can pick the right tax
-// rates automatically. Must stay in sync with PROVINCES in ExpensesClient.jsx.
-const PROVINCES = ['QC', 'ON', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU', 'VT', 'NH', 'ME', 'NY']
-const PAYMENT_METHODS = ['cash', 'credit', 'debit', 'etransfer', 'other']
+// Both lists come from lib/ now — previously hand-duplicated here and in
+// ExpensesClient.jsx, held in sync only by a code comment (a real drift risk:
+// adding a province/payment method to one and forgetting the other would
+// either get silently rejected by this validator or accepted here but
+// unselectable in the UI).
+const PROVINCES = EXPENSE_PROVINCE_VALUES
+const PAYMENT_METHODS = EXPENSE_PAYMENT_METHOD_VALUES
 
 // Cost control: the cheap model handles the vast majority of receipts (clear
 // printed totals). We escalate to the stronger model ONLY when the cheap pass
 // can't produce a usable result — see the escalation gate in POST. A confident
 // "not a receipt" is trusted from the cheap pass, so junk uploads never trigger
 // the second (pricier) call.
+//
+// These are dated model snapshots, not aliases — they will NOT pick up future
+// model generations automatically and need a periodic manual bump (check
+// what's current before assuming these are still the right choice).
 const PRIMARY_MODEL  = 'claude-haiku-4-5-20251001'
 const FALLBACK_MODEL = 'claude-sonnet-5'
 
@@ -133,19 +140,35 @@ export async function POST(request) {
       messages: [{ role: 'user', content: [mediaBlock, { type: 'text', text: EXTRACT_PROMPT }] }],
     })
     const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim()
-    try { return JSON.parse(text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')) }
-    catch { return null }
+    const stripped = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+    try { return JSON.parse(stripped) }
+    catch {
+      // The model is told to return raw JSON only, but if it slips in a stray
+      // sentence around the object despite that, pull out the first {...}
+      // block instead of failing outright — a free, local fix that's cheaper
+      // than falling through to a whole extra model call below.
+      const match = stripped.match(/\{[\s\S]*\}/)
+      if (!match) return null
+      try { return JSON.parse(match[0]) } catch { return null }
+    }
   }
+  const usableParse = (p) => p && (p.is_receipt === false || toNum(p.amount) != null || toNum(p.total) != null)
 
   try {
     let parsed = await runModel(PRIMARY_MODEL)
 
-    // Escalate to the stronger model only when the cheap pass failed to give a
-    // usable answer: unparseable JSON, or a "receipt" it couldn't read any
-    // amount from. A confident is_receipt:false is trusted as-is (no escalation)
-    // so non-receipt uploads stay a single cheap call.
-    const usable = parsed && (parsed.is_receipt === false || toNum(parsed.amount) != null || toNum(parsed.total) != null)
-    if (!usable) {
+    // A parse failure (still null after the lenient extraction above) is
+    // usually a transient formatting slip, not a hard-to-read image — worth
+    // one more cheap-model attempt before paying for the stronger model. Skip
+    // straight to escalation for a valid-but-unusable parse (no amount could
+    // be found) — that's much more likely a genuine image-legibility issue,
+    // which the stronger model is actually better at.
+    if (!parsed) parsed = await runModel(PRIMARY_MODEL)
+
+    // Escalate to the stronger model only when the cheap pass(es) still
+    // couldn't produce a usable answer. A confident is_receipt:false is
+    // trusted as-is (no escalation) so non-receipt uploads stay cheap.
+    if (!usableParse(parsed)) {
       const retry = await runModel(FALLBACK_MODEL)
       if (retry) parsed = retry
     }

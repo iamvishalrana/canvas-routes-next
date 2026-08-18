@@ -3,6 +3,7 @@ import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../lib/sentry'
 import { deleteReceiptFile } from '../../../../../lib/deleteReceiptFile'
+import { EXPENSE_PAYMENT_METHOD_VALUES } from '../../../../../lib/expensePaymentMethods'
 
 export async function PATCH(request, { params }) {
   const adminUser = await requireAdmin()
@@ -51,7 +52,7 @@ export async function PATCH(request, { params }) {
       update[field] = n
     }
   }
-  const VALID_PM = ['cash', 'credit', 'debit', 'etransfer', 'other']
+  const VALID_PM = EXPENSE_PAYMENT_METHOD_VALUES
   // Coerce any empty/invalid value to null (the DB CHECK rejects '') — matches POST.
   if ('payment_method' in update) update.payment_method = VALID_PM.includes(update.payment_method) ? update.payment_method : null
 
