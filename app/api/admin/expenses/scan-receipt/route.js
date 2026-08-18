@@ -15,9 +15,11 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf
 const MAX_BYTES = 4 * 1024 * 1024 // 4 MB
 
 const CATEGORIES = EXPENSE_CATEGORIES
-// Canadian province/territory codes — used to validate the scanned merchant
-// address so the client can pick the right tax rates automatically.
-const PROVINCES = ['QC', 'ON', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU']
+// Canadian province/territory codes, plus the US border states road trips
+// commonly cross into (Vermont, New Hampshire, Maine, New York) — used to
+// validate the scanned merchant address so the client can pick the right tax
+// rates automatically. Must stay in sync with PROVINCES in ExpensesClient.jsx.
+const PROVINCES = ['QC', 'ON', 'BC', 'AB', 'MB', 'SK', 'NS', 'NB', 'NL', 'PE', 'YT', 'NT', 'NU', 'VT', 'NH', 'ME', 'NY']
 const PAYMENT_METHODS = ['cash', 'credit', 'debit', 'etransfer', 'other']
 
 // Cost control: the cheap model handles the vast majority of receipts (clear
@@ -39,14 +41,14 @@ Rules:
 - "vendor" = the business/merchant name.
 - "date" = the transaction date in YYYY-MM-DD. If the year is missing, infer the most likely recent year.
 - "amount" = the PRE-TAX subtotal (goods/services before taxes). If only a grand total is shown with no tax lines, set "amount" to that total and leave "gst" and "qst" null.
-- "gst" = the GST / TPS / HST-federal amount (federal, ~5%) only. "qst" = the QST / TVQ / PST / HST-provincial amount only. If a single combined tax line is shown (e.g. HST) and you can't split it, put the whole amount in "gst" and leave "qst" null.
+- "gst" = the Canadian federal GST / TPS / HST-federal amount (~5%) only — always null on a US receipt (there is no GST). "qst" = the QST / TVQ / PST / HST-provincial amount, OR a US state sales tax amount (Vermont/Maine/New York have one; New Hampshire has none). If a single combined Canadian tax line is shown (e.g. HST) and you can't split it, put the whole amount in "gst" and leave "qst" null; for a single US state sales tax line, put it in "qst" instead (never "gst").
 - "tip" = the tip / gratuity / "Pourboire" / "Service" amount added on top of the taxed subtotal, if any (common on a restaurant's card/payment receipt but usually absent on the itemized bill). null if there is no tip line.
 - "total" = the grand total actually paid (this INCLUDES the tip when one is present).
 - "currency" = the 3-letter ISO code of the amounts shown (e.g. "USD", "EUR", "GBP") if the receipt is clearly NOT Canadian dollars; otherwise "CAD". Default "CAD" when unsure.
 - "vendor_tax_id" = the vendor's tax registration number if printed — a GST/HST number (9 digits + "RT" + 4 digits, e.g. "123456789 RT0001") or a QST/TVQ number (10 digits + "TQ" + 4 digits). Return it as printed, or null if not shown.
 - "category" MUST be exactly one of: ${CATEGORIES.join(', ')}. Pick the best fit, or null if unclear.
 - "payment_method" MUST be exactly one of: cash, credit, debit, etransfer, other. Map the tender shown on the receipt, checking in this order: "CASH"/"ESPÈCES"/"COMPTANT" → "cash"; "Interac e-Transfer"/"Virement Interac" → "etransfer"; "INTERAC"/"DEBIT"/"DÉBIT"/"Débit"/debit card → "debit" (Interac by itself always means a debit card); VISA/Mastercard/Amex/Discover/"CREDIT"/"CRÉDIT" → "credit"; anything else → "other". null if not shown.
-- "province" = the 2-letter Canadian province/territory code of the MERCHANT's address (one of: ${PROVINCES.join(', ')}), or null if no Canadian address is visible.
+- "province" = the code for the MERCHANT's address (one of: ${PROVINCES.join(', ')} — Canadian provinces/territories plus VT/NH/ME/NY for US border-state purchases), or null if the address doesn't match any of those.
 - "notes" = a very short (max ~90 chars) plain-text summary of the main items or purpose (e.g. "Fuel — 42L premium" or "Coffee & pastries for meetup"), or null.
 - Use null for anything not clearly present. All numbers must be plain decimals with no currency symbols (e.g. 12.34).`
 

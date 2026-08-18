@@ -75,6 +75,14 @@ export async function PATCH(request, { params }) {
     return Response.json({ error: error.message }, { status: 500 })
   }
   for (const u of removedUrls) await deleteReceiptFile(supabase, u)
+  // Every other admin PATCH route logs its edits (see members/[id]) — this one
+  // didn't, so amount corrections, reconciliation, and attachment changes were
+  // invisible in the activity log even though create/delete were both logged.
+  await logAdminAction(supabase, adminUser?.email, {
+    action: 'expense.update', entityType: 'expense', entityId: id,
+    entityName: [data.vendor, data.event_name].filter(Boolean).join(' — ') || 'Expense',
+    metadata: { fields: Object.keys(update) },
+  })
   return Response.json(data)
 }
 

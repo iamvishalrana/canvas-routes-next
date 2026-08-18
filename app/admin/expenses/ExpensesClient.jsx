@@ -21,21 +21,36 @@ const PAYMENT_LABELS = { cash: 'Cash', credit: 'Card', debit: 'Debit', etransfer
 // Canadian sales tax by province/territory, split into the federal GST/HST-federal
 // portion (gst) and the provincial portion (prov: QST / PST / HST-provincial).
 // Quebec is the default. "No tax / Other" covers non-taxable or foreign spend.
+// `provRecoverable` marks whether the PROVINCIAL portion is claimable as an
+// input tax credit alongside GST. It is for QST (Quebec's parallel ITC/ITR
+// mechanism) and the provincial slice of HST (it's federally harmonized, so
+// it flows through the same GST/HST return) — but NOT for a standalone
+// Retail Sales Tax (BC/MB/SK PST), which a GST/HST registrant cannot claim
+// back. GST itself is always recoverable regardless of province.
 const PROVINCES = [
-  { value: 'QC',   label: 'Quebec',                 gst: 0.05, prov: 0.09975, provLabel: 'QST' },
-  { value: 'ON',   label: 'Ontario',                gst: 0.05, prov: 0.08,    provLabel: 'HST' },
-  { value: 'BC',   label: 'British Columbia',       gst: 0.05, prov: 0.07,    provLabel: 'PST' },
-  { value: 'AB',   label: 'Alberta',                gst: 0.05, prov: 0,       provLabel: 'PST' },
-  { value: 'MB',   label: 'Manitoba',               gst: 0.05, prov: 0.07,    provLabel: 'PST' },
-  { value: 'SK',   label: 'Saskatchewan',           gst: 0.05, prov: 0.06,    provLabel: 'PST' },
-  { value: 'NS',   label: 'Nova Scotia',            gst: 0.05, prov: 0.09,    provLabel: 'HST' },
-  { value: 'NB',   label: 'New Brunswick',          gst: 0.05, prov: 0.10,    provLabel: 'HST' },
-  { value: 'NL',   label: 'Newfoundland & Lab.',    gst: 0.05, prov: 0.10,    provLabel: 'HST' },
-  { value: 'PE',   label: 'Prince Edward Island',   gst: 0.05, prov: 0.10,    provLabel: 'HST' },
-  { value: 'YT',   label: 'Yukon',                  gst: 0.05, prov: 0,       provLabel: 'PST' },
-  { value: 'NT',   label: 'Northwest Territories',  gst: 0.05, prov: 0,       provLabel: 'PST' },
-  { value: 'NU',   label: 'Nunavut',                gst: 0.05, prov: 0,       provLabel: 'PST' },
-  { value: 'NONE', label: 'No tax / Other',         gst: 0,    prov: 0,       provLabel: 'Tax' },
+  { value: 'QC',   label: 'Quebec',                 gst: 0.05, prov: 0.09975, provLabel: 'QST', provRecoverable: true },
+  { value: 'ON',   label: 'Ontario',                gst: 0.05, prov: 0.08,    provLabel: 'HST', provRecoverable: true },
+  { value: 'BC',   label: 'British Columbia',       gst: 0.05, prov: 0.07,    provLabel: 'PST', provRecoverable: false },
+  { value: 'AB',   label: 'Alberta',                gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
+  { value: 'MB',   label: 'Manitoba',               gst: 0.05, prov: 0.07,    provLabel: 'PST', provRecoverable: false },
+  { value: 'SK',   label: 'Saskatchewan',           gst: 0.05, prov: 0.06,    provLabel: 'PST', provRecoverable: false },
+  { value: 'NS',   label: 'Nova Scotia',            gst: 0.05, prov: 0.09,    provLabel: 'HST', provRecoverable: true },
+  { value: 'NB',   label: 'New Brunswick',          gst: 0.05, prov: 0.10,    provLabel: 'HST', provRecoverable: true },
+  { value: 'NL',   label: 'Newfoundland & Lab.',    gst: 0.05, prov: 0.10,    provLabel: 'HST', provRecoverable: true },
+  { value: 'PE',   label: 'Prince Edward Island',   gst: 0.05, prov: 0.10,    provLabel: 'HST', provRecoverable: true },
+  { value: 'YT',   label: 'Yukon',                  gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
+  { value: 'NT',   label: 'Northwest Territories',  gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
+  { value: 'NU',   label: 'Nunavut',                gst: 0.05, prov: 0,       provLabel: 'PST', provRecoverable: false },
+  // Border US states for road trips that cross into New England/NY. No GST —
+  // it's a single state sales tax — and never recoverable (no Canadian ITC on
+  // a foreign purchase). NY's rate varies by locality (4%–8.875%); 8.52% is
+  // the commonly-cited state+average-local combined rate — adjust per-receipt
+  // via the GST/Sales Tax field if the actual receipt shows a different cut.
+  { value: 'VT',   label: 'Vermont, USA',           gst: 0,    prov: 0.06,    provLabel: 'Sales Tax', provRecoverable: false },
+  { value: 'NH',   label: 'New Hampshire, USA',     gst: 0,    prov: 0,       provLabel: 'Sales Tax', provRecoverable: false },
+  { value: 'ME',   label: 'Maine, USA',             gst: 0,    prov: 0.055,   provLabel: 'Sales Tax', provRecoverable: false },
+  { value: 'NY',   label: 'New York, USA',          gst: 0,    prov: 0.0852,  provLabel: 'Sales Tax', provRecoverable: false },
+  { value: 'NONE', label: 'No tax / Other',         gst: 0,    prov: 0,       provLabel: 'Tax', provRecoverable: false },
 ]
 const PROVINCE_MAP = Object.fromEntries(PROVINCES.map(p => [p.value, p]))
 const provLabelOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).provLabel
@@ -63,6 +78,18 @@ function taxOf(e) {
 }
 // Tip / gratuity (restaurants) — sits on top of subtotal + tax, untaxed.
 function tipOf(e) { return parseFloat(e.tip_amount) || 0 }
+// Portion of a row's tax that's actually claimable as an input tax credit —
+// GST always is; the provincial portion only in provRecoverable provinces
+// (Quebec's QST and the provincial slice of HST). A standalone PST
+// (BC/MB/SK) was paid but isn't recoverable, so it's excluded here even
+// though taxOf() above still counts it as money actually spent.
+function recoverableTaxOf(e) {
+  const p = PROVINCE_MAP[e.province] || PROVINCE_MAP.QC
+  const gst = parseFloat(e.gst_amount) || 0
+  const qst = p.provRecoverable ? (parseFloat(e.qst_amount) || 0) : 0
+  const legacyTax = (gst === 0 && qst === 0) ? (parseFloat(e.tax_amount) || 0) : 0
+  return gst + qst + (p.provRecoverable ? legacyTax : 0)
+}
 // Grand total actually paid: subtotal + tax + tip.
 function grandTotalOf(e) { return (parseFloat(e.amount) || 0) + taxOf(e) + tipOf(e) }
 
@@ -174,6 +201,8 @@ export default function ExpensesClient() {
   const [filterEvent, setFilterEvent]   = useState('all')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterPayment, setFilterPayment]   = useState('all')
+  const [filterProvince, setFilterProvince] = useState('all')
+  const [filterCurrency, setFilterCurrency] = useState('all') // 'all' | 'CAD' | 'foreign'
   const [dateFrom, setDateFrom]         = useState('')
   const [dateTo, setDateTo]             = useState('')
   const [showSummary, setShowSummary]   = useState(false)
@@ -299,6 +328,9 @@ export default function ExpensesClient() {
   const baseFiltered = expenses.filter(e => {
     if (filterCategory !== 'all' && (e.category || '') !== filterCategory) return false
     if (filterPayment !== 'all' && (e.payment_method || '') !== filterPayment) return false
+    if (filterProvince !== 'all' && (e.province || 'QC') !== filterProvince) return false
+    if (filterCurrency === 'CAD' && e.currency && e.currency !== 'CAD') return false
+    if (filterCurrency === 'foreign' && (!e.currency || e.currency === 'CAD')) return false
     if (dateFrom && e.expense_date < dateFrom) return false
     if (dateTo && e.expense_date > dateTo) return false
     if (filterMissing && attachmentsOf(e).length) return false
@@ -310,6 +342,11 @@ export default function ExpensesClient() {
     return true
   })
   const usedCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))].sort()
+  // Only offer provinces actually in use — computed from the full list (not
+  // baseFiltered) so the option never disappears out from under a selection
+  // the way a dynamic value like event name could.
+  const usedProvinces = PROVINCES.filter(p => expenses.some(e => (e.province || 'QC') === p.value))
+  const usedForeign = expenses.some(e => e.currency && e.currency !== 'CAD')
 
   // Sort order applies to expenses within a folder AND to the folder order itself
   const totalOf = e => grandTotalOf(e)
@@ -323,18 +360,30 @@ export default function ExpensesClient() {
     if (sortBy === 'amount_desc') return arr.sort((a, b) => totalOf(b) - totalOf(a))
     if (sortBy === 'amount_asc')  return arr.sort((a, b) => totalOf(a) - totalOf(b))
     if (sortBy === 'vendor_az')   return arr.sort((a, b) => (a.vendor || '').localeCompare(b.vendor || '') || d(b).localeCompare(d(a)))
+    if (sortBy === 'category_az') return arr.sort((a, b) => (a.category || '').localeCompare(b.category || '') || d(b).localeCompare(d(a)))
+    // Mostly useful in flat (by-date) view, where rows from different events
+    // are interleaved — clusters same-event rows together without folding
+    // into Folders view.
+    if (sortBy === 'event_az')    return arr.sort((a, b) => (a.event_name?.trim() || 'General').localeCompare(b.event_name?.trim() || 'General') || d(b).localeCompare(d(a)))
+    if (sortBy === 'added_desc')  return arr.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
     return arr.sort((a, b) => d(b).localeCompare(d(a)))
   }
   const sortEventGroups = evs => {
     // Guard the date key like sortItems does — a null/blank expense_date would
     // otherwise throw on .localeCompare and blank the whole list.
     const gd = g => g.items[0]?.expense_date || ''
-    if (sortBy === 'vendor_az')   return evs.sort((a, b) => a.name.localeCompare(b.name))
+    if (sortBy === 'vendor_az' || sortBy === 'event_az') return evs.sort((a, b) => a.name.localeCompare(b.name))
     if (sortBy === 'amount_desc') return evs.sort((a, b) => (b.total + b.totalTax + b.totalTip) - (a.total + a.totalTax + a.totalTip))
     if (sortBy === 'amount_asc')  return evs.sort((a, b) => (a.total + a.totalTax + a.totalTip) - (b.total + b.totalTax + b.totalTip))
     if (sortBy === 'date_asc')    return evs.sort((a, b) => gd(a).localeCompare(gd(b)))
+    if (sortBy === 'added_desc')  return evs.sort((a, b) => (b.addedAt || '').localeCompare(a.addedAt || ''))
     return evs.sort((a, b) => gd(b).localeCompare(gd(a)))
   }
+  // Most recent created_at among a folder's items — powers the "added_desc"
+  // group order (category_az has no folder-level equivalent, so it falls
+  // through to the default date order at the group level; items within each
+  // folder still sort by category).
+  const addedAtOf = items => items.reduce((m, e) => (e.created_at && e.created_at > m ? e.created_at : m), '')
 
   // Groups: all events (used for the filter chips and totals)
   const allGroups = (() => {
@@ -351,6 +400,7 @@ export default function ExpensesClient() {
         total:    items.reduce((s, e) => s + parseFloat(e.amount || 0), 0),
         totalTax: items.reduce((s, e) => s + taxOf(e), 0),
         totalTip: items.reduce((s, e) => s + tipOf(e), 0),
+        addedAt:  addedAtOf(items),
       })))
   })()
 
@@ -388,6 +438,7 @@ export default function ExpensesClient() {
           total:    items.reduce((s, e) => s + parseFloat(e.amount || 0), 0),
           totalTax: items.reduce((s, e) => s + taxOf(e), 0),
           totalTip: items.reduce((s, e) => s + tipOf(e), 0),
+          addedAt:  addedAtOf(items),
         })))
         return {
           year, events,
@@ -405,6 +456,9 @@ export default function ExpensesClient() {
   const grandTotal    = visibleExpenses.reduce((s, e) => s + parseFloat(e.amount || 0), 0)
   const grandTotalTax = visibleExpenses.reduce((s, e) => s + taxOf(e), 0)
   const grandTotalTip = visibleExpenses.reduce((s, e) => s + tipOf(e), 0)
+  // What's actually claimable as an ITC — see recoverableTaxOf. Distinct from
+  // grandTotalTax (all tax actually paid, including non-recoverable PST).
+  const grandRecoverableTax = visibleExpenses.reduce((s, e) => s + recoverableTaxOf(e), 0)
   const missingReceiptCount = visibleExpenses.filter(e => !attachmentsOf(e).length).length
 
   // The list renders from `renderYearGroups`. In 'folders' mode that's the real
@@ -448,7 +502,11 @@ export default function ExpensesClient() {
       .map(([key, v]) => ({ key, name: key === 'unset' ? 'Not set' : (PAYMENT_LABELS[key] || key), ...v }))
       .sort((a, b) => b.total - a.total)
   })()
-  // Per calendar quarter — GST + QST recoverable as input tax credits
+  // Per calendar quarter — GST + QST recoverable as input tax credits. The
+  // provincial column only counts a row's tax if that province's tax is
+  // actually an ITC (QST / provincial-HST) — a BC/MB/SK PST line shows up in
+  // "By category" and CSV as tax paid, but not here, since it can't be
+  // claimed back. See recoverableTaxOf.
   const summaryByQuarter = (() => {
     const map = {}
     for (const e of visibleExpenses) {
@@ -457,8 +515,9 @@ export default function ExpensesClient() {
       const q = Math.floor((parseInt(m, 10) - 1) / 3) + 1
       const key = `${y}-Q${q}`
       if (!map[key]) map[key] = { gst: 0, qst: 0 }
+      const p = PROVINCE_MAP[e.province] || PROVINCE_MAP.QC
       map[key].gst += parseFloat(e.gst_amount || 0)
-      map[key].qst += parseFloat(e.qst_amount || 0)
+      if (p.provRecoverable) map[key].qst += parseFloat(e.qst_amount || 0)
     }
     return Object.entries(map)
       .map(([period, v]) => ({ period, ...v, total: v.gst + v.qst }))
@@ -1202,7 +1261,10 @@ export default function ExpensesClient() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
           {[
             { label: 'Total Spent',     value: fmt(grandTotal + grandTotalTax + grandTotalTip),  color: '#1a1a1a' },
-            { label: 'Tax Recoverable', value: fmt(grandTotalTax),               color: '#8A6535' },
+            // ITC-eligible tax only — a BC/MB/SK PST line is real tax paid
+            // (counted in Total Spent above) but isn't claimable, so it's
+            // excluded here. See recoverableTaxOf.
+            { label: 'Tax Recoverable', value: fmt(grandRecoverableTax),         color: '#8A6535' },
             ...(grandTotalTip > 0 ? [{ label: 'Tips', value: fmt(grandTotalTip), color: '#8A6535' }] : []),
             { label: 'Expenses',        value: visibleExpenses.length,           color: '#1a1a1a' },
             // Tapping toggles a receipt-less-only filter so the gaps are one tap away
@@ -1305,8 +1367,14 @@ export default function ExpensesClient() {
           </div>
           <div>
             <L>Amount paid ($)</L>
+            {/* Deliberately does NOT reset taxManualRef — if the admin already
+                hand-corrected GST/QST (e.g. to match a receipt that doesn't
+                follow the province's blended rate), fixing a typo here used to
+                silently overwrite that manual entry with the auto-calculated
+                split. Auto-split still applies normally when GST/QST haven't
+                been touched, since taxManualRef starts false. */}
             <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.paid} placeholder="tax + tip incl."
-              onChange={e => { taxManualRef.current = false; setForm(p => ({ ...p, paid: e.target.value })) }} required />
+              onChange={e => setForm(p => ({ ...p, paid: e.target.value }))} required />
           </div>
           <div>
             <L>GST ($)</L>
@@ -1503,6 +1571,31 @@ export default function ExpensesClient() {
                 <SelectChevron />
               </div>
             </div>
+            {usedProvinces.length > 1 && (
+              <div style={{ width: isMobile ? '100%' : '170px' }}>
+                <L>Province / State</L>
+                <div style={{ position: 'relative' }}>
+                  <select style={sel} value={filterProvince} onChange={e => setFilterProvince(e.target.value)}>
+                    <option value="all">Everywhere</option>
+                    {usedProvinces.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+                  </select>
+                  <SelectChevron />
+                </div>
+              </div>
+            )}
+            {usedForeign && (
+              <div style={{ width: isMobile ? '100%' : '150px' }}>
+                <L>Currency</L>
+                <div style={{ position: 'relative' }}>
+                  <select style={sel} value={filterCurrency} onChange={e => setFilterCurrency(e.target.value)}>
+                    <option value="all">All currencies</option>
+                    <option value="CAD">CAD only</option>
+                    <option value="foreign">Foreign only</option>
+                  </select>
+                  <SelectChevron />
+                </div>
+              </div>
+            )}
             <div style={{ width: isMobile ? '100%' : '170px' }}>
               <L>Sort</L>
               <div style={{ position: 'relative' }}>
@@ -1512,6 +1605,9 @@ export default function ExpensesClient() {
                   <option value="amount_desc">Highest amount</option>
                   <option value="amount_asc">Lowest amount</option>
                   <option value="vendor_az">Vendor A–Z</option>
+                  <option value="category_az">Category A–Z</option>
+                  <option value="event_az">Event A–Z</option>
+                  <option value="added_desc">Recently added</option>
                 </select>
                 <SelectChevron />
               </div>
@@ -1546,7 +1642,7 @@ export default function ExpensesClient() {
             <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>
               {visibleExpenses.length} expense{visibleExpenses.length !== 1 ? 's' : ''}
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
-              {(hasDateFilter || filterCategory !== 'all' || filterPayment !== 'all' || filterMissing || filterUnreconciled || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
+              {(hasDateFilter || filterCategory !== 'all' || filterPayment !== 'all' || filterProvince !== 'all' || filterCurrency !== 'all' || filterMissing || filterUnreconciled || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
@@ -1578,6 +1674,8 @@ export default function ExpensesClient() {
                 {filterEvent !== 'all' && ` · ${filterEvent}`}
                 {filterCategory !== 'all' && ` · ${filterCategory}`}
                 {filterPayment !== 'all' && ` · ${PAYMENT_LABELS[filterPayment] || filterPayment}`}
+                {filterProvince !== 'all' && ` · ${PROVINCE_MAP[filterProvince]?.label || filterProvince}`}
+                {filterCurrency !== 'all' && ` · ${filterCurrency === 'CAD' ? 'CAD only' : 'Foreign only'}`}
                 {searchTerm && ` · "${searchQuery.trim()}"`}
               </div>
 
