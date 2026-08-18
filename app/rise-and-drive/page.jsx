@@ -294,10 +294,16 @@ export default function RiseAndDrivePage() {
   const [status, setStatus]           = useState(null) // null | 'loading' | 'payment' | 'success' | 'error'
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
-  const [regOpen, setRegOpen]         = useState(true)
-  const [memberRegOpen, setMemberRegOpen] = useState(true)
+  // Closed by default — this page's upcoming_routes row is deliberately kept
+  // is_active:false until launch (hides it from /routes and /members/routes),
+  // which also means /api/upcoming-routes never returns it here. Defaulting
+  // to closed reflects that correctly instead of silently opening the form
+  // just because the row couldn't be found.
+  const [regOpen, setRegOpen]         = useState(false)
+  const [memberRegOpen, setMemberRegOpen] = useState(false)
   const [closedMsg, setClosedMsg]     = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
+  const [countdown, setCountdown]     = useState(null)
   const [memberProfile, setMemberProfile] = useState(null)
   const [memberCheckDone, setMemberCheckDone] = useState(false)
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
@@ -305,17 +311,33 @@ export default function RiseAndDrivePage() {
   const honeypotRef = useRef(null)
 
   useEffect(() => {
+    const EVENT = new Date('2026-08-30T11:30:00Z') // 7:30 AM EDT — Laval meetup
+    function tick() {
+      const diff = EVENT - new Date()
+      if (diff <= 0) { setCountdown(null); return }
+      const d = Math.floor(diff / 86400000)
+      const h = Math.floor((diff % 86400000) / 3600000)
+      const m = Math.floor((diff % 3600000) / 60000)
+      const s = Math.floor((diff % 60000) / 1000)
+      setCountdown({ d, h, m, s })
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  useEffect(() => {
     // Registration open/closed toggle — reads the upcoming_routes row for this
     // slug (admin Routes → kebab menu), same pattern as hello-to-montebello.
-    // No row exists yet since this is a draft/unlinked page — registration
-    // stays open by default until Jerry creates one and toggles it.
+    // The row exists with both toggles deliberately off until Jerry is ready
+    // to open registration.
     fetch('/api/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
       .then(routes => {
         const route = routes.find(r => r.slug === 'rise-and-drive')
-        if (!route) return
-        if (route.registration_open === false) setRegOpen(false)
-        if (route.member_registration_open === false) setMemberRegOpen(false)
+        if (!route) return // not found while is_active:false — stays closed (default state)
+        setRegOpen(route.registration_open !== false)
+        setMemberRegOpen(route.member_registration_open !== false)
       })
       .catch(() => {})
   }, [])
@@ -595,6 +617,9 @@ export default function RiseAndDrivePage() {
           .rad-stop       { gap: 1rem !important; padding: 1.25rem 0 !important; }
         }
         @media (max-width: 480px) {
+          .rad-countdown      { gap: 0 !important; }
+          .rad-countdown-cell { padding: 0.6rem 0.6rem !important; min-width: 46px !important; }
+          .rad-countdown-num  { font-size: 1.6rem !important; }
           .rad-stat { flex: 0 0 50% !important; }
           .rad-member-grid { grid-template-columns: 1fr !important; }
           .join-form-row { flex-direction: column !important; }
@@ -629,6 +654,22 @@ export default function RiseAndDrivePage() {
           <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'rad-fade-up 0.7s ease both',animationDelay:'800ms'}}>
             {et.heroBody}
           </p>
+
+          {countdown && (
+            <div className="rad-countdown" style={{display:'inline-flex',gap:'0',marginBottom:'3rem',border:'0.5px solid rgba(197,168,130,0.2)',overflow:'hidden',maxWidth:'100%',animation:'rad-fade-in 0.6s ease both',animationDelay:'950ms'}}>
+              {[
+                { label: et.countdownDays,    val: countdown.d },
+                { label: et.countdownHours,   val: countdown.h },
+                { label: et.countdownMinutes, val: countdown.m },
+                { label: et.countdownSeconds, val: countdown.s },
+              ].map(({ label, val }, i) => (
+                <div key={label} className="rad-countdown-cell" style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
+                  <div className="rad-countdown-num" style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.8rem',fontWeight:'400',color:'#F5F1EC',lineHeight:1,letterSpacing:'0.05em'}}>{String(val).padStart(2,'0')}</div>
+                  <div style={{fontSize:'8px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.5)',marginTop:'0.4rem',fontFamily:'var(--font-inter),sans-serif'}}>{label}</div>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div style={{animation:'rad-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
             <a href="#form" className={effectiveRegOpen ? 'rad-hero-cta' : undefined} onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
