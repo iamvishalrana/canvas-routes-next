@@ -49,7 +49,7 @@ Rules:
 - "category" MUST be exactly one of: ${CATEGORIES.join(', ')}. Pick the best fit, or null if unclear.
 - "payment_method" MUST be exactly one of: cash, credit, debit, etransfer, other. Map the tender shown on the receipt, checking in this order: "CASH"/"ESPÈCES"/"COMPTANT" → "cash"; "Interac e-Transfer"/"Virement Interac" → "etransfer"; "INTERAC"/"DEBIT"/"DÉBIT"/"Débit"/debit card → "debit" (Interac by itself always means a debit card); VISA/Mastercard/Amex/Discover/"CREDIT"/"CRÉDIT" → "credit"; anything else → "other". null if not shown.
 - "province" = the code for the MERCHANT's address (one of: ${PROVINCES.join(', ')} — Canadian provinces/territories plus VT/NH/ME/NY for US border-state purchases), or null if the address doesn't match any of those.
-- "notes" = a very short (max ~90 chars) plain-text summary of the main items or purpose (e.g. "Fuel — 42L premium" or "Coffee & pastries for meetup"), or null.
+- "notes" = a short (max ~90 chars) plain-text OVERVIEW of the purchase — what it was, at a glance — NOT a list of the line items on the receipt. Never enumerate individual items/quantities/prices; give the gist a reader would want at a glance instead. Good: "Fuel fill-up", "Team lunch, 4 people", "Office supplies", "Car detailing". Bad (too itemized, don't do this): "42.1L Premium + car wash $8", "2x Burger, 1x Fries, 2x Poutine, 4x Soda", "Pens, paper, tape, stapler". If the receipt is a single specific purchase (one part, one tool), name that briefly instead. null if there's nothing worth summarizing beyond the vendor name.
 - Use null for anything not clearly present. All numbers must be plain decimals with no currency symbols (e.g. 12.34).`
 
 function toNum(v) {

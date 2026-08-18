@@ -54,6 +54,8 @@ const PROVINCES = [
 ]
 const PROVINCE_MAP = Object.fromEntries(PROVINCES.map(p => [p.value, p]))
 const provLabelOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).provLabel
+const provinceNameOf = (code) => (PROVINCE_MAP[code] || PROVINCE_MAP.QC).label
+const paymentLabelOf = (code) => code ? (PAYMENT_LABELS[code] || code) : '—'
 
 const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst_amount: '', qst_amount: '', tip: '', province: 'QC', category: '', payment_method: '', vendor_tax_id: '', currency: 'CAD', original_amount: '', receipt_url: '', notes: '' }
 
@@ -190,6 +192,8 @@ export default function ExpensesClient() {
   const [filterMissing, setFilterMissing] = useState(false)
   const [filterUnreconciled, setFilterUnreconciled] = useState(false)
   const [zippingReceipts, setZippingReceipts] = useState(null) // { done, total, failed } | null
+  const [exportingPdf, setExportingPdf] = useState(false)
+  const [pdfErr, setPdfErr] = useState(null)
   const [copiedReceipt, setCopiedReceipt] = useState(null) // url just copied
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [deleteErr, setDeleteErr] = useState(null)
@@ -1090,6 +1094,52 @@ export default function ExpensesClient() {
     a.click(); URL.revokeObjectURL(a.href)
   }
 
+  // Formal, printable report — same filtered/sorted data as the CSV export
+  // and the on-screen Summary panel, laid out with a logo header, a clickable
+  // bookmark outline (Summary → each Year → each Event), and clickable
+  // receipt links. yearGroups always uses the real Year→Event hierarchy
+  // regardless of the on-screen viewMode toggle (a printed report reads
+  // better organized than a flat dump).
+  async function exportPDF() {
+    setExportingPdf(true)
+    try {
+      const { exportExpensesPdf } = await import('./expensePdf')
+      const parts = []
+      if (hasDateFilter) parts.push(`${dateFrom || '…'} → ${dateTo || '…'}`)
+      if (filterEvent !== 'all') parts.push(filterEvent)
+      if (filterCategory !== 'all') parts.push(filterCategory)
+      if (filterPayment !== 'all') parts.push(PAYMENT_LABELS[filterPayment] || filterPayment)
+      if (filterProvince !== 'all') parts.push(PROVINCE_MAP[filterProvince]?.label || filterProvince)
+      if (filterCurrency !== 'all') parts.push(filterCurrency === 'CAD' ? 'CAD only' : 'Foreign only')
+      if (searchTerm) parts.push(`"${searchQuery.trim()}"`)
+      const subtitle = parts.length ? parts.join(' · ') : 'All time'
+
+      const stats = [
+        { label: 'Total spent', value: fmt(grandTotal + grandTotalTax + grandTotalTip) },
+        { label: 'Tax recoverable', value: fmt(grandRecoverableTax) },
+        { label: 'Expenses', value: String(visibleExpenses.length) },
+        { label: 'Missing receipts', value: String(missingReceiptCount) },
+      ]
+
+      await exportExpensesPdf({
+        filename: `canvas-routes-expenses-${today}`,
+        subtitle,
+        stats,
+        summaryByCategory, summaryByPayment, summaryByQuarter,
+        grandTotal, grandTotalTax, grandTotalTip,
+        yearGroups,
+        provinceLabelOf: provinceNameOf,
+        paymentLabelOf,
+        generatedAt: new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' }),
+      })
+      setPdfErr(null)
+    } catch {
+      setPdfErr('PDF export failed — try again.')
+    } finally {
+      setExportingPdf(false)
+    }
+  }
+
   // Every attachment across the currently-filtered expenses, with a meaningful
   // filename (date_vendor, unique-suffixed). Powers the bulk "Download receipts"
   // zip (accountant handoff) and the per-expense download.
@@ -1653,6 +1703,11 @@ export default function ExpensesClient() {
                 style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
                 Export CSV
               </button>
+              <button onClick={exportPDF} disabled={exportingPdf} className="exp-tap"
+                title="Formal report with a Canvas Routes header, category/payment/tax breakdowns, and clickable receipt links — same filters as what's on screen"
+                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: exportingPdf ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: exportingPdf ? 0.6 : 1 }}>
+                {exportingPdf ? 'Building PDF…' : 'Export PDF'}
+              </button>
               {visibleReceiptCount > 0 && (
                 <button onClick={() => downloadReceiptsZip(visibleExpenses, `canvas-routes-receipts-${today}`)} disabled={!!zippingReceipts} className="exp-tap"
                   title="Download all receipt files in view as a .zip (for your accountant)"
@@ -1664,6 +1719,9 @@ export default function ExpensesClient() {
           </div>
           {zippingReceipts && zippingReceipts.failed > 0 && (
             <div style={{ fontSize: '10.5px', color: '#93333E', textAlign: 'right', marginTop: '0.4rem' }}>{zippingReceipts.failed} file{zippingReceipts.failed === 1 ? '' : 's'} couldn’t be fetched — skipped.</div>
+          )}
+          {pdfErr && (
+            <div style={{ fontSize: '10.5px', color: '#93333E', textAlign: 'right', marginTop: '0.4rem' }}>{pdfErr}</div>
           )}
 
           {/* Summary panel */}
