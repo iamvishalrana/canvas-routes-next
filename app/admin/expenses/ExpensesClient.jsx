@@ -711,24 +711,48 @@ export default function ExpensesClient() {
       // already filled are kept (not clobbered); genuinely empty ones still get
       // filled from this scan by the merge below.
       const isSubsequent = attachments.length > 0
-      // Restaurant flow: the first document is the itemized bill (subtotal +
-      // tax); the later payment receipt often adds a TIP on top. If this scan
-      // carries a tip the form doesn't have yet, treat the extra as a tip (set
-      // it + bump the total) instead of flagging it as a discrepancy.
       const curTip = parseFloat(form.tip) || 0
-      const tipAdded = (isSubsequent && scanTip != null && scanTip > 0 && curTip === 0) ? scanTip : null
+      const curPaid = parseFloat(form.paid) || 0
 
-      const diffs = []
+      // Non-total diffs first — if the vendor/date/tender don't match, this is
+      // probably a genuinely different purchase, not a tip-only difference, so
+      // the higher-total-means-tip fallback below must not fire.
+      const otherDiffs = []
       if (isSubsequent) {
+        if (data.vendor && form.vendor && data.vendor.trim().toLowerCase() !== form.vendor.trim().toLowerCase()) otherDiffs.push(`vendor “${data.vendor}” vs “${form.vendor}”`)
+        if (data.date && form.expense_date && data.date !== form.expense_date) otherDiffs.push(`date ${data.date} vs ${form.expense_date}`)
+        if (data.payment_method && form.payment_method && data.payment_method !== form.payment_method) otherDiffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[form.payment_method] || form.payment_method}`)
+      }
+
+      // Restaurant flow: the first document is the itemized bill (subtotal +
+      // tax); the later payment receipt often adds a TIP on top. Two cases:
+      //  1. The model read an explicit tip line ("Pourboire"/"Tip"/"Service") —
+      //     use that value directly.
+      //  2. The payment slip only prints a single total with no line items to
+      //     key off (common on card terminal slips), so the model can't tell
+      //     tip from anything else — in that case, if this scan's total is
+      //     simply higher than what's already on the form and nothing else
+      //     about it looks like a different purchase, treat the extra as a
+      //     tip instead of hard-erroring as a mismatch. A tip guess the admin
+      //     can correct beats blocking every restaurant receipt with a card tip.
+      let tipAdded = null
+      let tipGuessed = false
+      if (isSubsequent && curTip === 0 && sTotal != null) {
+        if (scanTip != null && scanTip > 0) {
+          tipAdded = scanTip
+        } else if (!otherDiffs.length && curPaid > 0 && sTotal > curPaid) {
+          tipAdded = round2(sTotal - curPaid)
+          tipGuessed = true
+        }
+      }
+
+      const diffs = [...otherDiffs]
+      if (isSubsequent && tipAdded == null) {
         // Compare amounts NET of tip on both sides, so a tip-only difference
         // doesn't read as a mismatch.
-        const curPaid = parseFloat(form.paid) || 0
         const scanPreTip = (sTotal != null ? sTotal : 0) - (scanTip || 0)
         const curPreTip = curPaid - curTip
         if (sTotal != null && curPaid > 0 && Math.abs(scanPreTip - curPreTip) > 0.01) diffs.push(`total ${fmt(scanPreTip)} vs ${fmt(curPreTip)}`)
-        if (data.vendor && form.vendor && data.vendor.trim().toLowerCase() !== form.vendor.trim().toLowerCase()) diffs.push(`vendor “${data.vendor}” vs “${form.vendor}”`)
-        if (data.date && form.expense_date && data.date !== form.expense_date) diffs.push(`date ${data.date} vs ${form.expense_date}`)
-        if (data.payment_method && form.payment_method && data.payment_method !== form.payment_method) diffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[form.payment_method] || form.payment_method}`)
       }
 
       // Foreign-currency receipt (US car parts, etc.): we DON'T drop the foreign
@@ -743,7 +767,9 @@ export default function ExpensesClient() {
           : diffs.length
             ? { type: 'warn', text: `Second document differs from the first — ${diffs.join(' · ')}. The fields already filled were kept; adjust manually if this one is the correct source.` }
             : tipAdded != null
-              ? { type: 'ok', text: `Payment receipt adds a ${fmt(tipAdded)} tip — total updated to ${fmt(total)}. ✓` }
+              ? { type: 'ok', text: tipGuessed
+                  ? `Payment receipt total is ${fmt(tipAdded)} higher than the invoice — treating the difference as a tip (couldn't find a separate tip line). Total updated to ${fmt(total)} — double-check before saving.`
+                  : `Payment receipt adds a ${fmt(tipAdded)} tip — total updated to ${fmt(total)}. ✓` }
               : data.mismatch
                 ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
                 : isSubsequent
@@ -767,7 +793,10 @@ export default function ExpensesClient() {
         paid:           isForeign ? p.paid : (tipAdded != null ? (total != null ? String(total) : p.paid) : (p.paid || (total != null ? String(total) : ''))),
         gst_amount:     isForeign ? p.gst_amount : (p.gst_amount || (data.gst != null ? String(data.gst) : '')),
         qst_amount:     isForeign ? p.qst_amount : (p.qst_amount || (data.qst != null ? String(data.qst) : '')),
-        tip:            isForeign ? p.tip : (parseFloat(p.tip) > 0 ? p.tip : (scanTip != null && scanTip > 0 ? String(scanTip) : p.tip)),
+        // tipAdded covers both an explicit tip line on a subsequent scan AND a
+        // guessed tip (case 2 above); scanTip covers an explicit tip found on
+        // a FIRST scan (tipAdded is only ever set when isSubsequent).
+        tip:            isForeign ? p.tip : (parseFloat(p.tip) > 0 ? p.tip : ((tipAdded ?? scanTip) > 0 ? String(tipAdded ?? scanTip) : p.tip)),
         payment_method: p.payment_method || data.payment_method || '',
         vendor_tax_id:  p.vendor_tax_id  || data.vendor_tax_id || '',
         currency:       (p.currency && p.currency !== 'CAD') ? p.currency : (data.currency || p.currency || 'CAD'),

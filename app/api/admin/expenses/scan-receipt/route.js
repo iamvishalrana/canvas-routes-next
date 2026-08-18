@@ -34,6 +34,7 @@ const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exact
 {"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"total":number|null,"currency":string|null,"vendor_tax_id":string|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
 
 Rules:
+- The receipt or invoice may be printed in French (common for Québec merchants) or English — read and extract accurately from either language, and don't let unfamiliar French wording lower your confidence. Common French terms you'll see: "Facture"/"Reçu" (invoice/receipt), "Sous-total" (subtotal), "Pourboire"/"Service" (tip), "Total"/"Montant total" (total), "TPS" (GST/federal tax), "TVQ" (QST/provincial tax), "Date", "Espèces"/"Comptant" (cash), "Débit" (debit), "Crédit" (credit). Write "vendor" and "notes" in whichever language is clearer/shorter — don't force a translation.
 - "is_receipt" = true ONLY if the image is clearly a purchase receipt, invoice, bill, or order confirmation showing amounts paid or payable. If it is anything else — an article, a menu, a screenshot, a random document, a photo, a business card — set is_receipt to false and EVERY other key to null. Never guess values from something that is not a receipt.
 - "vendor" = the business/merchant name.
 - "date" = the transaction date in YYYY-MM-DD. If the year is missing, infer the most likely recent year.
