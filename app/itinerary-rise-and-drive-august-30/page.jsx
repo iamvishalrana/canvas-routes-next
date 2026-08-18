@@ -482,7 +482,15 @@ export default function RiseAndDriveItineraryPage() {
     const params = new URLSearchParams(window.location.search)
     const urlPw = params.get('pw')
     if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
-    if (localStorage.getItem('rad_itinerary_auth') === '1') { setAuthed(true); setChecked(true); return }
+    // Some in-app browsers (Instagram/Facebook WebViews with restrictive
+    // storage settings) throw on localStorage access instead of just
+    // returning null — unguarded, that throw aborts this effect before
+    // setChecked(true) below ever runs, permanently stranding the page on
+    // its `if (!checked) return null` blank screen. Same failure class as
+    // the messageHandlers crash the layout.jsx polyfill guards against.
+    let storedAuth = null
+    try { storedAuth = localStorage.getItem('rad_itinerary_auth') } catch {}
+    if (storedAuth === '1') { setAuthed(true); setChecked(true); return }
     setChecked(true)
 
     const urlEmail = params.get('email')
@@ -498,7 +506,7 @@ export default function RiseAndDriveItineraryPage() {
     setErrMsg(null)
     const entered = normalizeEmail(emailOverride ?? email)
     if (entered === PASSWORD.toLowerCase()) {
-      localStorage.setItem('rad_itinerary_auth', '1')
+      try { localStorage.setItem('rad_itinerary_auth', '1') } catch {}
       setAuthed(true)
       return
     }
@@ -538,7 +546,7 @@ export default function RiseAndDriveItineraryPage() {
         && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
 
       if (allDone) {
-        localStorage.setItem('rad_itinerary_auth', '1')
+        try { localStorage.setItem('rad_itinerary_auth', '1') } catch {}
         setAuthed(true)
       } else {
         window.location.href = `/checkin/${idData.eventId}?email=${encodeURIComponent(entered)}`
