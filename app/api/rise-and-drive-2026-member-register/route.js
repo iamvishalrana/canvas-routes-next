@@ -1,0 +1,241 @@
+import { after } from 'next/server'
+import { createClient } from '../../../lib/supabase/server'
+import { deviceType } from '../../../lib/deviceType'
+import { createAdminClient } from '../../../lib/supabase/admin'
+import { stripe } from '../../../lib/stripe.js'
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
+import { captureException, captureMessage } from '../../../lib/sentry.js'
+import { computeTax } from '../../../lib/tax.js'
+import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
+
+// Route/itinerary names say "Name — Year" only, never the exact date (site convention).
+const EVENT_NAME = 'Rise and Drive — 2026'
+const MEMBER_PRICE_CENTS = 9900 // $99 CAD
+
+export async function GET() {
+  // Returns member's existing Rise and Drive registration status
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const admin = createAdminClient()
+    const { data: reg } = await admin
+      .from('applications')
+      .select('registrations')
+      .eq('email', user.email.toLowerCase())
+      .maybeSingle()
+
+    // Per-event paid flag, not the shared stripe_payment_status column — that
+    // column is reused across every paid flow this member ever touches, so
+    // it can read 'pending' from an unrelated flow even after this event was
+    // paid in full. See lib/markRegistrationPaid.js.
+    const radReg = (reg?.registrations || []).find(r => r.event === EVENT_NAME)
+    const alreadyRegistered = !!radReg?.paid
+
+    return Response.json({ alreadyRegistered })
+  } catch (e) {
+    captureException(e, { context: 'rad-member-register-get' })
+    return Response.json({ alreadyRegistered: false, status: null })
+  }
+}
+
+export async function POST(request) {
+  if (!stripe) return Response.json({ error: 'Payments not configured.' }, { status: 503 })
+
+  const supabase = await createClient()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  if (authError || !user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Check registration open — members have their own independent gate
+  // (member_registration_open) from the public form's (registration_open),
+  // so the club can close registration to one without affecting the other —
+  // e.g. prioritizing remaining spots for members only.
+  try {
+    const adminCheck = createAdminClient()
+    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open').eq('slug', 'rise-and-drive').maybeSingle()
+    if (route && route.member_registration_open === false) {
+      return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
+    }
+  } catch { /* allow through if upcoming_routes unavailable */ }
+
+  const ip = getClientIp(request)
+  if (ip && await checkRateLimit(ip, 10, 60)) {
+    return Response.json({ error: 'Too many requests.' }, { status: 429 })
+  }
+
+  let body
+  try { body = await request.json() } catch {
+    return Response.json({ error: 'Invalid request.' }, { status: 400 })
+  }
+
+  const { carYear, carMake, carModel, passengers, hasChildren, childrenAges, more, lang, _health_check } = body
+  const normalEmail = user.email.toLowerCase().trim()
+
+  // Duplicate guard — one per member
+  const admin = createAdminClient()
+  const { data: existing } = await admin
+    .from('applications')
+    .select('id, stripe_payment_status, registrations, stripe_payment_intent_id')
+    .eq('email', normalEmail)
+    .maybeSingle()
+
+  // Per-event paid flag, not the shared stripe_payment_status column — see
+  // lib/markRegistrationPaid.js for why that column can't be trusted here.
+  const existingReg = (existing?.registrations || []).find(r => r.event === EVENT_NAME)
+  if (existingReg?.paid) {
+    return Response.json({ error: 'You have already registered for this event.' }, { status: 400 })
+  }
+
+  // Validate
+  if (!carYear?.trim()) return Response.json({ error: 'Car year is required.' }, { status: 400 })
+  if (!carMake?.trim()) return Response.json({ error: 'Car make is required.' }, { status: 400 })
+  if (!carModel?.trim()) return Response.json({ error: 'Car model is required.' }, { status: 400 })
+  const VALID_PASSENGERS = ['1', '2', '3', '4+']
+  if (!passengers || !VALID_PASSENGERS.includes(passengers)) return Response.json({ error: 'Number of passengers is required.' }, { status: 400 })
+  if (!hasChildren || !['yes', 'no'].includes(hasChildren)) return Response.json({ error: 'Please answer the children question.' }, { status: 400 })
+  if (hasChildren === 'yes' && !childrenAges?.trim()) return Response.json({ error: 'Please provide the ages of children attending.' }, { status: 400 })
+
+  // Get member name for emails
+  const { data: member } = await admin.from('members').select('name').eq('id', user.id).maybeSingle()
+  const memberName = member?.name?.trim() || normalEmail.split('@')[0]
+  const fullCar = [carMake.trim(), carModel.trim()].filter(Boolean).join(' ')
+
+  // Save to DB as pending
+  try {
+    const newReg = {
+      event: EVENT_NAME,
+      registered_at: existingReg?.registered_at || new Date().toISOString(),
+      attended: existingReg?.attended ?? null,
+      paid: existingReg?.paid ?? false,
+      // Snapshot of what was actually submitted for THIS event — see the same
+      // key on rise-and-drive-2026-register/route.js for why this exists.
+      // No phone/dob/source here — members don't re-submit those.
+      details: {
+        car_year: carYear.trim(), car_make: carMake.trim(), car_model: fullCar,
+        passengers: passengers || null, has_children: hasChildren || null, children_ages: childrenAges || null,
+        more: more || null,
+      },
+    }
+    const prevRegs = (existing?.registrations || []).filter(r => r.event !== EVENT_NAME)
+    const registrations = [...prevRegs, newReg]
+
+    const { data: appData, error: upsertErr } = await admin.from('applications').upsert({
+      device_type: deviceType(request),
+      email: normalEmail,
+      name: memberName,
+      car_year: carYear.trim(),
+      car_make: carMake.trim(),
+      car_model: fullCar,
+      passengers: passengers || null,
+      has_children: hasChildren || null,
+      children_ages: childrenAges || null,
+      more: more || null,
+      registrations,
+      lang: lang === 'fr' ? 'fr' : 'en',
+      stripe_payment_status: 'pending',
+      // New payment cycle — clear the previous flow's capture timestamp so the
+      // confirm route's email claim and the webhook's already-captured check
+      // (both keyed on stripe_paid_at) work for this registration
+      stripe_paid_at: null,
+      ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
+    }, { onConflict: 'email' }).select('id').single()
+
+    if (upsertErr) captureException(upsertErr, { context: 'rad-member-register-db', email: normalEmail })
+    else if (appData?.id) {
+      const { error: contactErr } = await admin.from('contacts').upsert(
+        { application_id: appData.id },
+        { onConflict: 'application_id', ignoreDuplicates: true }
+      )
+      if (contactErr) captureException(contactErr, { context: 'rad-member-register-contacts' })
+    }
+  } catch (e) {
+    captureException(e, { context: 'rad-member-register-db-outer', email: normalEmail })
+  }
+
+  // Create Stripe PI — immediate capture for members (vetted, no manual review needed)
+  const { total: memberTotalWithTax } = computeTax(MEMBER_PRICE_CENTS)
+  try {
+    const pi = await stripe.paymentIntents.create({
+      amount: memberTotalWithTax,
+      currency: 'cad',
+      receipt_email: normalEmail,
+      metadata: {
+        type: 'road_trip_rise-and-drive-2026',
+        email: normalEmail,
+        name: memberName,
+        event_name: EVENT_NAME,
+        is_member: 'yes',
+        member_id: user.id,
+        car_year: carYear.trim(),
+        car_make: carMake.trim(),
+        car_model: fullCar,
+        passengers: passengers || '',
+        has_children: hasChildren || '',
+        children_ages: childrenAges || '',
+        original_amount: String(MEMBER_PRICE_CENTS),
+        lang: lang === 'fr' ? 'fr' : 'en',
+        ...(_health_check ? {
+          source: 'health_check',
+          health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',
+        } : {}),
+      },
+      description: `Canvas Routes — ${EVENT_NAME} (Member rate)`,
+      automatic_payment_methods: { enabled: true },
+    })
+    // Cancel the previous PI if re-registering — prevents ghost holds. The
+    // applications row shares ONE stripe_payment_intent_id across membership and
+    // every road trip, so verify the stored PI belongs to THIS flow before
+    // cancelling — a blind cancel can release a live hold from another flow.
+    if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
+      stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id).then(prev => {
+        if (prev.metadata?.type === 'road_trip_rise-and-drive-2026' && prev.status !== 'succeeded') {
+          return stripe.paymentIntents.cancel(existing.stripe_payment_intent_id)
+        }
+      }).catch(() => {})
+    }
+
+    // Store PI ID immediately so rise-and-drive-2026-member-confirm can find this row after payment
+    const { error: piStoreErr } = await admin.from('applications')
+      .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_rise-and-drive-2026' })
+      .eq('email', normalEmail)
+    if (piStoreErr) captureException(piStoreErr, { context: 'rad-member-register-pi-store', email: normalEmail })
+
+    // Notify Jerry immediately when a member reaches the payment step — same
+    // belt-and-suspenders heads-up the non-member route already sends
+    // (rise-and-drive-2026-register/route.js). Members use automatic capture,
+    // so rise-and-drive-2026-member-confirm normally sends the "payment
+    // confirmed" notify moments later — this is the earlier "someone's paying
+    // right now" signal.
+    if (process.env.RESEND_API_KEY && !_health_check) {
+      after(() =>
+        fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: 'Canvas Routes <info@canvasroutes.com>',
+            to: 'jerry@canvasroutes.com',
+            subject: `Registration Started — ${memberName} (Member)`,
+            html: buildAdminNotifyHtml('Member registration started — payment processing', [
+              ['Name',       `<strong>${memberName}</strong>`],
+              ['Email',      `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
+              ['Amount',     `$${(memberTotalWithTax / 100).toFixed(2)} CAD incl. tax`],
+              ['Car year',   carYear.trim()],
+              ['Car',        fullCar],
+              ['Passengers', passengers],
+              ['Children',   hasChildren],
+              ['Children ages', childrenAges || '—'],
+              ['Message',    more || '—'],
+              ['PI',         pi.id],
+            ]),
+          }),
+        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — rad-member-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'rad-member-register-admin-notify', email: normalEmail }))
+      )
+    }
+
+    return Response.json({ clientSecret: pi.client_secret })
+  } catch (err) {
+    captureException(err, { context: 'rad-member-create-pi', email: normalEmail })
+    return Response.json({ error: 'Failed to initialise payment. Please try again.' }, { status: 500 })
+  }
+}
