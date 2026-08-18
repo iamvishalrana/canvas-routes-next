@@ -358,9 +358,8 @@ export default function BroadcastsClient() {
   const [audience, setAudience]                 = useState('specific_emails')
   const [fromEmail, setFromEmail]               = useState('info@canvasroutes.com')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
-  const [excludeChipEmails, setExcludeChipEmails] = useState([])        // exclude list
-  const [includeChipEmails, setIncludeChipEmails] = useState([])        // include list (extra recipients beyond the audience)
-  const [emailMode, setEmailMode]               = useState(null)        // null | 'exclude' | 'include' — greyed until one is picked
+  const [extraEmails, setExtraEmails]           = useState([])          // one list — treated as include OR exclude per emailMode
+  const [emailMode, setEmailMode]               = useState(null)        // null | 'exclude' | 'include' — field greyed until one is picked
   const [subject, setSubject]                   = useState('')
   const [bodyHtml, setBodyHtml]                 = useState('')          // explicit state for draft save
   const [sending, setSending]                   = useState(false)
@@ -429,8 +428,7 @@ export default function BroadcastsClient() {
       if (saved.audience) setAudience(saved.audience)
       if (saved.fromEmail) setFromEmail(saved.fromEmail)
       if (Array.isArray(saved.chipEmails) && saved.chipEmails.length) setChipEmails(saved.chipEmails)
-      if (Array.isArray(saved.excludeChipEmails) && saved.excludeChipEmails.length) setExcludeChipEmails(saved.excludeChipEmails)
-      if (Array.isArray(saved.includeChipEmails) && saved.includeChipEmails.length) setIncludeChipEmails(saved.includeChipEmails)
+      if (Array.isArray(saved.extraEmails) && saved.extraEmails.length) setExtraEmails(saved.extraEmails)
       if (saved.emailMode === 'exclude' || saved.emailMode === 'include') setEmailMode(saved.emailMode)
       if (saved.bodyHtml && saved.bodyHtml !== '<p></p>') {
         editor.commands.setContent(saved.bodyHtml)
@@ -442,8 +440,8 @@ export default function BroadcastsClient() {
   // 4. Auto-save draft to localStorage on any change
   useEffect(() => {
     if (!draftRestoredRef.current) return
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, excludeChipEmails, includeChipEmails, emailMode, fromEmail })) } catch {}
-  }, [subject, bodyHtml, audience, chipEmails, excludeChipEmails, includeChipEmails, emailMode, fromEmail])
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, extraEmails, emailMode, fromEmail })) } catch {}
+  }, [subject, bodyHtml, audience, chipEmails, extraEmails, emailMode, fromEmail])
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -642,9 +640,9 @@ export default function BroadcastsClient() {
           audience,
           fromEmail,
           ...(audience === 'specific_emails' ? { specificEmails: parsedEmails } : {}),
-          // Only the actively-selected mode is applied (the other stays greyed/unused).
-          ...(emailMode === 'exclude' && excludeChipEmails.length > 0 ? { excludeEmails: excludeChipEmails } : {}),
-          ...(emailMode === 'include' && includeChipEmails.length > 0 ? { includeEmails: includeChipEmails } : {}),
+          // The one list is sent as exclude OR include depending on the toggle.
+          ...(emailMode === 'exclude' && extraEmails.length > 0 ? { excludeEmails: extraEmails } : {}),
+          ...(emailMode === 'include' && extraEmails.length > 0 ? { includeEmails: extraEmails } : {}),
           ...(attachments.length > 0 ? { attachments: attachmentPayload() } : {}),
         }),
       })
@@ -655,7 +653,7 @@ export default function BroadcastsClient() {
       editor?.chain().clearContent().unsetAllMarks().run()
       setBodyHtml('')
       setChipEmails([])
-      setExcludeChipEmails([])
+      setExtraEmails([]); setEmailMode(null)
       setAttachments([])
       setAttachErr(null)
       setFromEmail('info@canvasroutes.com')
@@ -703,7 +701,7 @@ export default function BroadcastsClient() {
     }
     setAudience('specific_emails')
     setChipEmails(emails)
-    setExcludeChipEmails([])
+    setExtraEmails([]); setEmailMode(null)
     setResult(null); setError(null)
     setTab('compose')
     if (!h.body_html) setError('The original message body wasn’t saved for this broadcast — re-add it before resending.')
@@ -1104,17 +1102,18 @@ export default function BroadcastsClient() {
                       <div style={{ fontSize: '11px', color: countLoading ? '#ccc' : '#3B6B2F', minHeight: '16px' }}>
                         {countLoading ? 'Counting…' : recipientCount !== null
                           ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}`
-                            + (emailMode === 'include' && includeChipEmails.length ? ` + ${includeChipEmails.length} extra` : '')
-                            + (emailMode === 'exclude' && excludeChipEmails.length ? ` − ${excludeChipEmails.length} excluded` : '')
+                            + (emailMode === 'include' && extraEmails.length ? ` + ${extraEmails.length} extra` : '')
+                            + (emailMode === 'exclude' && extraEmails.length ? ` − ${extraEmails.length} excluded` : '')
                             + (recipientCount > MAX_RECIPIENTS ? ` (capped at ${MAX_RECIPIENTS})` : '')
                           : ''}
                       </div>
                     )}
-                    {/* Include / Exclude extra recipients — greyed until a mode is picked */}
+                    {/* One email list — the toggle decides whether it Excludes members
+                        or Includes extra recipients. Field is greyed until a mode is picked. */}
                     {audience !== 'specific_emails' && (
                       <div style={{ marginTop: '0.85rem', paddingTop: '0.85rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.65rem' }}>
-                          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb' }}>Extra recipients</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                          <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb' }}>Extra emails</span>
                           <div style={{ marginLeft: 'auto', display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '7px', overflow: 'hidden' }}>
                             {[['exclude', 'Exclude'], ['include', 'Include']].map(([m, label]) => (
                               <button key={m} type="button" className="bc-seg-btn" onClick={() => setEmailMode(cur => cur === m ? null : m)}
@@ -1125,38 +1124,23 @@ export default function BroadcastsClient() {
                           </div>
                         </div>
 
-                        {/* Exclude field — greyed unless Exclude is selected */}
-                        <div style={{ opacity: emailMode === 'exclude' ? 1 : 0.4, pointerEvents: emailMode === 'exclude' ? 'auto' : 'none', marginBottom: '0.7rem', transition: 'opacity 0.2s ease' }}>
-                          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Exclude these members</div>
-                          <ChipInput
-                            chips={excludeChipEmails}
-                            onAdd={email => setExcludeChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
-                            onRemove={email => setExcludeChipEmails(prev => prev.filter(e => e !== email))}
-                          />
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem' }}>
-                            <span style={{ fontSize: '11px', color: excludeChipEmails.length > 0 ? '#8A6535' : '#ccc' }}>
-                              {excludeChipEmails.length > 0 ? `${excludeChipEmails.length} excluded` : 'None'}
-                            </span>
-                            {excludeChipEmails.length > 0 && (
-                              <button onClick={() => setExcludeChipEmails([])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Clear</button>
-                            )}
+                        <div style={{ opacity: emailMode ? 1 : 0.4, pointerEvents: emailMode ? 'auto' : 'none', transition: 'opacity 0.2s ease' }}>
+                          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>
+                            {emailMode === 'include' ? 'Also send to these extra emails' : emailMode === 'exclude' ? 'Exclude these members' : 'Pick Exclude or Include above'}
                           </div>
-                        </div>
-
-                        {/* Include field — greyed unless Include is selected */}
-                        <div style={{ opacity: emailMode === 'include' ? 1 : 0.4, pointerEvents: emailMode === 'include' ? 'auto' : 'none', transition: 'opacity 0.2s ease' }}>
-                          <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Also send to these extra emails</div>
                           <ChipInput
-                            chips={includeChipEmails}
-                            onAdd={email => setIncludeChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
-                            onRemove={email => setIncludeChipEmails(prev => prev.filter(e => e !== email))}
+                            chips={extraEmails}
+                            onAdd={email => setExtraEmails(prev => prev.includes(email) ? prev : [...prev, email])}
+                            onRemove={email => setExtraEmails(prev => prev.filter(e => e !== email))}
                           />
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.3rem' }}>
-                            <span style={{ fontSize: '11px', color: includeChipEmails.length > 0 ? '#8A6535' : '#ccc' }}>
-                              {includeChipEmails.length > 0 ? `${includeChipEmails.length} extra recipient${includeChipEmails.length !== 1 ? 's' : ''}` : 'None'}
+                            <span style={{ fontSize: '11px', color: extraEmails.length > 0 ? '#8A6535' : '#ccc' }}>
+                              {extraEmails.length > 0
+                                ? `${extraEmails.length} ${emailMode === 'include' ? 'to add' : emailMode === 'exclude' ? 'to exclude' : 'email' + (extraEmails.length !== 1 ? 's' : '')}`
+                                : 'None'}
                             </span>
-                            {includeChipEmails.length > 0 && (
-                              <button onClick={() => setIncludeChipEmails([])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Clear</button>
+                            {extraEmails.length > 0 && (
+                              <button onClick={() => setExtraEmails([])} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Clear</button>
                             )}
                           </div>
                         </div>
