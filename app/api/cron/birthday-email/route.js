@@ -48,9 +48,10 @@ async function sendBirthdayEmails() {
     if (already) { skipped++; continue }
 
     const firstName = (person.name || person.email).trim().split(/\s+/)[0]
+    const isMember = person.type === 'member'
     const unsubPageUrl = `${SITE}/unsubscribe?email=${encodeURIComponent(person.email)}`
     const unsubApiUrl = `${SITE}/api/unsubscribe?email=${encodeURIComponent(person.email)}`
-    const html = withUnsubUrl(buildBirthdayEmailHtml({ firstName }), unsubPageUrl)
+    const html = withUnsubUrl(buildBirthdayEmailHtml({ firstName, isMember }), unsubPageUrl)
 
     try {
       const res = await fetch('https://api.resend.com/emails', {
@@ -60,9 +61,9 @@ async function sendBirthdayEmails() {
           from: 'Canvas Routes <jerry@canvasroutes.com>',
           to: person.email,
           reply_to: 'jerry@canvasroutes.com',
-          subject: `Happy Birthday, ${firstName}! 🎂`,
+          subject: `Happy Birthday, ${firstName}! 🎉`,
           html,
-          text: birthdayEmailText({ firstName, unsubUrl: unsubPageUrl }) || htmlToPlainText(html),
+          text: birthdayEmailText({ firstName, isMember, unsubUrl: unsubPageUrl }) || htmlToPlainText(html),
           headers: {
             // RFC 8058 one-click — List-Unsubscribe-Post requires the URL to
             // accept a POST with application/x-www-form-urlencoded;
