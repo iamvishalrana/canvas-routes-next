@@ -11,16 +11,27 @@ const KEY = 'admin_calendar_token'
 // rsvp_tokens and photo_shares elsewhere in this codebase.
 function newToken() { return crypto.randomUUID() }
 
-function urlsFor(token) {
-  // No file extension needed on the path — the Content-Type header is what
-  // tells iOS/Google/Outlook this is a calendar feed, and skipping it avoids
-  // any dynamic-route parsing to strip a suffix back off the token.
-  const path = `/api/calendar/${token}`
+function feedUrls(path) {
   return {
     url: `${SITE}${path}`,
     // webcal:// is what makes iOS open the "Subscribe to Calendar" sheet
     // directly instead of just downloading a one-off file.
     webcalUrl: `webcal://${SITE.replace(/^https?:\/\//, '')}${path}`,
+  }
+}
+
+// One combined feed plus three single-category ones. Subscribing to the
+// single-category feeds instead of (or alongside) the combined one gives
+// each its own entry in iOS's calendar list, toggleable independently —
+// the only way to get "only show birthdays" in the native Calendar app.
+// No file extension on any path — the Content-Type header is what tells
+// iOS/Google/Outlook these are calendar feeds.
+function urlsFor(token) {
+  return {
+    all:       feedUrls(`/api/calendar/${token}`),
+    events:    feedUrls(`/api/calendar/${token}/events`),
+    birthdays: feedUrls(`/api/calendar/${token}/birthdays`),
+    notes:     feedUrls(`/api/calendar/${token}/notes`),
   }
 }
 
@@ -39,7 +50,7 @@ export async function GET() {
       return Response.json({ error: error.message }, { status: 500 })
     }
   }
-  return Response.json({ token, ...urlsFor(token) })
+  return Response.json({ token, feeds: urlsFor(token) })
 }
 
 // Regenerate — invalidates the old link. Use if it's ever leaked/pasted
@@ -55,5 +66,5 @@ export async function POST() {
     captureException(error, { context: 'admin-calendar-token-regenerate' })
     return Response.json({ error: error.message }, { status: 500 })
   }
-  return Response.json({ token, ...urlsFor(token) })
+  return Response.json({ token, feeds: urlsFor(token) })
 }

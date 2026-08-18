@@ -170,25 +170,40 @@ export default function CalendarClient() {
           <div style={{ fontSize: '12px', color: '#bbb' }}>Loading your link…</div>
         ) : (
           <>
-            <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.6, marginBottom: '0.75rem' }}>
-              This link is personal — it includes events, everyone's birthday, and every note below. On your iPhone, open it in Safari to add it as a calendar subscription (Settings → Calendar → Accounts also works, using the link below). It re-checks for changes roughly once or twice a day, not instantly.
+            <div style={{ fontSize: '12px', color: '#666', lineHeight: 1.6, marginBottom: '0.85rem' }}>
+              These links are personal. Subscribe to "Everything" for one combined calendar, or subscribe to any combination of the three below instead — iOS shows each as its own calendar in Settings → Calendar → Accounts, with its own on/off checkbox, so you can display just birthdays, just notes, or just events. Whichever you pick, it re-checks for changes roughly once or twice a day, not instantly.
             </div>
-            <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <a href={sync.webcalUrl} className="admin-btn"
-                style={{ display: 'inline-block', padding: '0.65rem 1.4rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
-                Subscribe on this device
-              </a>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '11px', color: '#888', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '8px', padding: '0.5rem 0.7rem', maxWidth: '100%' }}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '260px', fontFamily: 'monospace', fontSize: '10.5px' }}>{sync.url}</span>
-                <CopyBtn value={sync.url} />
+
+            {[
+              { key: 'all',       label: 'Everything',      desc: 'Events + birthdays + notes combined' },
+              { key: 'events',    label: 'Events only',     desc: 'Every meet & road trip, past and future' },
+              { key: 'birthdays', label: 'Birthdays only',  desc: "Everyone's birthday, every year" },
+              { key: 'notes',     label: 'Notes only',      desc: 'Just what you write on this calendar' },
+            ].map(f => (
+              <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.5rem 0', borderTop: f.key === 'all' ? 'none' : '0.5px solid rgba(0,0,0,0.05)' }}>
+                <div style={{ minWidth: '140px', flex: '0 0 auto' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 500, color: '#1a1a1a' }}>{f.label}</div>
+                  <div style={{ fontSize: '10.5px', color: '#999' }}>{f.desc}</div>
+                </div>
+                <a href={sync.feeds[f.key].webcalUrl}
+                  style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '7px', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  Subscribe
+                </a>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '10.5px', color: '#888', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.1)', borderRadius: '7px', padding: '0.4rem 0.6rem', maxWidth: '100%' }}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', fontFamily: 'monospace', fontSize: '10px' }}>{sync.feeds[f.key].url}</span>
+                  <CopyBtn value={sync.feeds[f.key].url} />
+                </div>
               </div>
+            ))}
+
+            <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
               {!regenConfirm ? (
                 <button onClick={() => setRegenConfirm(true)} style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '6px 10px', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', color: '#999', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                  Regenerate link
+                  Regenerate all links
                 </button>
               ) : (
-                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#93333E' }}>Old link stops working. Sure?</span>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '11px', color: '#93333E' }}>All four links above stop working (including any already subscribed). Sure?</span>
                   <DangerBtn small onClick={regenerateLink} disabled={regenBusy}>{regenBusy ? '…' : 'Yes'}</DangerBtn>
                   <GhostBtn small onClick={() => setRegenConfirm(false)}>Cancel</GhostBtn>
                 </div>
