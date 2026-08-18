@@ -10,10 +10,7 @@ import { observedBirthdayDay } from '../../../lib/adminBirthdays'
 const SECTIONS = [
   {
     id: 'dashboard', label: 'Overview',
-    items: [
-      { href: '/admin/dashboard', label: 'Dashboard' },
-      { href: '/admin/calendar',  label: 'Calendar'  },
-    ],
+    items: [{ href: '/admin/dashboard', label: 'Dashboard' }],
   },
   {
     id: 'members', label: 'Members',
