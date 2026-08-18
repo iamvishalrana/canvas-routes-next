@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import JSZip from 'jszip'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
 import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
@@ -172,6 +172,10 @@ export default function ExpensesClient() {
   const [dateTo, setDateTo]             = useState('')
   const [showSummary, setShowSummary]   = useState(false)
   const [showAdd, setShowAdd]           = useState(false)
+  // Vendor tax # and Notes are collapsed by default — almost always OCR-filled
+  // or left blank, so hiding them shortens the default add-form noticeably
+  // without removing the ability to fill them in for the rare case they matter.
+  const [showMoreFields, setShowMoreFields] = useState(false)
   const [isMobile, setIsMobile]         = useState(false)
   const [editingId, setEditingId]       = useState(null)
   const [editForm, setEditForm]         = useState({})
@@ -290,7 +294,17 @@ export default function ExpensesClient() {
 
   // Date-range + category + free-text filters feed both the list and the summary
   const searchTerm = searchQuery.trim().toLowerCase()
-  const baseFiltered = expenses.filter(e => {
+  // Memoized — this is the base every downstream grouping/summary computation
+  // starts from, and it used to re-run a full filter pass over every expense
+  // on EVERY render, including ones with nothing to do with the list (a
+  // keystroke in the add-form's Notes field, the edit panel, etc.). The
+  // downstream grouping/sorting steps below aren't memoized the same way —
+  // they close over sortItems/sortEventGroups, which themselves capture
+  // `sortBy` and are redefined every render, so memoizing them correctly
+  // would mean restructuring those into stable callbacks too; this one step
+  // has a plain, exhaustive, low-risk dependency list and is the single
+  // biggest share of the repeated work.
+  const baseFiltered = useMemo(() => expenses.filter(e => {
     if (filterCategory !== 'all' && (e.category || '') !== filterCategory) return false
     if (filterPayment !== 'all' && (e.payment_method || '') !== filterPayment) return false
     if (filterProvince !== 'all' && (e.province || 'QC') !== filterProvince) return false
@@ -305,7 +319,7 @@ export default function ExpensesClient() {
       if (!haystack.includes(searchTerm)) return false
     }
     return true
-  })
+  }), [expenses, filterCategory, filterPayment, filterProvince, filterCurrency, dateFrom, dateTo, filterMissing, filterUnreconciled, searchTerm])
   const usedCategories = [...new Set(expenses.map(e => e.category).filter(Boolean))].sort()
   // Only offer provinces actually in use — computed from the full list (not
   // baseFiltered) so the option never disappears out from under a selection
@@ -644,14 +658,21 @@ export default function ExpensesClient() {
     setUploadingFile(true); setFormErr(null)
     try {
       // Attach one OR several files (invoice + receipt) — each appends to the
-      // list rather than replacing, so nothing you attach is lost.
+      // list rather than replacing, so nothing you attach is lost. Uploaded
+      // concurrently, not one-at-a-time — each file's upload-url→PUT→confirm
+      // round trip is independent of the others, so a multi-select of 3-4
+      // photos used to take roughly 3-4x as long as a single file for no
+      // reason. allSettled (not all) so one failed file can't lose an
+      // already-succeeded sibling's attachment.
       const uploadPath = slugify(folderEvent) + (form.expense_date ? `/${form.expense_date}` : '')
-      for (const file of files) {
-        const url = await uploadReceipt(file, uploadPath)
-        setAttachments(prev => [...prev, { url, name: file.name }])
+      const results = await Promise.allSettled(files.map(file => uploadReceipt(file, uploadPath).then(url => ({ file, url }))))
+      let failed = 0
+      for (const r of results) {
+        if (r.status === 'fulfilled') setAttachments(prev => [...prev, { url: r.value.url, name: r.value.file.name }])
+        else failed++
       }
-    } catch (err) { setFormErr(err.message || 'Upload failed.') }
-    finally { setUploadingFile(false) }
+      if (failed) setFormErr(`${failed} of ${files.length} file${files.length > 1 ? 's' : ''} failed to upload.`)
+    } finally { setUploadingFile(false) }
   }
 
   // Attach one or more files to an existing expense from the edit panel — each
@@ -663,13 +684,16 @@ export default function ExpensesClient() {
     if (!files.length) return
     setEditUploading(true); setEditErr(null)
     try {
+      // Concurrent, not sequential — see handleFileChange above for why.
       const uploadPath = slugify(editForm.event_name || 'General') + (editForm.expense_date ? `/${editForm.expense_date}` : '')
-      for (const file of files) {
-        const url = await uploadReceipt(file, uploadPath)
-        setEditAttachments(prev => [...prev, { url, isNew: true }])
+      const results = await Promise.allSettled(files.map(file => uploadReceipt(file, uploadPath)))
+      let failed = 0
+      for (const r of results) {
+        if (r.status === 'fulfilled') setEditAttachments(prev => [...prev, { url: r.value, isNew: true }])
+        else failed++
       }
-    } catch (err) { setEditErr(err.message || 'Upload failed.') }
-    finally { setEditUploading(false) }
+      if (failed) setEditErr(`${failed} of ${files.length} file${files.length > 1 ? 's' : ''} failed to upload.`)
+    } finally { setEditUploading(false) }
   }
 
   // Scan a receipt photo: Claude vision extracts the fields, we prefill the empty
@@ -685,44 +709,87 @@ export default function ExpensesClient() {
     if (!file) return
     setShowAdd(true)
     setScanning(true); setFormErr(null); setScanNotice(null)
+
+    // Upload the ORIGINAL file to Storage starting right now, in parallel
+    // with the whole OCR pipeline below (HEIC convert → compress → fetch →
+    // parse) — the two are independent except that the upload would ideally
+    // know the receipt's date to file it in a dated folder, which isn't
+    // known until the scan resolves. Using the form's already-set date (true
+    // for a second scan in an invoice+receipt pair, since the first scan
+    // already filled it) keeps that common case dated; a brand-new scan just
+    // lands in the event's undated root instead of blocking the upload on
+    // the whole OCR round-trip first. This alone roughly halves the wall-clock
+    // wait for a scan, since previously the upload only started after OCR
+    // fully finished even though it never needed OCR's output to run.
+    const uploadPath = slugify(folderEvent) + (form.expense_date ? `/${form.expense_date}` : '')
+    const uploadPromise = uploadReceipt(file, uploadPath).then(url => ({ ok: true, url }), () => ({ ok: false }))
+    // Resolves the upload result and attaches it (or reports failure) —
+    // called from every exit path below so a receipt that uploaded fine is
+    // never orphaned just because OCR itself failed or was skipped (a PDF
+    // over the OCR size cap, a network error, an unparseable response).
+    const settleUpload = async () => {
+      const up = await uploadPromise
+      if (up.ok) setAttachments(prev => [...prev, { url: up.url, name: file.name }])
+      else setScanNotice(prev => prev ? { ...prev, text: `${prev.text} (Also: the receipt image itself couldn't be attached — use "Attach receipt" below.)` } : { type: 'warn', text: "The receipt image couldn't be attached — use \"Attach receipt\" below to add it manually." })
+      return up.ok
+    }
+
     try {
       // Claude's vision API doesn't need full camera resolution to read a
       // receipt, and this route posts straight to a Next.js API route body —
-      // unlike every other upload on this page, it can't use a signed
-      // Storage URL, so it's stuck with Vercel's ~4.5MB serverless request
-      // cap. A downscaled copy comfortably clears that; the untouched
-      // original is still what gets attached to the expense below via
-      // uploadReceipt(). PDFs can't be canvas-compressed, so those are
+      // unlike the Storage upload above, it can't use a signed URL, so it's
+      // stuck with Vercel's ~4.5MB serverless request cap. A downscaled copy
+      // comfortably clears that; the untouched original is what the parallel
+      // upload above attaches. PDFs can't be canvas-compressed, so those are
       // capped client-side instead of silently hitting the platform wall.
       let scanFile = file
       if (file.type === 'application/pdf') {
-        if (file.size > 4 * 1024 * 1024) { setFormErr('PDF is too large to scan (max 4 MB) — attach it below instead and enter the details manually.'); return }
+        if (file.size > 4 * 1024 * 1024) {
+          setFormErr('PDF is too large to scan (max 4 MB) — attaching it below for you to fill in manually.')
+          await settleUpload()
+          return
+        }
       } else {
         // iPhone receipt photos are usually HEIC — the scan route can't read
         // those and compressImageClient passes small ones through untouched,
         // so convert to JPEG first (no-op for already-web formats). Downscale
         // to ~1400px / q0.72 specifically for the OCR call — under the vision
         // API's ~1568px cap, so it costs fewer image tokens while staying
-        // legible, and the full-resolution original is still what gets attached
-        // to the expense below via uploadReceipt(file).
+        // legible. This only affects the OCR copy — the parallel upload above
+        // always sends the untouched original.
         scanFile = await compressImageClient(await convertHeicIfNeeded(file), { maxEdge: 1400, quality: 0.72 })
       }
       const sfd = new FormData()
       sfd.append('file', scanFile)
       const res = await fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setFormErr(data.error || (res.status === 413 ? 'That file is too large to scan.' : 'Scan failed.')); return }
+      if (!res.ok) {
+        setFormErr(data.error || (res.status === 413 ? 'That file is too large to scan.' : 'Scan failed.'))
+        await settleUpload()
+        return
+      }
 
       const total = data.total != null ? data.total
         : (data.amount != null ? round2((data.amount || 0) + (data.gst || 0) + (data.qst || 0) + (data.tip || 0)) : null)
       const scanTip = data.tip != null ? round2(data.tip) : null
+      // Foreign-currency receipt (US car parts, etc.) — computed early since
+      // the duplicate check right below needs it too, not just the form-merge
+      // logic further down.
+      const isForeign = !!(data.currency && data.currency !== 'CAD')
 
       // Scan-time duplicate check — warn right away if this vendor + date + total
       // already exists, so the same receipt isn't scanned and saved twice. Mirrors
-      // the Save-time guard in handleSubmit, just caught earlier.
+      // the Save-time guard in handleSubmit, just caught earlier. Skipped for a
+      // foreign receipt: `total` here is in the RECEIPT's own currency (e.g. USD),
+      // never converted, but every saved expense's amount is CAD — comparing them
+      // directly is comparing different currencies as if they were equal, which
+      // produces both false "duplicate" warnings (an unrelated CAD expense that
+      // happens to total the same number) and false negatives (a genuine repeat
+      // USD receipt whose CAD-charged amount doesn't numerically match its own
+      // USD total).
       const sVendor = (data.vendor || '').trim().toLowerCase()
       const sTotal = total != null ? round2(total) : null
-      const dup = (sVendor && data.date && sTotal != null)
+      const dup = (!isForeign && sVendor && data.date && sTotal != null)
         ? expenses.find(x =>
             (x.vendor || '').trim().toLowerCase() === sVendor &&
             x.expense_date === data.date &&
@@ -734,7 +801,15 @@ export default function ExpensesClient() {
       // / vendor / date / tender between the two doesn't slip through. Fields
       // already filled are kept (not clobbered); genuinely empty ones still get
       // filled from this scan by the merge below.
-      const isSubsequent = attachments.length > 0
+      //
+      // Also true if the form already has real data even with zero current
+      // attachments — e.g. the admin removed a bad first scan's attachment
+      // (wrong photo, blurry) but its fields are still on the form. Keying
+      // purely off attachments.length would then treat the NEXT scan as a
+      // "first" one: the tip-vs-mismatch branch below gets skipped entirely,
+      // so a payment receipt's tip could get merged into `tip` while `paid`
+      // stays at the first document's total — silently wrong subtotal math.
+      const isSubsequent = attachments.length > 0 || !!(form.vendor || form.expense_date || (parseFloat(form.paid) || 0) > 0)
       const curTip = parseFloat(form.tip) || 0
       const curPaid = parseFloat(form.paid) || 0
 
@@ -782,8 +857,8 @@ export default function ExpensesClient() {
       // Foreign-currency receipt (US car parts, etc.): we DON'T drop the foreign
       // amounts into the CAD fields — the CAD figure is whatever the card was
       // actually charged (from the statement). Record the currency + original
-      // total and prompt for the CAD amount.
-      const isForeign = !!(data.currency && data.currency !== 'CAD')
+      // total and prompt for the CAD amount. (isForeign itself is computed
+      // earlier, above — the duplicate check needs it too.)
       setScanNotice(dup
         ? { type: 'warn', text: `Heads up — you already logged a ${fmt(sTotal)} expense from “${data.vendor}” on ${data.date}. Saving will add a second copy.` }
         : isForeign
@@ -832,20 +907,27 @@ export default function ExpensesClient() {
         province:       provinceManualRef.current ? p.province : (data.province || p.province),
         notes:          p.notes          || data.notes    || '',
       }))
+      // The scan banner promises "we'll auto-fill ... & a note" — if OCR
+      // actually filled notes or a vendor tax #, expand that section instead
+      // of leaving what it captured hidden behind "More details" by default.
+      if ((data.notes && !form.notes) || (data.vendor_tax_id && !form.vendor_tax_id)) setShowMoreFields(true)
 
-      // Also attach the scanned file — APPENDED, so scanning an invoice and
-      // then its receipt keeps both on the expense instead of replacing.
-      try {
-        const path = slugify(folderEvent) + ((data.date || form.expense_date) ? `/${data.date || form.expense_date}` : '')
-        const url = await uploadReceipt(file, path)
-        setAttachments(prev => [...prev, { url, name: file.name }])
-      } catch {
-        // Fields were extracted fine, but the receipt image itself didn't
-        // attach — this used to fail silently, leaving a green "Scanned ✓"
-        // banner while the expense would save with no receipt at all.
-        setScanNotice({ type: 'warn', text: "Fields were read, but the receipt image couldn't be attached — use \"Attach receipt\" below to add it manually." })
-      }
-    } catch { setFormErr('Scan failed.') }
+      // The upload kicked off at the very top of this function has likely
+      // already finished by now (it ran the whole time OCR was in flight) —
+      // APPENDED, so scanning an invoice and then its receipt keeps both on
+      // the expense instead of replacing. settleUpload() overwrites the
+      // notice above with a failure message if the attach didn't work, so
+      // the admin never sees a green "Scanned ✓" banner for an expense that
+      // would actually save with no receipt at all.
+      await settleUpload()
+    } catch {
+      setFormErr('Scan failed.')
+      // Settle even on an unexpected throw (e.g. HEIC conversion blowing up)
+      // — the parallel upload kicked off at the top may well have already
+      // succeeded, and skipping this would silently orphan it: the file
+      // lands in Storage but never gets attached or reported either way.
+      await settleUpload()
+    }
     finally { setScanning(false); if (scanRef.current) scanRef.current.value = '' }
   }
 
@@ -1127,14 +1209,29 @@ export default function ExpensesClient() {
     setZippingReceipts({ done: 0, total: items.length, failed: 0 })
     try {
       const zip = new JSZip()
-      for (let i = 0; i < items.length; i++) {
-        try {
-          const res = await fetch(items[i].url)
-          if (!res.ok) throw new Error('fetch failed')
-          zip.file(items[i].name, await res.blob())
-        } catch { setZippingReceipts(z => z ? { ...z, failed: z.failed + 1 } : z) }
-        setZippingReceipts(z => z ? { ...z, done: i + 1 } : z)
+      // Bounded concurrency instead of strictly one-at-a-time — fetching a
+      // receipt is latency-bound (waiting on a round trip), not bandwidth-
+      // bound, so a handful running at once finishes a multi-dozen-receipt
+      // export much faster without opening so many connections at once that
+      // it looks like abuse. zip.file() is safe to call concurrently — it's
+      // just adding entries to an in-memory map, and receiptItemsFor already
+      // guarantees each item's filename is unique.
+      const CONCURRENCY = 5
+      let nextIndex = 0
+      let doneCount = 0
+      async function worker() {
+        while (nextIndex < items.length) {
+          const i = nextIndex++
+          try {
+            const res = await fetch(items[i].url)
+            if (!res.ok) throw new Error('fetch failed')
+            zip.file(items[i].name, await res.blob())
+          } catch { setZippingReceipts(z => z ? { ...z, failed: z.failed + 1 } : z) }
+          doneCount++
+          setZippingReceipts(z => z ? { ...z, done: doneCount } : z)
+        }
       }
+      await Promise.all(Array.from({ length: Math.min(CONCURRENCY, items.length) }, worker))
       const content = await zip.generateAsync({ type: 'blob' })
       const a = document.createElement('a')
       a.href = URL.createObjectURL(content)
@@ -1370,7 +1467,21 @@ export default function ExpensesClient() {
             <L>Province</L>
             <div style={{ position: 'relative' }}>
               <select style={sel} value={form.province}
-                onChange={e => { taxManualRef.current = false; provinceManualRef.current = true; setForm(p => ({ ...p, province: e.target.value })) }}>
+                onChange={e => {
+                  // Only re-arm auto-split if there's no real tax on the form
+                  // yet. Unconditionally resetting here used to mean: scan a
+                  // receipt (locks in its actual GST/QST), notice the model
+                  // misdetected the province, correct it by hand — and that
+                  // correction would silently replace the receipt's real,
+                  // accurately-read tax with an estimated blended-rate guess
+                  // for the new province, with no warning either number had
+                  // changed. A fresh form (no tax yet) still gets the normal
+                  // "picking a province auto-splits" behavior.
+                  const hasTax = (parseFloat(form.gst_amount) || 0) > 0 || (parseFloat(form.qst_amount) || 0) > 0
+                  if (!hasTax) taxManualRef.current = false
+                  provinceManualRef.current = true
+                  setForm(p => ({ ...p, province: e.target.value }))
+                }}>
                 {PROVINCES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
               </select>
               <SelectChevron />
@@ -1433,11 +1544,6 @@ export default function ExpensesClient() {
                 onChange={e => setForm(p => ({ ...p, original_amount: e.target.value }))} />
             </div>
           )}
-          <div>
-            <L>Vendor tax # (opt.)</L>
-            <input style={inp} value={form.vendor_tax_id} placeholder="GST/QST reg. #" maxLength={40}
-              onChange={e => setForm(p => ({ ...p, vendor_tax_id: e.target.value }))} />
-          </div>
         </div>
         {form.currency !== 'CAD' && (
           <div style={{ fontSize: '10.5px', color: '#8a7a5c', marginBottom: '0.85rem', lineHeight: 1.5 }}>
@@ -1450,7 +1556,6 @@ export default function ExpensesClient() {
           const existingNames = [...new Set(expenses.map(e => e.event_name?.trim()).filter(Boolean))]
           const formName = form.event_name?.trim()
           const options = ['General', ...existingNames, ...(formName && !existingNames.includes(formName) ? [formName] : [])]
-          const previewPath = `receipts/${slugify(folderEvent)}${form.expense_date ? `/${form.expense_date}` : ''}/`
           return (
             <div style={{ marginBottom: '0.6rem' }}>
               <L>Save Receipt To</L>
@@ -1483,22 +1588,45 @@ export default function ExpensesClient() {
                   <SelectChevron />
                 </div>
               </div>
-              <div style={{ fontSize: '10px', color: '#bbb', fontFamily: 'monospace', wordBreak: 'break-all' }}>{previewPath}</div>
             </div>
           )
         })()}
 
-        <div style={{ marginBottom: '0.85rem' }}>
-          <L>Notes (optional)</L>
-          <input style={inp} value={form.notes} placeholder="e.g. reimbursed by Jerry, bought for spare tires"
-            onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} maxLength={1000} />
-        </div>
+        {/* Vendor tax # and Notes — collapsed by default (see showMoreFields
+            declaration for why); scanning still fills vendor_tax_id even
+            while this is collapsed, it's just not shown until expanded. */}
+        {!showMoreFields ? (
+          <button type="button" onClick={() => setShowMoreFields(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', padding: '0.3rem 0', marginBottom: '0.6rem', cursor: 'pointer', fontSize: '11px', color: '#8a7a5c', fontFamily: 'var(--font-inter),sans-serif' }}>
+            <ChevronIcon open={false} /> More details (notes, vendor tax #)
+          </button>
+        ) : (
+          <div style={{ marginBottom: '0.85rem' }}>
+            <button type="button" onClick={() => setShowMoreFields(false)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'none', border: 'none', padding: '0.3rem 0', marginBottom: '0.5rem', cursor: 'pointer', fontSize: '11px', color: '#8a7a5c', fontFamily: 'var(--font-inter),sans-serif' }}>
+              <ChevronIcon open={true} /> More details
+            </button>
+            <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.6rem' }}>
+              <div>
+                <L>Notes (optional)</L>
+                <input style={inp} value={form.notes} placeholder="e.g. reimbursed by Jerry, bought for spare tires"
+                  onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} maxLength={1000} />
+              </div>
+              <div>
+                <L>Vendor tax # (opt.)</L>
+                <input style={inp} value={form.vendor_tax_id} placeholder="GST/QST reg. #" maxLength={40}
+                  onChange={e => setForm(p => ({ ...p, vendor_tax_id: e.target.value }))} />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="exp-actions-row" style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input ref={fileRef} type="file" accept="image/*,.pdf" multiple style={{ display: 'none' }} onChange={handleFileChange} />
           <button type="button" className="exp-tap" onClick={() => fileRef.current?.click()} disabled={uploadingFile}
+            title="Attaches the file without running receipt scanning/auto-fill"
             style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 12px', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '6px', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
-            {uploadingFile ? 'Uploading…' : `↑ Attach${attachments.length ? ' more' : ' invoice / receipt'}`}
+            {uploadingFile ? 'Uploading…' : `↑ Attach only, no scan${attachments.length ? ' — more' : ''}`}
           </button>
           {attachments.map(a => (
             <span key={a.url} style={{ fontSize: '11px', color: '#3B6B2F', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: 'rgba(59,107,47,0.08)', border: '0.5px solid rgba(59,107,47,0.25)', borderRadius: '6px', padding: '3px 8px', maxWidth: '100%' }}>

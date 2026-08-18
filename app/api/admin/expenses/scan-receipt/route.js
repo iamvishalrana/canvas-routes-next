@@ -201,8 +201,17 @@ export async function POST(request) {
     }
 
     // Flag when subtotal + taxes + tip don't reconcile with the printed total so
-    // the client can tell the admin to double-check instead of silently trusting it
-    const mismatch = amount != null && total != null && (gst != null || qst != null || tip != null)
+    // the client can tell the admin to double-check instead of silently trusting
+    // it. Deliberately does NOT require gst/qst/tip to be non-null first — a
+    // receipt where the model read a subtotal and a different grand total but
+    // couldn't make out ANY tax/tip line (illegible tax section, unusual
+    // layout) is exactly the clearest "these numbers don't add up" case, and
+    // used to be silently waved through because that gate excluded it. This
+    // can't create a new false positive: when the model legitimately has no
+    // tax lines to report, it's instructed to set amount = total (see the
+    // "only a grand total is shown" rule above), so amount and total already
+    // match and no mismatch is raised.
+    const mismatch = amount != null && total != null
       ? Math.abs(amount + (gst || 0) + (qst || 0) + (tip || 0) - total) > 0.02
       : false
 
