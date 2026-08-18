@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { inp, GhostBtn, PrimaryBtn, DangerBtn, Err, CopyBtn, MONTHS } from '../_components/shared'
+import { observedBirthdayDay, isLeapDayBirthday } from '../../../lib/adminBirthdays'
 
 const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const pad2 = (n) => String(n).padStart(2, '0')
@@ -30,7 +31,9 @@ export default function CalendarClient() {
   const [birthdays, setBirthdays] = useState([])
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [selectedDate, setSelectedDate] = useState(null) // 'YYYY-MM-DD' | null
+  // Defaults to today so the detail panel always has something to show
+  // instead of a "tap a day" placeholder on first load.
+  const [selectedDate, setSelectedDate] = useState(() => ymd(now.getFullYear(), now.getMonth(), now.getDate()))
   const [draft, setDraft] = useState('')
   const [savingDraft, setSavingDraft] = useState(false)
   const [editingNoteId, setEditingNoteId] = useState(null)
@@ -102,10 +105,16 @@ export default function CalendarClient() {
   const birthdaysByDay = useMemo(() => {
     const map = {}
     for (const b of birthdays) {
-      if (b.month - 1 === month) (map[b.day] ||= []).push(b)
+      if (b.month - 1 !== month) continue
+      // A raw day-29 lookup would make a Feb 29 birthday's marker simply
+      // vanish in every non-leap February (no 29th cell exists to place it
+      // in) — observedBirthdayDay resolves it to the 28th in those years,
+      // matching what the .ics feed and the countdown widget both show.
+      const day = observedBirthdayDay(b, year)
+      ;(map[day] ||= []).push(b)
     }
     return map
-  }, [birthdays, month])
+  }, [birthdays, year, month])
 
   const notesByDay = useMemo(() => {
     const map = {}
@@ -183,8 +192,11 @@ export default function CalendarClient() {
   const dayEvents = useMemo(() => selectedDate ? events.filter(e => e.date === selectedDate) : [], [events, selectedDate])
   const dayBirthdays = useMemo(() => {
     if (!selectedDate) return []
-    const [, m, d] = selectedDate.split('-').map(Number)
-    return birthdays.filter(b => b.month === m && b.day === d)
+    const [y, m, d] = selectedDate.split('-').map(Number)
+    // See birthdaysByDay above — a Feb 29 birthday must match against its
+    // observed day for THIS specific year, or clicking Feb 28 in a
+    // non-leap year would show nothing for that person.
+    return birthdays.filter(b => b.month === m && observedBirthdayDay(b, y) === d)
   }, [birthdays, selectedDate])
   const dayNotes = useMemo(() => selectedDate ? notes.filter(n => n.note_date === selectedDate) : [], [notes, selectedDate])
 
@@ -377,39 +389,49 @@ export default function CalendarClient() {
           </div>
 
           {/* Day detail panel */}
-          <div className="cal-detail-panel" style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', position: 'sticky', top: '1rem' }}>
-            {!selectedDate ? (
-              <div style={{ fontSize: '12px', color: '#bbb' }}>Tap a day to see its events, birthdays, and notes.</div>
-            ) : (
-              <div key={selectedDate} className="cal-detail-body">
-                <div style={{ fontSize: '13px', fontWeight: 500, color: '#1a1a1a', marginBottom: '0.9rem' }}>
+          <div className="cal-detail-panel" style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderLeft: '3px solid #c5a882', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', position: 'sticky', top: '1rem' }}>
+            <div key={selectedDate} className="cal-detail-body">
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <div style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '19px', fontWeight: 400, color: '#1a1a1a' }}>
                   {new Date(`${selectedDate}T12:00:00`).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric', year: selectedInView ? undefined : 'numeric' })}
                 </div>
-
-                {dayEvents.length > 0 && (
-                  <div style={{ marginBottom: '0.9rem' }}>
-                    <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Events</div>
-                    {dayEvents.map(e => (
-                      <div key={e.id} style={{ fontSize: '12px', color: '#333', marginBottom: '0.3rem' }}>
-                        {e.name}{e.location ? <span style={{ color: '#999' }}> — {e.location}</span> : null}
-                      </div>
-                    ))}
-                  </div>
+                {selectedDate === ymd(now.getFullYear(), now.getMonth(), now.getDate()) && (
+                  <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#0F1E14', background: 'rgba(197,168,130,0.35)', borderRadius: '20px', padding: '2px 8px', fontFamily: 'var(--font-inter),sans-serif', fontWeight: 600 }}>Today</span>
                 )}
+              </div>
 
-                {dayBirthdays.length > 0 && (
-                  <div style={{ marginBottom: '0.9rem' }}>
-                    <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.35rem' }}>Birthdays</div>
-                    {dayBirthdays.map((b, i) => (
-                      <div key={i} style={{ fontSize: '12px', color: '#333', marginBottom: '0.3rem' }}>🎂 {b.name}</div>
-                    ))}
-                  </div>
-                )}
+              {dayEvents.length === 0 && dayBirthdays.length === 0 && (
+                <div style={{ fontSize: '11.5px', color: '#bbb', marginBottom: '1rem', fontStyle: 'italic' }}>Nothing scheduled — the day's clear.</div>
+              )}
 
-                <div>
-                  <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Notes</div>
-                  {dayNotes.length === 0 && <div style={{ fontSize: '12px', color: '#ccc', marginBottom: '0.6rem' }}>No notes for this day yet.</div>}
-                  {dayNotes.map(n => (
+              {dayEvents.length > 0 && (
+                <div style={{ marginBottom: '0.9rem' }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.4rem' }}>Events</div>
+                  {dayEvents.map(e => (
+                    <div key={e.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '12px', color: '#333', marginBottom: '0.35rem' }}>
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#c5a882', flexShrink: 0, marginTop: '5px' }} />
+                      <span>{e.name}{e.location ? <span style={{ color: '#999' }}> — {e.location}</span> : null}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {dayBirthdays.length > 0 && (
+                <div style={{ marginBottom: '0.9rem' }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.4rem' }}>Birthdays</div>
+                  {dayBirthdays.map((b, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.4rem', fontSize: '12px', color: '#333', marginBottom: '0.35rem' }}>
+                      <span style={{ flexShrink: 0 }}>🎂</span>
+                      <span>{b.name}{isLeapDayBirthday(b) ? <span style={{ color: '#999' }}> (leap day, observed)</span> : null}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div>
+                <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.5rem' }}>Notes</div>
+                {dayNotes.length === 0 && <div style={{ fontSize: '12px', color: '#ccc', marginBottom: '0.6rem' }}>No notes for this day yet.</div>}
+                {dayNotes.map(n => (
                     <div key={n.id} style={{ background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '8px', padding: '0.6rem 0.7rem', marginBottom: '0.5rem' }}>
                       {editingNoteId === n.id ? (
                         <>
@@ -445,7 +467,6 @@ export default function CalendarClient() {
                   <Err msg={notesErr} />
                 </div>
               </div>
-            )}
           </div>
         </div>
       )}

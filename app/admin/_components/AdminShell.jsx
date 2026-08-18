@@ -5,6 +5,7 @@ import Link from 'next/link'
 import GlobalSearch from './GlobalSearch'
 import PullToRefresh from './PullToRefresh'
 import { ConfirmProvider } from './ConfirmProvider'
+import { observedBirthdayDay } from '../../../lib/adminBirthdays'
 
 const SECTIONS = [
   {
@@ -113,8 +114,13 @@ function BirthdaysWidget() {
   // Trim trailing empty week
   while (slots.length > 35 && slots.slice(-7).every(d => d === null)) slots.splice(-7)
 
-  const bdayDays = new Set((birthdays || []).filter(b => b.month - 1 === month).map(b => b.day))
-  const monthBirthdays = (birthdays || []).filter(b => b.month - 1 === month).sort((a, b) => a.day - b.day)
+  // observedBirthdayDay resolves a Feb 29 birthday to the 28th in a
+  // non-leap year (matches the .ics feed and the full Calendar page) — a
+  // raw b.day lookup would make it silently drop off this preview 3 years
+  // out of every 4.
+  const monthBirthdaysRaw = (birthdays || []).filter(b => b.month - 1 === month)
+  const bdayDays = new Set(monthBirthdaysRaw.map(b => observedBirthdayDay(b, year)))
+  const monthBirthdays = [...monthBirthdaysRaw].sort((a, b) => observedBirthdayDay(a, year) - observedBirthdayDay(b, year))
 
   return (
     <div style={{ borderTop: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, padding: '0.85rem 1.1rem 1rem' }}>
@@ -190,7 +196,7 @@ function BirthdaysWidget() {
                   {b.name}
                 </span>
                 <span style={{ fontSize: '10px', color: b.daysUntil === 0 ? '#c5a882' : 'rgba(245,241,236,0.3)', flexShrink: 0 }}>
-                  {b.daysUntil === 0 ? '🎂' : b.day}
+                  {b.daysUntil === 0 ? '🎂' : observedBirthdayDay(b, year)}
                 </span>
               </div>
             )
