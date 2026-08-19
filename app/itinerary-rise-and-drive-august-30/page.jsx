@@ -27,7 +27,7 @@ const STOPS = [
   { label: 'Rawdon', note: { en: 'Into Lanaudière — the first real stretch of backroads', fr: 'Direction Lanaudière — le premier vrai tronçon de routes secondaires' }, href: 'https://www.google.com/maps/search/?api=1&query=Rawdon,+QC', lat: 46.0470, lng: -73.7181 },
   { label: 'Saint-Côme', note: { en: 'Deeper into cottage country, quiet roads the whole way', fr: 'Plus profondément dans les chalets, des routes tranquilles tout du long' }, href: 'https://www.google.com/maps/search/?api=1&query=Saint-Côme,+QC', lat: 46.2710370, lng: -73.7714770 },
   { label: 'Café Marius', note: { en: 'Coffee stop — covered by Canvas Routes', fr: 'Arrêt café — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Café+Marius+Rue+Principale+Saint-Donat-de-Montcalm+QC', lat: 46.3107848, lng: -74.2103737 },
-  { label: 'Petinos', note: { en: 'Breakfast in Saint-Sauveur — covered by Canvas Routes', fr: 'Petit-déjeuner à Saint-Sauveur — couvert par Canvas Routes' }, tag: { en: 'Breakfast', fr: 'Petit-déjeuner' }, feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=Petinos+75+Avenue+de+la+Gare+Saint-Sauveur+QC', lat: 45.8908004, lng: -74.1535634 },
+  { label: 'Petinos', note: { en: 'Breakfast in Saint-Sauveur — covered by Canvas Routes', fr: 'Petit-déjeuner à Saint-Sauveur — couvert par Canvas Routes' }, tag: { en: 'Breakfast', fr: 'Petit-déjeuner' }, end: true, href: 'https://www.google.com/maps/search/?api=1&query=Petinos+75+Avenue+de+la+Gare+Saint-Sauveur+QC', lat: 45.8908004, lng: -74.1535634 },
 ]
 
 const MAP_STOPS = STOPS.filter(s => s.lat != null && s.lng != null)
