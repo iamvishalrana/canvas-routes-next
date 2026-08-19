@@ -116,6 +116,7 @@ export async function exportExpensesPdf({
   stats,
   summaryByCategory, summaryByPayment, summaryByQuarter,
   grandTotal, grandTotalTax, grandTotalTip,
+  mealsGrandTotal = 0, mealsDeductible = 0, // CRA 50% meals & entertainment limit — see deductibleOf in ExpensesClient.jsx
   yearGroups, // [{ year, events: [{ name, items, total, totalTax, totalTip }] }]
   provinceLabelOf, paymentLabelOf,
   generatedAt,
@@ -179,6 +180,25 @@ export async function exportExpensesPdf({
       head: [['Quarter', 'GST', 'QST', 'Total']],
       body: summaryByQuarter.map(q => [q.period.replace('-', ' '), fmt(q.gst), fmt(q.qst), fmt(q.total)]),
       startY: y, margin: { left: margin, right: margin }, tableWidth: 120,
+      styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2.2 },
+      headStyles: { fillColor: GREEN, textColor: GOLD, fontStyle: 'normal' },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },
+    })
+    y = doc.lastAutoTable.finalY + 8
+  }
+
+  if (mealsGrandTotal > 0) {
+    y = ensureSpace(doc, y, 30, margin, pageH)
+    y = drawSectionLabel(doc, 'Meals & entertainment — 50% limit', y, margin)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(...MUTED)
+    doc.text('CRA caps Food & Beverages at 50% deductible (Income Tax Act s.67.1) — estimate only, confirm exceptions with your accountant.', margin, y)
+    y += 4
+    autoTable(doc, {
+      head: [['', 'Spent', 'Deductible', 'Non-deductible']],
+      body: [['Food & Beverages', fmt(mealsGrandTotal), fmt(mealsDeductible), fmt(mealsGrandTotal - mealsDeductible)]],
+      startY: y, margin: { left: margin, right: margin }, tableWidth: 140,
       styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2.2 },
       headStyles: { fillColor: GREEN, textColor: GOLD, fontStyle: 'normal' },
       columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' } },

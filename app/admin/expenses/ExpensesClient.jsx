@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import JSZip from 'jszip'
 import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
-import { EXPENSE_CATEGORIES } from '../../../lib/expenseCategories'
+import { EXPENSE_CATEGORIES, MEALS_ENTERTAINMENT_CATEGORY, MEALS_ENTERTAINMENT_DEDUCTIBLE_RATE } from '../../../lib/expenseCategories'
 import { EXPENSE_PAYMENT_METHODS, EXPENSE_PAYMENT_LABELS } from '../../../lib/expensePaymentMethods'
 import { EXPENSE_PROVINCES, EXPENSE_PROVINCE_MAP } from '../../../lib/expenseProvinces'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
@@ -55,6 +55,14 @@ function recoverableTaxOf(e) {
 }
 // Grand total actually paid: subtotal + tax + tip.
 function grandTotalOf(e) { return (parseFloat(e.amount) || 0) + taxOf(e) + tipOf(e) }
+// Estimated income-tax-deductible portion of a row. Meals & entertainment
+// (Food & Beverages) are capped at 50% under CRA rules — see the constant's
+// definition in lib/expenseCategories.js for why. Everything else is
+// treated as fully deductible.
+function deductibleOf(e) {
+  const total = grandTotalOf(e)
+  return e.category === MEALS_ENTERTAINMENT_CATEGORY ? round2(total * MEALS_ENTERTAINMENT_DEDUCTIBLE_RATE) : total
+}
 
 // All attachments on an expense (new receipt_urls list, falling back to the
 // legacy single receipt_url for older rows).
@@ -439,6 +447,12 @@ export default function ExpensesClient() {
   // grandTotalTax (all tax actually paid, including non-recoverable PST).
   const grandRecoverableTax = visibleExpenses.reduce((s, e) => s + recoverableTaxOf(e), 0)
   const missingReceiptCount = visibleExpenses.filter(e => !attachmentsOf(e).length).length
+  // Estimated deductible total — everything at 100% except Food & Beverages
+  // at the CRA's 50% meals & entertainment rate. See deductibleOf.
+  const grandDeductible = visibleExpenses.reduce((s, e) => s + deductibleOf(e), 0)
+  const mealsExpenses = visibleExpenses.filter(e => e.category === MEALS_ENTERTAINMENT_CATEGORY)
+  const mealsGrandTotal = mealsExpenses.reduce((s, e) => s + grandTotalOf(e), 0)
+  const mealsDeductible = mealsExpenses.reduce((s, e) => s + deductibleOf(e), 0)
 
   // The list renders from `renderYearGroups`. In 'folders' mode that's the real
   // Year → Event hierarchy; in 'flat' mode it's a single synthetic year+group
@@ -1116,7 +1130,7 @@ export default function ExpensesClient() {
     // silently exported all-time data instead.
     const source = visibleExpenses
     const rows = [
-      ['Date', 'Event', 'Vendor', 'Vendor Tax #', 'Category', 'Payment', 'Province', 'Currency', 'Original', 'Amount', 'GST', 'QST', 'Tax', 'Tip', 'Total', 'Reconciled', 'Receipt', 'Notes'],
+      ['Date', 'Event', 'Vendor', 'Vendor Tax #', 'Category', 'Payment', 'Province', 'Currency', 'Original', 'Amount', 'GST', 'QST', 'Tax', 'Tip', 'Total', 'Deductible (est.)', 'Reconciled', 'Receipt', 'Notes'],
       ...source.map(e => {
         const gst = parseFloat(e.gst_amount || 0), qst = parseFloat(e.qst_amount || 0)
         return [
@@ -1124,7 +1138,7 @@ export default function ExpensesClient() {
           PAYMENT_LABELS[e.payment_method] || '', e.province || 'QC',
           e.currency || 'CAD', (e.original_amount != null ? parseFloat(e.original_amount).toFixed(2) : ''),
           parseFloat(e.amount || 0).toFixed(2), gst.toFixed(2), qst.toFixed(2), taxOf(e).toFixed(2),
-          tipOf(e).toFixed(2), grandTotalOf(e).toFixed(2),
+          tipOf(e).toFixed(2), grandTotalOf(e).toFixed(2), deductibleOf(e).toFixed(2),
           e.reconciled ? 'Yes' : 'No',
           attachmentsOf(e).join(' | '), e.notes || '',
         ]
@@ -1160,6 +1174,7 @@ export default function ExpensesClient() {
       const stats = [
         { label: 'Total spent', value: fmt(grandTotal + grandTotalTax + grandTotalTip) },
         { label: 'Tax recoverable', value: fmt(grandRecoverableTax) },
+        ...(mealsGrandTotal > 0 ? [{ label: 'Deductible (est.)', value: fmt(grandDeductible) }] : []),
         { label: 'Expenses', value: String(visibleExpenses.length) },
         { label: 'Missing receipts', value: String(missingReceiptCount) },
       ]
@@ -1170,6 +1185,7 @@ export default function ExpensesClient() {
         stats,
         summaryByCategory, summaryByPayment, summaryByQuarter,
         grandTotal, grandTotalTax, grandTotalTip,
+        mealsGrandTotal, mealsDeductible,
         yearGroups,
         provinceLabelOf: provinceNameOf,
         paymentLabelOf,
@@ -1373,6 +1389,10 @@ export default function ExpensesClient() {
             // (counted in Total Spent above) but isn't claimable, so it's
             // excluded here. See recoverableTaxOf.
             { label: 'Tax Recoverable', value: fmt(grandRecoverableTax),         color: '#8A6535' },
+            // Estimated deductible total (CRA 50% meals & entertainment limit
+            // applied) — only shown once there's a meals expense in view, since
+            // otherwise it's identical to Total Spent and just adds noise.
+            ...(mealsGrandTotal > 0 ? [{ label: 'Deductible (est.)', value: fmt(grandDeductible), color: '#8A6535' }] : []),
             ...(grandTotalTip > 0 ? [{ label: 'Tips', value: fmt(grandTotalTip), color: '#8A6535' }] : []),
             { label: 'Expenses',        value: visibleExpenses.length,           color: '#1a1a1a' },
             // Tapping toggles a receipt-less-only filter so the gaps are one tap away
@@ -1914,6 +1934,29 @@ export default function ExpensesClient() {
                       )}
                     </div>
                   </div>
+
+                  {/* Meals & entertainment — CRA 50% deductibility limit */}
+                  {mealsGrandTotal > 0 && (
+                    <div style={{ marginTop: '1.5rem' }}>
+                      <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.3rem' }}>Meals &amp; entertainment — 50% limit</div>
+                      <div style={{ fontSize: '10px', color: '#bbb', marginBottom: '0.65rem' }}>CRA caps Food &amp; Beverages at 50% deductible (Income Tax Act s.67.1) — estimate only, confirm exceptions with your accountant.</div>
+                      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                        <div style={{ minWidth: '380px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px', padding: '0.35rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.08)' }}>
+                            {['', 'Spent', 'Deductible', 'Non-ded.'].map((h, i) => (
+                              <div key={i} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', textAlign: i === 0 ? 'left' : 'right' }}>{h}</div>
+                            ))}
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px 100px 100px', padding: '0.45rem 0' }}>
+                            <div style={{ fontSize: '12px', color: '#333' }}>Food &amp; Beverages</div>
+                            <div style={{ fontSize: '12px', color: '#555', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(mealsGrandTotal)}</div>
+                            <div style={{ fontSize: '12px', color: '#3B6B2F', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(mealsDeductible)}</div>
+                            <div style={{ fontSize: '12px', color: '#93333E', textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{fmt(mealsGrandTotal - mealsDeductible)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
