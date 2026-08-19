@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react'
 import { uploadToSupabaseStorage } from '../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded, isHeicFile } from '../lib/convertHeicIfNeeded'
+import { convertTiffIfNeeded, isTiffFile } from '../lib/convertTiffIfNeeded'
 import { compressImageClient } from '../lib/compressImageClient'
 import { MIME_TO_EXT } from '../lib/allowedImageTypes'
 
@@ -23,8 +24,8 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
   async function handleFiles(e) {
     const rawAll = Array.from(e.target.files || [])
     const all = rawAll.slice(0, MAX_FILES)
-    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
-    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — unsupported format`)
+    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f) || isTiffFile(f))
+    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f) && !isTiffFile(f)).map(f => `${f.name} — unsupported format`)
     const truncated = rawAll.length - all.length
     if (truncated > 0) skipped.push(`${truncated} more photo${truncated === 1 ? '' : 's'} skipped — up to ${MAX_FILES} per upload`)
     if (!rawAll.length) return
@@ -35,6 +36,7 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
       let file = files[i]
       try {
         file = await convertHeicIfNeeded(file)
+        file = await convertTiffIfNeeded(file)
         if (!ALLOWED[file.type]) throw new Error('could not be converted — try exporting as JPEG first')
         if (file.size > 100 * 1024 * 1024) throw new Error('over the 100 MB per-file limit')
         const display = await compressImageClient(file)

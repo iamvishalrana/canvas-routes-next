@@ -9,6 +9,7 @@ import { uploadToSupabaseStorage } from '../../../../../../lib/uploadToSupabaseS
 import { onImgError } from '../../../../../../lib/imgFallback'
 import { compressImageClient } from '../../../../../../lib/compressImageClient'
 import { convertHeicIfNeeded, isHeicFile } from '../../../../../../lib/convertHeicIfNeeded'
+import { convertTiffIfNeeded, isTiffFile } from '../../../../../../lib/convertTiffIfNeeded'
 import { formatMbps } from '../../../../../../lib/formatMbps'
 import { MIME_TO_EXT } from '../../../../../../lib/allowedImageTypes'
 
@@ -100,15 +101,16 @@ export default function FolderClient() {
   async function handleFiles(e) {
     const all = Array.from(e.target.files || [])
     if (fileRef.current) fileRef.current.value = ''
-    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
-    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — unsupported format`)
+    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f) || isTiffFile(f))
+    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f) && !isTiffFile(f)).map(f => `${f.name} — unsupported format`)
     if (!all.length) return
     setUpload({ done: 0, total: files.length, errors: skipped, bytes: 0, ms: 0 })
     for (let i = 0; i < files.length; i++) {
       let file = files[i]
       try {
         file = await convertHeicIfNeeded(file)
-        if (!ALLOWED[file.type]) throw new Error('could not be converted from HEIC — try exporting as JPEG first')
+        file = await convertTiffIfNeeded(file)
+        if (!ALLOWED[file.type]) throw new Error('could not be converted — try exporting as JPEG first')
         if (file.size > 100 * 1024 * 1024) throw new Error('over the 100 MB per-file limit')
         const display = await compressImageClient(file)
         const urlRes = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/upload-url`, {

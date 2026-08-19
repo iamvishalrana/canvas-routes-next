@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react'
 import { uploadToSupabaseStorage } from '../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded, isHeicFile } from '../lib/convertHeicIfNeeded'
+import { convertTiffIfNeeded, isTiffFile } from '../lib/convertTiffIfNeeded'
 import { compressImageClient } from '../lib/compressImageClient'
 import { MIME_TO_EXT } from '../lib/allowedImageTypes'
 import { membersPhotosT } from '../lib/i18n/membersPhotos'
@@ -38,8 +39,8 @@ export default function MemberPhotoUpload({ attendedEventNames, lang = 'en' }) {
   async function handleFiles(e) {
     const rawAll = Array.from(e.target.files || [])
     const all = rawAll.slice(0, MAX_FILES)
-    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f))
-    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f)).map(f => `${f.name} — ${t.unsupportedFormat}`)
+    const files = all.filter(f => ALLOWED[f.type] || isHeicFile(f) || isTiffFile(f))
+    const skipped = all.filter(f => !ALLOWED[f.type] && !isHeicFile(f) && !isTiffFile(f)).map(f => `${f.name} — ${t.unsupportedFormat}`)
     const truncated = rawAll.length - all.length
     if (truncated > 0) skipped.push(t.photosSkipped(truncated, truncated === 1 ? '' : 's', MAX_FILES))
     if (!rawAll.length) return
@@ -50,6 +51,7 @@ export default function MemberPhotoUpload({ attendedEventNames, lang = 'en' }) {
       let file = files[i]
       try {
         file = await convertHeicIfNeeded(file)
+        file = await convertTiffIfNeeded(file)
         if (!ALLOWED[file.type]) throw new Error(t.couldNotConvert)
         if (file.size > 100 * 1024 * 1024) throw new Error(t.overSizeLimit)
         const display = await compressImageClient(file)
