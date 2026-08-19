@@ -12,6 +12,7 @@ import { convertHeicIfNeeded, isHeicFile } from '../../../../../../lib/convertHe
 import { convertTiffIfNeeded, isTiffFile } from '../../../../../../lib/convertTiffIfNeeded'
 import { formatMbps } from '../../../../../../lib/formatMbps'
 import { MIME_TO_EXT } from '../../../../../../lib/allowedImageTypes'
+import { sha256Hex } from '../../../../../../lib/hashFile'
 
 const ALLOWED = MIME_TO_EXT
 
@@ -113,25 +114,43 @@ export default function FolderClient() {
         if (!ALLOWED[file.type]) throw new Error('could not be converted — try exporting as JPEG first')
         if (file.size > 100 * 1024 * 1024) throw new Error('over the 100 MB per-file limit')
         const display = await compressImageClient(file)
+        // Hashed so the server can spot "this exact photo is already
+        // uploaded under this folder's title elsewhere" and skip the
+        // storage upload entirely for a shared group shot — see
+        // lib/photoShareDedup.js.
+        const contentHash = await sha256Hex(file)
         const urlRes = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/upload-url`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fileType: file.type, dispFileType: display.type || 'image/jpeg' }),
+          body: JSON.stringify({ fileType: file.type, dispFileType: display.type || 'image/jpeg', contentHash }),
         })
         const urls = await urlRes.json().catch(() => ({}))
         if (!urlRes.ok) throw new Error(urls.error || 'upload failed — please try again')
-        const pairStarted = performance.now()
-        await Promise.all([
-          uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.originalPath, token: urls.originalToken, file }),
-          uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.displayPath, token: urls.displayToken, file: display }),
-        ])
-        const pairMs = performance.now() - pairStarted
-        setUpload(u => u ? { ...u, bytes: u.bytes + file.size + display.size, ms: u.ms + pairMs } : u)
-        const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/photos`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ originalPath: urls.originalPath, displayPath: urls.displayPath }),
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data.error || 'upload failed — please try again')
+
+        let data
+        if (urls.duplicate) {
+          // Byte-identical photo already uploaded under a same-titled
+          // folder elsewhere — link it in, nothing to upload.
+          const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/photos`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ photoId: urls.photoId }),
+          })
+          data = await res.json().catch(() => ({}))
+          if (!res.ok) throw new Error(data.error || 'upload failed — please try again')
+        } else {
+          const pairStarted = performance.now()
+          await Promise.all([
+            uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.originalPath, token: urls.originalToken, file }),
+            uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.displayPath, token: urls.displayToken, file: display }),
+          ])
+          const pairMs = performance.now() - pairStarted
+          setUpload(u => u ? { ...u, bytes: u.bytes + file.size + display.size, ms: u.ms + pairMs } : u)
+          const res = await fetch(`/api/admin/photo-share-people/${personId}/folders/${folderId}/photos`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ originalPath: urls.originalPath, displayPath: urls.displayPath, contentHash }),
+          })
+          data = await res.json().catch(() => ({}))
+          if (!res.ok) throw new Error(data.error || 'upload failed — please try again')
+        }
         setPhotos(prev => [...prev, data])
       } catch (err) {
         setUpload(u => u ? { ...u, errors: [...u.errors, `${file.name} — ${err.message}`] } : u)
@@ -378,6 +397,15 @@ export default function FolderClient() {
                   style={{ position: 'absolute', bottom: '6px', right: '6px', width: '26px', height: '26px', borderRadius: '99px', background: 'rgba(15,30,20,0.65)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                 </span>
+                {/* Same photo also linked into someone else's folder — never
+                    a silent black box about where a shared photo lives. */}
+                {photo.sharedWith?.length > 0 && (
+                  <span title={`Also in: ${photo.sharedWith.map(s => s.personName).join(', ')}`}
+                    style={{ position: 'absolute', top: '6px', left: '6px', display: 'flex', alignItems: 'center', gap: '3px', padding: '3px 7px', borderRadius: '99px', background: 'rgba(15,30,20,0.72)', color: '#c5a882', fontSize: '10px', fontWeight: '600', cursor: 'default' }}>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+                    {photo.sharedWith.length}
+                  </span>
+                )}
               </div>
             )
           })}

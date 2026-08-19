@@ -14,7 +14,7 @@ export async function GET() {
   const [{ data: people, error }, { data: folders }, { data: items }] = await Promise.all([
     supabase.from('photo_share_people').select('*').order('created_at', { ascending: false }),
     supabase.from('photo_share_folders').select('id, person_id'),
-    supabase.from('photo_share_items').select('folder_id'),
+    supabase.from('photo_share_folder_items').select('folder_id'),
   ])
   if (error) return Response.json({ error: error.message }, { status: 500 })
 

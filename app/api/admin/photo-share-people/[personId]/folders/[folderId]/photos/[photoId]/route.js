@@ -1,11 +1,15 @@
 import { createAdminClient } from '../../../../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../../../../lib/sentry'
+import { unlinkFolderItemAndCleanup } from '../../../../../../../../../lib/photoShareDedup'
 
-const BUCKET = 'photo-shares'
+// `photoId` in this route's URL is actually a photo_share_folder_items LINK
+// id (kept as-is to avoid a client route-shape change) — captions are
+// per-folder-link, not per-photo, since two different people's folders can
+// share the same underlying photo but reasonably want different captions.
 
 // Edit a non-member photo's caption (shown on their gallery). Verifies the
-// photo belongs to this person's folder before writing.
+// link belongs to this person's folder before writing.
 export async function PATCH(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -18,12 +22,17 @@ export async function PATCH(request, { params }) {
   const { data: folder } = await supabase.from('photo_share_folders').select('id').eq('id', folderId).eq('person_id', personId).maybeSingle()
   if (!folder) return Response.json({ error: 'Folder not found.' }, { status: 404 })
 
-  const { data, error } = await supabase.from('photo_share_items')
+  const { data, error } = await supabase.from('photo_share_folder_items')
     .update({ caption }).eq('id', photoId).eq('folder_id', folderId).select('id, caption').single()
   if (error) return Response.json({ error: error.message }, { status: 500 })
   return Response.json(data)
 }
 
+// Removes this photo from just this one person's folder. If the same photo
+// is still linked into any other folder (shared group shot), the storage
+// files and canonical photo row are left alone — see
+// lib/photoShareDedup.js#unlinkFolderItemAndCleanup for the actual
+// last-reference check.
 export async function DELETE(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -33,16 +42,14 @@ export async function DELETE(request, { params }) {
   const { data: folder } = await supabase.from('photo_share_folders').select('id').eq('id', folderId).eq('person_id', personId).maybeSingle()
   if (!folder) return Response.json({ error: 'Folder not found.' }, { status: 404 })
 
-  const { data: row } = await supabase.from('photo_share_items').select('storage_path, original_path').eq('id', photoId).eq('folder_id', folderId).maybeSingle()
-  if (!row) return Response.json({ error: 'Photo not found.' }, { status: 404 })
+  const { data: link } = await supabase.from('photo_share_folder_items').select('id').eq('id', photoId).eq('folder_id', folderId).maybeSingle()
+  if (!link) return Response.json({ error: 'Photo not found.' }, { status: 404 })
 
-  const { error } = await supabase.from('photo_share_items').delete().eq('id', photoId)
-  if (error) return Response.json({ error: error.message }, { status: 500 })
-
-  const paths = [...new Set([row.storage_path, row.original_path].filter(Boolean))]
-  if (paths.length) {
-    await supabase.storage.from(BUCKET).remove(paths).catch(err =>
-      captureException(err, { context: 'admin-photo-share-item-delete-storage', photoId }))
+  try {
+    await unlinkFolderItemAndCleanup(supabase, { linkId: photoId })
+  } catch (err) {
+    captureException(err, { context: 'admin-photo-share-item-delete', photoId })
+    return Response.json({ error: 'Failed to delete photo.' }, { status: 500 })
   }
   return Response.json({ success: true })
 }

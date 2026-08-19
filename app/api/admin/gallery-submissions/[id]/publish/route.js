@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../../../lib/adminAudit.js'
 import { captureException } from '../../../../../../lib/sentry'
+import { createSharedPhotoAndLink } from '../../../../../../lib/photoShareDedup'
 
 // Copies a pending submission into the real, visible destination
 // (gallery_photos for a member's event album, photo_share_items for a
@@ -49,13 +50,22 @@ export async function POST(request, { params }) {
     const { error: tagErr } = await supabase.from('gallery_photo_tags').insert({ photo_id: row.id, member_id: claimed.member_id })
     if (tagErr) captureException(tagErr, { context: 'gallery-submission-publish-tag', submissionId: id })
   } else {
-    const { error: insertErr } = await supabase.from('photo_share_items').insert({
-      folder_id: claimed.photo_share_folder_id,
-      caption: claimed.caption,
-      storage_path: claimed.storage_path,
-      original_path: claimed.original_path,
-    })
-    if (insertErr) {
+    // Always creates a fresh canonical photo — non-member self-submissions
+    // don't compute a content hash (see lib/hashFile.js, only used by the
+    // admin direct-upload flow), so this intentionally never auto-links
+    // into an existing shared photo. contentHash: null can never match
+    // anything, by design (see the migration's unique index).
+    const { data: folder } = await supabase.from('photo_share_folders').select('title').eq('id', claimed.photo_share_folder_id).maybeSingle()
+    try {
+      await createSharedPhotoAndLink(supabase, {
+        folderId: claimed.photo_share_folder_id,
+        storagePath: claimed.storage_path,
+        originalPath: claimed.original_path,
+        contentHash: null,
+        folderTitle: folder?.title || '',
+        caption: claimed.caption,
+      })
+    } catch (insertErr) {
       captureException(insertErr, { context: 'gallery-submission-publish-nonmember', submissionId: id })
       await supabase.from('gallery_photo_submissions').update({ status: 'pending' }).eq('id', id)
       return Response.json({ error: 'Could not publish this photo.' }, { status: 500 })

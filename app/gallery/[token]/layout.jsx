@@ -9,11 +9,11 @@ export async function generateMetadata({ params }) {
   if (person) {
     const { data: folders } = await admin.from('photo_share_folders').select('id').eq('person_id', person.id)
     const folderIds = (folders || []).map(f => f.id)
-    const { data: firstItem } = folderIds.length
-      ? await admin.from('photo_share_items').select('storage_path').in('folder_id', folderIds).order('created_at', { ascending: true }).limit(1).maybeSingle()
+    const { data: firstLink } = folderIds.length
+      ? await admin.from('photo_share_folder_items').select('photo:photo_share_photos(storage_path)').in('folder_id', folderIds).order('created_at', { ascending: true }).limit(1).maybeSingle()
       : { data: null }
-    if (firstItem) {
-      const { data: { publicUrl } } = admin.storage.from('photo-shares').getPublicUrl(firstItem.storage_path)
+    if (firstLink?.photo) {
+      const { data: { publicUrl } } = admin.storage.from('photo-shares').getPublicUrl(firstLink.photo.storage_path)
       bg = publicUrl
     }
   }

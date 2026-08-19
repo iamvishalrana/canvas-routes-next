@@ -3,6 +3,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { captureException } from '../../../../../lib/sentry'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
+import { cleanupOrphanedPhotos } from '../../../../../lib/photoShareDedup'
 
 const BUCKET = 'photo-shares'
 
@@ -20,7 +21,7 @@ export async function GET(request, { params }) {
 
   const { data: folders } = await supabase.from('photo_share_folders')
     .select('*').eq('person_id', personId).order('created_at', { ascending: false })
-  const { data: items } = await supabase.from('photo_share_items')
+  const { data: items } = await supabase.from('photo_share_folder_items')
     .select('folder_id').in('folder_id', (folders || []).map(f => f.id))
 
   const countByFolder = new Map()
@@ -56,8 +57,10 @@ export async function PATCH(request, { params }) {
   return Response.json(data)
 }
 
-// Deletes a person and everything underneath them — every folder, every
-// photo, and every storage file across all of it.
+// Deletes a person and every folder underneath them. Photo LINKS cascade
+// away too, but a photo shared into someone ELSE's folder (a group shot)
+// keeps its storage file and canonical row — see
+// lib/photoShareDedup.js#cleanupOrphanedPhotos.
 export async function DELETE(request, { params }) {
   const adminUser = await requireAdmin()
   if (!adminUser) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -67,9 +70,10 @@ export async function DELETE(request, { params }) {
   const { data: person } = await supabase.from('photo_share_people').select('name, email').eq('id', personId).maybeSingle()
   const { data: folders } = await supabase.from('photo_share_folders').select('id').eq('person_id', personId)
   const folderIds = (folders || []).map(f => f.id)
-  const { data: items } = folderIds.length
-    ? await supabase.from('photo_share_items').select('storage_path, original_path').in('folder_id', folderIds)
+  const { data: links } = folderIds.length
+    ? await supabase.from('photo_share_folder_items').select('photo_id').in('folder_id', folderIds)
     : { data: [] }
+  const photoIds = (links || []).map(l => l.photo_id)
   // gallery_photo_submissions.photo_share_folder_id also cascades when the
   // folders are cascade-deleted below — any still-pending (unreviewed)
   // uploads for this person leak in storage forever unless read out now.
@@ -80,13 +84,13 @@ export async function DELETE(request, { params }) {
   const { error } = await supabase.from('photo_share_people').delete().eq('id', personId)
   if (error) return Response.json({ error: error.message }, { status: 500 })
 
-  const paths = [...new Set([
-    ...(items || []).flatMap(i => [i.storage_path, i.original_path]),
-    ...(pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]),
-  ].filter(Boolean))]
-  if (paths.length) {
-    await supabase.storage.from(BUCKET).remove(paths).catch(err =>
-      captureException(err, { context: 'admin-photo-share-person-delete-storage', personId }))
+  await cleanupOrphanedPhotos(supabase, photoIds).catch(err =>
+    captureException(err, { context: 'admin-photo-share-person-delete-cleanup', personId }))
+
+  const pendingPaths = [...new Set((pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
+  if (pendingPaths.length) {
+    await supabase.storage.from(BUCKET).remove(pendingPaths).catch(err =>
+      captureException(err, { context: 'admin-photo-share-person-delete-pending-storage', personId }))
   }
 
   await logAdminAction(supabase, adminUser?.email, {
