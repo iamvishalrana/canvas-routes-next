@@ -12,27 +12,29 @@ const ROUTE_SLUG = 'rise-and-drive'
 // and the map markers. Meetup is the same Starbucks used for Hello to
 // Montebello — south service road of Autoroute 440 in Laval (4630 Desserte
 // Sud Autoroute 440, Laval, QC H7T 2Z8), confirmed via
-// https://maps.app.goo.gl/dj4LKV6nTD6GwnVD8. Saint-Sauveur/Estérel/Chertsey/
-// Saint-Donat/Rawdon are town-center geocoded estimates (this is a loop
-// through the towns, not a stop at one exact address in each) — good enough
-// for a reference pin, not independently verified for turn-by-turn
-// navigation. Petinos (breakfast, closing the morning) has no confirmed
-// address yet — it's listed in the itinerary text with no map pin or link
-// until Jerry locks the exact location (Saint-Jérôme or Laval).
+// https://maps.app.goo.gl/dj4LKV6nTD6GwnVD8. Full confirmed route (Laval →
+// Rawdon → Saint-Côme → Café Marius, Saint-Donat-de-Montcalm → Petinos,
+// Saint-Sauveur) locked in by Jerry via
+// https://maps.app.goo.gl/vQMQdBm7M1VTJ1dJ7 — see ROUTE_LINK below.
+// Rawdon and Saint-Côme are town-center geocoded estimates (waypoints
+// through the towns, not one exact address) — good enough for a reference
+// pin, not independently verified for turn-by-turn navigation. Café Marius
+// and Petinos both now have confirmed street-level coordinates (Café Marius:
+// Rue Principale, Saint-Donat-de-Montcalm; Petinos: 75 Avenue de la Gare,
+// Saint-Sauveur).
 const STOPS = [
   { label: 'Starbucks — Autoroute 440, Back Parking', note: { en: '7:30 AM · Laval · Departure sharp', fr: '7 h 30 · Laval · Départ précis' }, tag: { en: 'Meetup & Departure', fr: 'Rendez-vous et départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
-  { label: 'Saint-Sauveur', note: { en: 'First stretch into the Laurentians — the road starts to open up', fr: "Premier tronçon dans les Laurentides — la route commence à s'ouvrir" }, href: 'https://www.google.com/maps/search/?api=1&query=Saint-Sauveur,+QC', lat: 45.8850, lng: -74.1728 },
-  { label: 'Estérel', note: { en: 'Lake country, sweeping curves', fr: 'Pays des lacs, longues courbes' }, href: 'https://www.google.com/maps/search/?api=1&query=Estérel,+QC', lat: 45.9236, lng: -74.1214 },
-  { label: 'Chertsey', note: { en: 'Deeper into the backroads', fr: 'Plus profondément dans les routes secondaires' }, href: 'https://www.google.com/maps/search/?api=1&query=Chertsey,+QC', lat: 46.0500, lng: -73.8814 },
-  { label: 'Saint-Donat', note: { en: 'Coffee stop — covered by Canvas Routes', fr: 'Arrêt café — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Saint-Donat,+QC', lat: 46.3199, lng: -74.2306 },
-  { label: 'Rawdon', note: { en: 'Last stretch before heading back', fr: 'Dernier tronçon avant le retour' }, href: 'https://www.google.com/maps/search/?api=1&query=Rawdon,+QC', lat: 46.0470, lng: -73.7181 },
-  { label: 'Petinos', note: { en: 'Breakfast — covered by Canvas Routes · exact location TBD', fr: 'Petit-déjeuner — couvert par Canvas Routes · lieu à confirmer' }, tag: { en: 'Breakfast', fr: 'Petit-déjeuner' }, feature: true, end: true },
+  { label: 'Rawdon', note: { en: 'Into Lanaudière — the first real stretch of backroads', fr: 'Direction Lanaudière — le premier vrai tronçon de routes secondaires' }, href: 'https://www.google.com/maps/search/?api=1&query=Rawdon,+QC', lat: 46.0470, lng: -73.7181 },
+  { label: 'Saint-Côme', note: { en: 'Deeper into cottage country, quiet roads the whole way', fr: 'Plus profondément dans les chalets, des routes tranquilles tout du long' }, href: 'https://www.google.com/maps/search/?api=1&query=Saint-Côme,+QC', lat: 46.2710370, lng: -73.7714770 },
+  { label: 'Café Marius', note: { en: 'Coffee stop — covered by Canvas Routes', fr: 'Arrêt café — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Café+Marius+Rue+Principale+Saint-Donat-de-Montcalm+QC', lat: 46.3107848, lng: -74.2103737 },
+  { label: 'Petinos', note: { en: 'Breakfast in Saint-Sauveur — covered by Canvas Routes', fr: 'Petit-déjeuner à Saint-Sauveur — couvert par Canvas Routes' }, tag: { en: 'Breakfast', fr: 'Petit-déjeuner' }, feature: true, end: true, href: 'https://www.google.com/maps/search/?api=1&query=Petinos+75+Avenue+de+la+Gare+Saint-Sauveur+QC', lat: 45.8908004, lng: -74.1535634 },
 ]
 
-// Map only shows stops with confirmed coordinates — Petinos is excluded
-// until its address is locked in (see STOPS comment above).
 const MAP_STOPS = STOPS.filter(s => s.lat != null && s.lng != null)
-const ROUTE_LINK = 'https://www.google.com/maps/dir/' + MAP_STOPS.map(s => `${s.lat},${s.lng}`).join('/')
+// Jerry's actual confirmed-route share link (Laval → Rawdon → Saint-Côme →
+// Café Marius → Petinos) — used directly instead of a synthesized
+// /maps/dir/ chain now that every stop is real, not a placeholder.
+const ROUTE_LINK = 'https://maps.app.goo.gl/vQMQdBm7M1VTJ1dJ7'
 
 // Resolves a translatable field — either a plain string (untranslated, e.g.
 // a proper noun) or an {en, fr} pair — against the current language.
@@ -54,10 +56,10 @@ const CAR_FACTS = {}
 
 const DRIVE_BULLETS = [
   { emoji: '📸', text: { en: "Arrive on time — it's a quick, low-key morning, so there's no long mingling window before we roll out together.", fr: "Arrivez à l'heure — c'est une matinée rapide et décontractée, il n'y a pas de longue période pour discuter avant le départ." } },
-  { emoji: '🛣️', text: { en: 'We meet at 7:30 AM at Starbucks in Laval — departure is sharp, so don\'t be late. From there the convoy heads north into the Laurentians through Saint-Sauveur, then Estérel and Chertsey — backroads the whole way.', fr: "Rendez-vous à 7 h 30 au Starbucks à Laval — départ précis, alors ne soyez pas en retard. De là, le convoi file vers le nord dans les Laurentides par Saint-Sauveur, puis Estérel et Chertsey — des routes secondaires tout du long." } },
-  { emoji: '☕', text: { en: 'A coffee stop in Saint-Donat, covered by Canvas Routes, breaks up the drive right in the middle of the loop.', fr: 'Un arrêt café à Saint-Donat, couvert par Canvas Routes, casse la route en plein milieu de la boucle.' } },
-  { emoji: '🏁', text: { en: 'From Saint-Donat, the convoy heads back through Rawdon — the last real stretch of backroads before things open up again heading home.', fr: 'De Saint-Donat, le convoi reprend la route par Rawdon — le dernier vrai tronçon de routes secondaires avant que ça s\'ouvre de nouveau vers la maison.' } },
-  { emoji: '🥐', text: { en: 'Breakfast at Petinos closes the morning, covered by Canvas Routes — exact location confirmed closer to the date.', fr: 'Le petit-déjeuner chez Petinos clôture la matinée, couvert par Canvas Routes — le lieu exact sera confirmé à l\'approche de la date.' } },
+  { emoji: '🛣️', text: { en: "We meet at 7:30 AM at Starbucks in Laval — departure is sharp, so don't be late. From there the convoy heads north into Lanaudière through Rawdon, then deeper into cottage country through Saint-Côme — backroads the whole way.", fr: "Rendez-vous à 7 h 30 au Starbucks à Laval — départ précis, alors ne soyez pas en retard. De là, le convoi file vers le nord en Lanaudière par Rawdon, puis plus profondément dans les chalets par Saint-Côme — des routes secondaires tout du long." } },
+  { emoji: '☕', text: { en: 'A coffee stop at Café Marius in Saint-Donat-de-Montcalm, covered by Canvas Routes, breaks up the drive right in the middle of the loop.', fr: 'Un arrêt café chez Café Marius à Saint-Donat-de-Montcalm, couvert par Canvas Routes, casse la route en plein milieu de la boucle.' } },
+  { emoji: '🏁', text: { en: 'From Saint-Donat, the convoy heads west into the Laurentians toward Saint-Sauveur — the last real stretch of backroads before things open up again near home.', fr: "De Saint-Donat, le convoi file vers l'ouest dans les Laurentides en direction de Saint-Sauveur — le dernier vrai tronçon de routes secondaires avant que ça s'ouvre de nouveau près de la maison." } },
+  { emoji: '🥐', text: { en: 'Breakfast at Petinos in Saint-Sauveur closes the morning, covered by Canvas Routes.', fr: 'Le petit-déjeuner chez Petinos à Saint-Sauveur clôture la matinée, couvert par Canvas Routes.' } },
   { emoji: '🕛', text: { en: "Back on the road by around noon — a short, genuinely great morning drive, not a full-day production.", fr: "De retour sur la route vers midi — une courte et vraiment belle balade matinale, pas une production d'une journée complète." } },
 ]
 
@@ -87,7 +89,7 @@ const UI = {
     mapLabel: 'Map',
     openRoute: 'Open Route in Google Maps →',
     modalEyebrow: 'Canvas Routes · Rise and Drive 2026',
-    heroTags: ['Laurentian Backroads', '~180km Drive', 'Coffee + Breakfast'],
+    heroTags: ['Laurentian Backroads', '~220km Drive', 'Coffee + Breakfast'],
     countdownUnits: ['Days', 'Hrs', 'Min', 'Sec'],
   },
   fr: {
@@ -104,7 +106,7 @@ const UI = {
     mapLabel: 'Carte',
     openRoute: "Ouvrir l'itinéraire dans Google Maps →",
     modalEyebrow: 'Canvas Routes · Rise and Drive 2026',
-    heroTags: ['Routes secondaires laurentiennes', '~180 km de route', 'Café + petit-déjeuner'],
+    heroTags: ['Routes secondaires laurentiennes', '~220 km de route', 'Café + petit-déjeuner'],
     countdownUnits: ['Jours', 'Hres', 'Min', 'Sec'],
   },
 }
@@ -608,7 +610,7 @@ export default function RiseAndDriveItineraryPage() {
             Sunday · August 30, 2026
           </div>
           <div className="gate-tags" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.75rem' }}>
-            {['Laurentian Backroads', '~180km Drive', 'Coffee + Breakfast'].map(tag => (
+            {['Laurentian Backroads', '~220km Drive', 'Coffee + Breakfast'].map(tag => (
               <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', border: '0.5px solid rgba(197,168,130,0.25)', padding: '3px 9px' }}>{tag}</span>
             ))}
           </div>
