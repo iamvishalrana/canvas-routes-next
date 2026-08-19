@@ -41,6 +41,7 @@ export default function PersonClient() {
   const [savingPerson, setSavingPerson] = useState(false)
   const [deletePersonConfirm, setDeletePersonConfirm] = useState(false)
   const [deletingPerson, setDeletingPerson] = useState(false)
+  const [folderTitleSuggestions, setFolderTitleSuggestions] = useState([])
 
   function load() {
     fetch(`/api/admin/photo-share-people/${personId}`)
@@ -49,6 +50,17 @@ export default function PersonClient() {
       .catch(() => { setErr('Failed to load — this person may not exist.'); setLoading(false) })
   }
   useEffect(load, [personId])
+
+  // Every folder title used across ALL people, not just this one — the whole
+  // point is reusing the same event name across different people's folders
+  // instead of retyping it (and risking a typo that fragments one event into
+  // two differently-titled folders).
+  useEffect(() => {
+    fetch('/api/admin/photo-share-people/folder-titles')
+      .then(r => r.ok ? r.json() : { titles: [] })
+      .then(data => setFolderTitleSuggestions(Array.isArray(data.titles) ? data.titles : []))
+      .catch(() => {})
+  }, [])
 
   const link = person ? `${siteUrl()}/gallery/${person.token}` : ''
 
@@ -219,8 +231,11 @@ export default function PersonClient() {
         <form onSubmit={handleCreateFolder} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', padding: '1.1rem', marginBottom: '1.5rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: '1 1 240px' }}>
             <L>Folder title (e.g. the event name)</L>
-            <input style={inp} value={folderTitle} placeholder="e.g. Whips to Eastern Townships — July 2026"
+            <input style={inp} list="ph-share-folder-titles" value={folderTitle} placeholder="e.g. Whips to Eastern Townships — July 2026"
               onChange={e => setFolderTitle(e.target.value)} maxLength={120} autoFocus />
+            <datalist id="ph-share-folder-titles">
+              {folderTitleSuggestions.map(t => <option key={t} value={t} />)}
+            </datalist>
           </div>
           <div style={{ flex: '0 0 auto' }}>
             <L>Removes after</L>

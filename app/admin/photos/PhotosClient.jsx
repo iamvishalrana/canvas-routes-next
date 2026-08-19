@@ -542,7 +542,10 @@ export default function PhotosClient() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.6rem', marginBottom: '0.75rem' }}>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <L>Event Name *</L>
-                  <input style={inp} placeholder="Whips to Eastern Townships — July 5, 2026" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={120} />
+                  <input style={inp} list="ph-event-album-names" placeholder="Whips to Eastern Townships — July 5, 2026" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={120} />
+                  <datalist id="ph-event-album-names">
+                    {[...new Set(photos.filter(p => p.category === 'event' && p.album).map(p => p.album))].map(a => <option key={a} value={a} />)}
+                  </datalist>
                   <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>Must match the event's name exactly — this is how we know which members attended and can view it.</div>
                 </div>
                 <div>
