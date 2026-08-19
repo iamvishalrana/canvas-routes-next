@@ -58,7 +58,7 @@ export default function MemberPhotoUpload({ attendedEventNames, lang = 'en' }) {
           body: JSON.stringify({ album, origExt: ALLOWED[file.type], dispExt: ALLOWED[display.type] || 'jpg' }),
         })
         const urls = await urlRes.json().catch(() => ({}))
-        if (!urlRes.ok) throw new Error(urls.error || `HTTP ${urlRes.status}`)
+        if (!urlRes.ok) throw new Error(urls.error || t.uploadFailedRetry)
         await Promise.all([
           uploadToSupabaseStorage({ bucket: 'gallery-photos', path: urls.originalPath, token: urls.originalToken, file }),
           uploadToSupabaseStorage({ bucket: 'gallery-photos', path: urls.displayPath, token: urls.displayToken, file: display }),
@@ -68,7 +68,7 @@ export default function MemberPhotoUpload({ attendedEventNames, lang = 'en' }) {
           body: JSON.stringify({ album, caption, originalPath: urls.originalPath, displayPath: urls.displayPath }),
         })
         const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+        if (!res.ok) throw new Error(data.error || t.uploadFailedRetry)
         succeeded += 1
       } catch (err) {
         setUpload(u => u ? { ...u, errors: [...u.errors, `${file.name} — ${err.message}`] } : u)

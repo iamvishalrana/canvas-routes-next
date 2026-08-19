@@ -116,7 +116,7 @@ export default function FolderClient() {
           body: JSON.stringify({ fileType: file.type, dispFileType: display.type || 'image/jpeg' }),
         })
         const urls = await urlRes.json().catch(() => ({}))
-        if (!urlRes.ok) throw new Error(urls.error || `HTTP ${urlRes.status}`)
+        if (!urlRes.ok) throw new Error(urls.error || 'upload failed — please try again')
         const pairStarted = performance.now()
         await Promise.all([
           uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.originalPath, token: urls.originalToken, file }),
@@ -129,7 +129,7 @@ export default function FolderClient() {
           body: JSON.stringify({ originalPath: urls.originalPath, displayPath: urls.displayPath }),
         })
         const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+        if (!res.ok) throw new Error(data.error || 'upload failed — please try again')
         setPhotos(prev => [...prev, data])
       } catch (err) {
         setUpload(u => u ? { ...u, errors: [...u.errors, `${file.name} — ${err.message}`] } : u)
