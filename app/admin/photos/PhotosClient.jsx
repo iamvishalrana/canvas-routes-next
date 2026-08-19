@@ -161,6 +161,7 @@ export default function PhotosClient() {
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [personalMember, setPersonalMember] = useState(null)
   const [personalFolder, setPersonalFolder] = useState('') // folder (album) new personal uploads go into
+  const [creatingPersonalFolder, setCreatingPersonalFolder] = useState(false) // toggles the "+ New Folder" form, mirroring the non-member photo-share "+ New Folder" pattern
   const [notifyStatus, setNotifyStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | <error string> }
   const [submissionsCount, setSubmissionsCount] = useState(0)
   const [albumSearch, setAlbumSearch] = useState('')
@@ -666,12 +667,7 @@ export default function PhotosClient() {
                   <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{personalMember.email}<CopyBtn value={personalMember.email} /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <input list={`ph-folders-${personalMember.id}`} value={personalFolder} onChange={e => setPersonalFolder(e.target.value)}
-                    placeholder="Folder (optional)" maxLength={120} title="New photos go into this folder — leave blank for General"
-                    style={{ width: '150px', padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }} />
-                  <datalist id={`ph-folders-${personalMember.id}`}>
-                    {[...new Set(photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id && p.album).map(p => p.album))].map(a => <option key={a} value={a} />)}
-                  </datalist>
+                  <PrimaryBtn onClick={() => setCreatingPersonalFolder(v => !v)}>{creatingPersonalFolder ? 'Cancel' : '+ New Folder'}</PrimaryBtn>
                   <GhostBtn small disabled={!!upload} onClick={() => personalFilesRef.current?.click()}>+ Add Photos</GhostBtn>
                   <GhostBtn small disabled={notifyStatus[personalMember.id] === 'sending'} onClick={() => notifyMember(personalMember)}>
                     {notifyStatus[personalMember.id] === 'sending' ? 'Sending…'
@@ -679,18 +675,42 @@ export default function PhotosClient() {
                       : notifyStatus[personalMember.id] ? 'Retry'
                       : `Notify ${personalMember.name?.split(' ')[0] || 'member'}`}
                   </GhostBtn>
-                  <GhostBtn small onClick={() => { setPersonalMember(null); setPersonalFolder('') }}>Close</GhostBtn>
+                  <GhostBtn small onClick={() => { setPersonalMember(null); setPersonalFolder(''); setCreatingPersonalFolder(false) }}>Close</GhostBtn>
                 </div>
                 {notifyStatus[personalMember.id] && !['sending', 'sent'].includes(notifyStatus[personalMember.id]) && (
                   <div style={{ fontSize: '11px', color: '#93333E', width: '100%' }}>{notifyStatus[personalMember.id]}</div>
                 )}
               </div>
+
+              {/* "+ New Folder" form — mirrors the non-member photo-share
+                  "+ New Folder" pattern (PersonClient.jsx). There's no
+                  standalone folder row to insert here (a personal folder is
+                  just gallery_photos.album, it only really exists once it
+                  has a photo in it) — submitting sets the active folder name
+                  and immediately opens the file picker, which is the closest
+                  honest equivalent of "creating" it. Also doubles as "add
+                  more to an existing folder" via the datalist, same as the
+                  input it replaced. */}
+              {creatingPersonalFolder && (
+                <form onSubmit={e => { e.preventDefault(); setCreatingPersonalFolder(false); personalFilesRef.current?.click() }}
+                  style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fff', display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                  <div style={{ flex: '1 1 220px' }}>
+                    <L>Folder name (e.g. the event name)</L>
+                    <input style={inp} list={`ph-folders-${personalMember.id}`} value={personalFolder} onChange={e => setPersonalFolder(e.target.value)}
+                      placeholder="Leave blank for General" maxLength={120} autoFocus />
+                    <datalist id={`ph-folders-${personalMember.id}`}>
+                      {[...new Set(photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id && p.album).map(p => p.album))].map(a => <option key={a} value={a} />)}
+                    </datalist>
+                  </div>
+                  <PrimaryBtn type="submit">Choose Photos…</PrimaryBtn>
+                </form>
+              )}
               <div style={{ padding: '1.25rem' }}>
                 {(() => {
                   const mp = photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id)
                   if (mp.length === 0) return (
                     <div style={{ textAlign: 'center', color: '#bbb', fontSize: '13px', padding: '1.5rem 0' }}>
-                      No photos yet — type a folder name above (optional) and click Add Photos.
+                      No photos yet — click "+ New Folder" to name one (optional), or "+ Add Photos" to upload straight into General.
                     </div>
                   )
                   // Group into folders (album); null-album photos are "General".
@@ -733,8 +753,8 @@ export default function PhotosClient() {
               <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.75rem' }}>Existing folders</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 {personalGroups.map(g => (
-                  <div key={g.member?.id || 'unknown'} role="button" tabIndex={0} onClick={() => setPersonalMember(g.member)}
-                    onKeyDown={e => { if (e.key === 'Enter') setPersonalMember(g.member) }}
+                  <div key={g.member?.id || 'unknown'} role="button" tabIndex={0} onClick={() => { setPersonalMember(g.member); setPersonalFolder(''); setCreatingPersonalFolder(false) }}
+                    onKeyDown={e => { if (e.key === 'Enter') { setPersonalMember(g.member); setPersonalFolder(''); setCreatingPersonalFolder(false) } }}
                     style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                     <div>
                       <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{g.member?.name || '(no name)'}</div>
