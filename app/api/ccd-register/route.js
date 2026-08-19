@@ -71,7 +71,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { name, email, year, carMake, carModel, phone, instagram, more, source, _hp } = body
+  const { name, email, year, carMake, carModel, phone, instagram, more, source, isMember, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -84,8 +84,23 @@ export async function POST(request) {
     return Response.json({ error: 'Car make is required.' }, { status: 400 })
   if (!carModel?.trim())
     return Response.json({ error: 'Car model is required.' }, { status: 400 })
+
+  const normalEmail = email.toLowerCase().trim()
+
+  // Verify member status server-side — never trust isMember from the client
+  // body alone. Members already know about Canvas Routes, so the "how did
+  // you hear about us" question (and its requirement) is skipped for them.
+  let verifiedMember = false
+  if (isMember === true && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { data: member } = await createAdminClient().from('members')
+        .select('id').eq('email', normalEmail).maybeSingle()
+      verifiedMember = !!member
+    } catch { /* fall through — treat as non-member */ }
+  }
+
   const VALID_SOURCES = ['Instagram','Facebook','Friend / Word of mouth','Google','Other']
-  if (!source || !VALID_SOURCES.includes(source))
+  if (!verifiedMember && (!source || !VALID_SOURCES.includes(source)))
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
 
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
@@ -93,7 +108,6 @@ export async function POST(request) {
   if (carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
 
   const fullCarModel = [carMake, carModel].filter(Boolean).join(' ')
-  const normalEmail = email.toLowerCase().trim()
   const firstName = name.trim().split(' ')[0]
 
   // Save to DB — skip silently if Supabase env vars are absent (local dev without .env.local)

@@ -1,5 +1,5 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import SiteFooter from '../../components/SiteFooter'
@@ -45,7 +45,15 @@ export default function CCDPage() {
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [shareCopied, setShareCopied] = useState(false)
+  const [isMember, setIsMember] = useState(false) // logged-in members already know us — skip the "how did you hear about us" question
   const honeypotRef = useRef(null)
+
+  useEffect(() => {
+    fetch('/api/member/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.member) setIsMember(true) })
+      .catch(() => {})
+  }, [])
 
   function update(field, value) {
     if (field === 'carModel') value = value.replace(/(^|\s)\S/g, c => c.toUpperCase())
@@ -86,7 +94,7 @@ export default function CCDPage() {
     if (!form.carModel.trim()) newErrors.carModel = true
     // Phone only required if the user chose to add it
     if (phoneShown && !form.phone.trim()) newErrors.phone = true
-    if (!form.source) newErrors.source = true
+    if (!isMember && !form.source) newErrors.source = true
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors)
@@ -111,6 +119,7 @@ export default function CCDPage() {
           instagram: form.instagram.trim().replace(/^@+/,'') || '',
           more: form.more.trim() || '',
           source: form.source,
+          isMember,
           _hp: honeypotRef.current?.value || '',
         }),
       })
@@ -404,7 +413,8 @@ export default function CCDPage() {
                 />
               </div>
 
-              {/* Source — just above submit */}
+              {/* Source — just above submit. Only for non-members; members already know us. */}
+              {!isMember && (
               <div>
                 <label htmlFor="ccd-source" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.source ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>How did you hear about us? <span style={{ color:'#d06070' }}>*</span></label>
                 <div style={{ position:'relative' }}>
@@ -420,6 +430,7 @@ export default function CCDPage() {
                   <Chevron />
                 </div>
               </div>
+              )}
 
               {serverError && (
                 <p style={{ fontSize:'13px', color:'#93333E', margin:0, fontFamily:'var(--font-inter), sans-serif' }}>{serverError}</p>

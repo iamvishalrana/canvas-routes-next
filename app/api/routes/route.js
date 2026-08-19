@@ -144,7 +144,7 @@ export async function POST(request) {
     return Response.json({ error: 'Registration is now closed.' }, { status: 410 })
   }
 
-  const { name, email, phone, dob, year, carModel, passengers, hasChildren, childrenAges, source, more, _hp } = body
+  const { name, email, phone, dob, year, carModel, passengers, hasChildren, childrenAges, source, more, isMember, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2 || !email?.trim() || !year?.trim() || !carModel?.trim() || !dob?.trim()) {
@@ -166,7 +166,22 @@ export async function POST(request) {
   if (hasChildren === 'yes' && !childrenAges?.trim()) {
     return Response.json({ error: 'Please enter the ages of children attending.' }, { status: 400 })
   }
-  if (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other'].includes(source)) {
+
+  const normalEmail = email.toLowerCase().trim()
+
+  // Verify member status server-side — never trust isMember from the client
+  // body alone. Members already know about Canvas Routes, so the "how did
+  // you hear about us" question (and its requirement) is skipped for them.
+  let verifiedMember = false
+  if (isMember === true && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    try {
+      const { data: member } = await createAdminClient().from('members')
+        .select('id').eq('email', normalEmail).maybeSingle()
+      verifiedMember = !!member
+    } catch { /* fall through — treat as non-member */ }
+  }
+
+  if (!verifiedMember && (!source || !['Instagram','Facebook','Friend / Word of mouth','Google','Other'].includes(source))) {
     return Response.json({ error: 'Please select how you heard about us.' }, { status: 400 })
   }
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
@@ -176,7 +191,6 @@ export async function POST(request) {
 
   const firstName = h(name.trim().split(' ')[0])
   const rawFirstName = name.trim().split(' ')[0]
-  const normalEmail = email.toLowerCase().trim()
 
   // Save to DB first so data is never lost if email sending fails
   try {

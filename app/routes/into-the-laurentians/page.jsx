@@ -37,10 +37,18 @@ export default function RoutesPage() {
   const [status, setStatus] = useState(null)
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
+  const [isMember, setIsMember] = useState(false) // logged-in members already know us — skip the "how did you hear about us" question
   const honeypotRef = useRef(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.fbq) window.fbq('track', 'ViewContent', { content_name: 'Into the Laurentians' })
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/member/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.member) setIsMember(true) })
+      .catch(() => {})
   }, [])
 
   function updateForm(field, value) {
@@ -101,7 +109,7 @@ export default function RoutesPage() {
     if (!form.passengers) e.passengers = true
     if (!form.hasChildren) e.hasChildren = true
     if (form.hasChildren === 'yes' && !form.childrenAges.trim()) e.childrenAges = true
-    if (!form.source) e.source = true
+    if (!isMember && !form.source) e.source = true
     setErrors(e)
     return e
   }
@@ -126,7 +134,7 @@ export default function RoutesPage() {
       const res = await fetch('/api/routes', {
         method:'POST',
         headers:{ 'Content-Type':'application/json' },
-        body: JSON.stringify({ ...form, phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '', carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`, _hp: honeypotRef.current?.value || '' }),
+        body: JSON.stringify({ ...form, phone: form.phone ? `${countryCode} ${form.phone}`.trim() : '', carModel: [form.carMake, form.carModel].filter(Boolean).join(' '), dob: `${form.dob_year || '0000'}-${String(form.dob_month).padStart(2,'0')}-${String(form.dob_day).padStart(2,'0')}`, isMember, _hp: honeypotRef.current?.value || '' }),
         signal: controller.signal,
       })
       clearTimeout(timeout)
@@ -569,7 +577,8 @@ export default function RoutesPage() {
                   </div>
                 )}
 
-                {/* Source */}
+                {/* Source — only for non-members; members already know us */}
+                {!isMember && (
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
                   <label htmlFor="field-source" className="join-label">How did you hear about us?<Share2 size={13} style={{marginLeft:"3px",verticalAlign:"middle"}}/><span style={{color:"#93333E",marginLeft:"3px"}}>*</span></label>
                   <div style={{position:"relative"}}>
@@ -586,6 +595,7 @@ export default function RoutesPage() {
                   </div>
                   {errors.source && <span style={{fontSize:"11px",color:"#93333E"}}>Required</span>}
                 </div>
+                )}
 
                 {/* Tell us more */}
                 <div className="join-form-field" style={{marginBottom:"1rem"}}>
