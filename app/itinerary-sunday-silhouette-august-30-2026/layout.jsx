@@ -1,7 +1,7 @@
 // Private/password-gated page — not indexed, not linked anywhere yet (the
-// public /sunday-silhouette registration form isn't open either).
+// public /sunday-silhouette-2026 registration form isn't open either).
 const HERO_IMAGE = 'https://www.canvasroutes.com/laurentian-cars-morning-mirrored.png'
-const PAGE_URL = 'https://canvasroutes.com/itinerary-sunday-silhouette-august-30'
+const PAGE_URL = 'https://canvasroutes.com/itinerary-sunday-silhouette-august-30-2026'
 
 export const metadata = {
   title: 'Sunday Silhouette — Private Itinerary',
