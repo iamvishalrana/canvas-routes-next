@@ -9,11 +9,11 @@ import { computeTax } from '../../../lib/tax.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
-const EVENT_NAME = 'Rise and Drive — 2026'
+const EVENT_NAME = 'Sunday Silhouette — 2026'
 const MEMBER_PRICE_CENTS = 9900 // $99 CAD
 
 export async function GET() {
-  // Returns member's existing Rise and Drive registration status
+  // Returns member's existing Sunday Silhouette registration status
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
@@ -35,7 +35,7 @@ export async function GET() {
 
     return Response.json({ alreadyRegistered })
   } catch (e) {
-    captureException(e, { context: 'rad-member-register-get' })
+    captureException(e, { context: 'ss-member-register-get' })
     return Response.json({ alreadyRegistered: false, status: null })
   }
 }
@@ -53,7 +53,7 @@ export async function POST(request) {
   // e.g. prioritizing remaining spots for members only.
   try {
     const adminCheck = createAdminClient()
-    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open').eq('slug', 'rise-and-drive').maybeSingle()
+    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open').eq('slug', 'sunday-silhouette').maybeSingle()
     if (route && route.member_registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
@@ -109,7 +109,7 @@ export async function POST(request) {
       attended: existingReg?.attended ?? null,
       paid: existingReg?.paid ?? false,
       // Snapshot of what was actually submitted for THIS event — see the same
-      // key on rise-and-drive-2026-register/route.js for why this exists.
+      // key on sunday-silhouette-2026-register/route.js for why this exists.
       // No phone/dob/source here — members don't re-submit those.
       details: {
         car_year: carYear.trim(), car_make: carMake.trim(), car_model: fullCar,
@@ -141,16 +141,16 @@ export async function POST(request) {
       ...(existing ? { reregistered_at: new Date().toISOString() } : {}),
     }, { onConflict: 'email' }).select('id').single()
 
-    if (upsertErr) captureException(upsertErr, { context: 'rad-member-register-db', email: normalEmail })
+    if (upsertErr) captureException(upsertErr, { context: 'ss-member-register-db', email: normalEmail })
     else if (appData?.id) {
       const { error: contactErr } = await admin.from('contacts').upsert(
         { application_id: appData.id },
         { onConflict: 'application_id', ignoreDuplicates: true }
       )
-      if (contactErr) captureException(contactErr, { context: 'rad-member-register-contacts' })
+      if (contactErr) captureException(contactErr, { context: 'ss-member-register-contacts' })
     }
   } catch (e) {
-    captureException(e, { context: 'rad-member-register-db-outer', email: normalEmail })
+    captureException(e, { context: 'ss-member-register-db-outer', email: normalEmail })
   }
 
   // Create Stripe PI — immediate capture for members (vetted, no manual review needed)
@@ -161,7 +161,7 @@ export async function POST(request) {
       currency: 'cad',
       receipt_email: normalEmail,
       metadata: {
-        type: 'road_trip_rise-and-drive-2026',
+        type: 'road_trip_sunday-silhouette-2026',
         email: normalEmail,
         name: memberName,
         event_name: EVENT_NAME,
@@ -189,22 +189,22 @@ export async function POST(request) {
     // cancelling — a blind cancel can release a live hold from another flow.
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
       stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id).then(prev => {
-        if (prev.metadata?.type === 'road_trip_rise-and-drive-2026' && prev.status !== 'succeeded') {
+        if (prev.metadata?.type === 'road_trip_sunday-silhouette-2026' && prev.status !== 'succeeded') {
           return stripe.paymentIntents.cancel(existing.stripe_payment_intent_id)
         }
       }).catch(() => {})
     }
 
-    // Store PI ID immediately so rise-and-drive-2026-member-confirm can find this row after payment
+    // Store PI ID immediately so sunday-silhouette-2026-member-confirm can find this row after payment
     const { error: piStoreErr } = await admin.from('applications')
-      .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_rise-and-drive-2026' })
+      .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_sunday-silhouette-2026' })
       .eq('email', normalEmail)
-    if (piStoreErr) captureException(piStoreErr, { context: 'rad-member-register-pi-store', email: normalEmail })
+    if (piStoreErr) captureException(piStoreErr, { context: 'ss-member-register-pi-store', email: normalEmail })
 
     // Notify Jerry immediately when a member reaches the payment step — same
     // belt-and-suspenders heads-up the non-member route already sends
-    // (rise-and-drive-2026-register/route.js). Members use automatic capture,
-    // so rise-and-drive-2026-member-confirm normally sends the "payment
+    // (sunday-silhouette-2026-register/route.js). Members use automatic capture,
+    // so sunday-silhouette-2026-member-confirm normally sends the "payment
     // confirmed" notify moments later — this is the earlier "someone's paying
     // right now" signal.
     if (process.env.RESEND_API_KEY && !_health_check) {
@@ -229,13 +229,13 @@ export async function POST(request) {
               ['PI',         pi.id],
             ]),
           }),
-        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — rad-member-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'rad-member-register-admin-notify', email: normalEmail }))
+        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — ss-member-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'ss-member-register-admin-notify', email: normalEmail }))
       )
     }
 
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {
-    captureException(err, { context: 'rad-member-create-pi', email: normalEmail })
+    captureException(err, { context: 'ss-member-create-pi', email: normalEmail })
     return Response.json({ error: 'Failed to initialise payment. Please try again.' }, { status: 500 })
   }
 }

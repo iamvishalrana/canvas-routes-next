@@ -8,7 +8,7 @@ export const metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function RiseAndDriveLayout({ children }) {
+export default function SundaySilhouetteLayout({ children }) {
   return (
     <>
       {/* Polyfill for in-app browsers where native-bridge calls throw on

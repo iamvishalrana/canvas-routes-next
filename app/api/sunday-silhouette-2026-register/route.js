@@ -8,7 +8,7 @@ import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
-const EVENT_NAME = 'Rise and Drive — 2026'
+const EVENT_NAME = 'Sunday Silhouette — 2026'
 const MEMBER_PRICE_CENTS    = 9900  // $99 CAD
 const NONMEMBER_PRICE_CENTS = 12500 // $125 CAD
 
@@ -26,11 +26,12 @@ export async function POST(request) {
   }
 
   // Check registration open — Registration Open toggle in admin Routes section
-  // (upcoming_routes, same as hello-to-montebello). No row exists yet for this
-  // draft/unlinked page, so registration stays open until Jerry creates one.
+  // (upcoming_routes, same as hello-to-montebello). registration_open is
+  // false on today's draft/unlinked row, so this correctly blocks POSTs
+  // until Jerry flips it on at launch.
   try {
     const supabase = createAdminClient()
-    const { data: route } = await supabase.from('upcoming_routes').select('registration_open').eq('slug', 'rise-and-drive').maybeSingle()
+    const { data: route } = await supabase.from('upcoming_routes').select('registration_open').eq('slug', 'sunday-silhouette').maybeSingle()
     if (route && route.registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
@@ -141,16 +142,16 @@ export async function POST(request) {
     }, { onConflict: 'email' }).select('id').single()
 
     if (upsertErr) {
-      captureException(upsertErr, { context: 'rad-register-db-upsert', email: normalEmail })
+      captureException(upsertErr, { context: 'ss-register-db-upsert', email: normalEmail })
     } else if (appData?.id) {
       const { error: contactErr } = await supabase.from('contacts').upsert(
         { application_id: appData.id },
         { onConflict: 'application_id', ignoreDuplicates: true }
       )
-      if (contactErr) captureException(contactErr, { context: 'rad-register-contacts', email: normalEmail })
+      if (contactErr) captureException(contactErr, { context: 'ss-register-contacts', email: normalEmail })
     }
   } catch (e) {
-    captureException(e, { context: 'rad-register-db', email: normalEmail })
+    captureException(e, { context: 'ss-register-db', email: normalEmail })
   }
 
   // Create Stripe PaymentIntent — manual capture (hold only)
@@ -161,7 +162,7 @@ export async function POST(request) {
       currency: 'cad',
       receipt_email: normalEmail,
       metadata: {
-        type: 'road_trip_rise-and-drive-2026',
+        type: 'road_trip_sunday-silhouette-2026',
         email: normalEmail,
         name: name.trim(),
         event_name: EVENT_NAME,
@@ -194,7 +195,7 @@ export async function POST(request) {
     // cancelling — a blind cancel can release a live hold from another flow.
     if (existing?.stripe_payment_intent_id && existing.stripe_payment_intent_id !== pi.id) {
       stripe.paymentIntents.retrieve(existing.stripe_payment_intent_id).then(prev => {
-        if (prev.metadata?.type === 'road_trip_rise-and-drive-2026' && prev.status !== 'succeeded') {
+        if (prev.metadata?.type === 'road_trip_sunday-silhouette-2026' && prev.status !== 'succeeded') {
           return stripe.paymentIntents.cancel(existing.stripe_payment_intent_id)
         }
       }).catch(() => {})
@@ -205,9 +206,9 @@ export async function POST(request) {
     if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
       const _sb = createAdminClient()
       const { error: piStoreErr } = await _sb.from('applications')
-        .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_rise-and-drive-2026' })
+        .update({ stripe_payment_intent_id: pi.id, stripe_payment_type: 'road_trip_sunday-silhouette-2026' })
         .eq('email', normalEmail)
-      if (piStoreErr) captureException(piStoreErr, { context: 'rad-register-pi-store', email: normalEmail })
+      if (piStoreErr) captureException(piStoreErr, { context: 'ss-register-pi-store', email: normalEmail })
     }
 
     // Notify Jerry immediately when someone reaches the payment step — belt-and-suspenders
@@ -238,13 +239,13 @@ export async function POST(request) {
               ['PI',             pi.id],
             ]),
           }),
-        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — rad-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'rad-register-admin-notify', email: normalEmail }))
+        }).then(r => { if (r && !r.ok) captureMessage(`Resend non-200 — ss-register-admin-notify`, { status: r.status }) }).catch(err => captureException(err, { context: 'ss-register-admin-notify', email: normalEmail }))
       )
     }
 
     return Response.json({ clientSecret: pi.client_secret })
   } catch (err) {
-    captureException(err, { context: 'rad-create-payment-intent', email: normalEmail })
+    captureException(err, { context: 'ss-create-payment-intent', email: normalEmail })
     return Response.json({ error: 'Failed to initialise payment. Please try again.' }, { status: 500 })
   }
 }

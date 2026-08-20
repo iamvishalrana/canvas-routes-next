@@ -5,8 +5,8 @@ import PageLoader from '../../components/PageLoader'
 import { captureException } from '../../lib/sentry'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 
-const PASSWORD = 'riseanddrive'
-const ROUTE_SLUG = 'rise-and-drive'
+const PASSWORD = 'sundaysilhouette'
+const ROUTE_SLUG = 'sunday-silhouette'
 
 // Only real venues so this one array can drive both the itinerary timeline
 // and the map markers. Meetup is the same Starbucks used for Hello to
@@ -43,7 +43,7 @@ function pick(value, lang) {
 }
 
 // Jerry's entry stays manual (lead car + fact blurb) — everyone else is
-// fetched live from /api/rise-and-drive/roster, which reflects paid
+// fetched live from /api/sunday-silhouette/roster, which reflects paid
 // registrants automatically. Same pattern as the Hello to Montebello page.
 const MANUAL_PARTICIPANTS = [
   { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect balance front to back, every option added — this is exactly how this car was meant to be built.' },
@@ -88,7 +88,7 @@ const UI = {
     groupLabel: n => `Group ${n}`, ungrouped: 'Ungrouped', groupLead: 'Group Lead',
     mapLabel: 'Map',
     openRoute: 'Open Route in Google Maps →',
-    modalEyebrow: 'Canvas Routes · Rise and Drive 2026',
+    modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
     heroTags: ['Laurentian Backroads', '~220km Drive', 'Coffee + Breakfast'],
     countdownUnits: ['Days', 'Hrs', 'Min', 'Sec'],
   },
@@ -105,7 +105,7 @@ const UI = {
     groupLabel: n => `Groupe ${n}`, ungrouped: 'Sans groupe', groupLead: 'Chef de groupe',
     mapLabel: 'Carte',
     openRoute: "Ouvrir l'itinéraire dans Google Maps →",
-    modalEyebrow: 'Canvas Routes · Rise and Drive 2026',
+    modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
     heroTags: ['Routes secondaires laurentiennes', '~220 km de route', 'Café + petit-déjeuner'],
     countdownUnits: ['Jours', 'Hres', 'Min', 'Sec'],
   },
@@ -366,7 +366,7 @@ function RouteMap({ stops, lang = 'en' }) {
   )
 }
 
-export default function RiseAndDriveItineraryPage() {
+export default function SundaySilhouetteItineraryPage() {
   const [authed, setAuthed] = useState(false)
   const [email, setEmail] = useState('')
   const [checking, setChecking] = useState(false)
@@ -430,7 +430,7 @@ export default function RiseAndDriveItineraryPage() {
 
   useEffect(() => {
     if (!authed) return
-    fetch('/api/rise-and-drive/roster')
+    fetch('/api/sunday-silhouette/roster')
       .then(r => r.ok ? r.json() : { participants: [] })
       .then(d => setFetchedParticipants(Array.isArray(d.participants) ? d.participants : []))
       .catch(() => {})
@@ -533,7 +533,7 @@ export default function RiseAndDriveItineraryPage() {
           setErrMsg("We couldn't find a registration matching that email.")
         } else {
           setErrMsg(data.error || 'Something went wrong. Please try again.')
-          captureException(new Error(`rad-itinerary-gate lookup failed: HTTP ${res.status}`), { context: 'rad-itinerary-gate-lookup', status: res.status, serverError: data.error })
+          captureException(new Error(`ss-itinerary-gate lookup failed: HTTP ${res.status}`), { context: 'ss-itinerary-gate-lookup', status: res.status, serverError: data.error })
         }
         setChecking(false)
         return
@@ -554,7 +554,7 @@ export default function RiseAndDriveItineraryPage() {
         window.location.href = `/checkin/${idData.eventId}?email=${encodeURIComponent(entered)}`
       }
     } catch (err) {
-      captureException(err, { context: 'rad-itinerary-gate-lookup-network' })
+      captureException(err, { context: 'ss-itinerary-gate-lookup-network' })
       setErrMsg('Something went wrong. Please try again.')
       setChecking(false)
     }
@@ -568,7 +568,7 @@ export default function RiseAndDriveItineraryPage() {
         minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center',
         position: 'relative', overflow: 'hidden', boxSizing: 'border-box',
         backgroundColor: '#0F1E14',
-        backgroundImage: 'url(/Convoy.png)', backgroundSize: 'cover', backgroundPosition: 'center 40%',
+        backgroundImage: 'url(/laurentian-cars-morning-mirrored.png)', backgroundSize: 'cover', backgroundPosition: 'center 40%',
         fontFamily: 'sans-serif', padding: 'clamp(2rem,6vw,4rem) 1.25rem',
       }}>
         <style>{`
@@ -604,7 +604,7 @@ export default function RiseAndDriveItineraryPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/white-outline.png" alt="Canvas Routes" className="gate-logo" style={{ width: '120px', margin: '0 auto 1.75rem', display: 'block', opacity: 0.92 }} />
           <h1 className="gate-title" style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#F5F1EC', fontSize: 'clamp(1.5rem,5.5vw,2.1rem)', fontWeight: '400', lineHeight: '1.2', margin: '0 0 0.85rem' }}>
-            Rise and Drive
+            Sunday Silhouette
           </h1>
           <div className="gate-date" style={{ display: 'inline-block', padding: '0.4rem 1.1rem', border: '1px solid rgba(197,168,130,0.5)', background: 'rgba(197,168,130,0.09)', fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#F5F1EC', marginBottom: '1.5rem' }}>
             Sunday · August 30, 2026
@@ -660,7 +660,7 @@ export default function RiseAndDriveItineraryPage() {
       background: 'repeating-linear-gradient(45deg, rgba(15,30,20,0.028) 0px, rgba(15,30,20,0.028) 1px, transparent 1px, transparent 13px), #F5F1EC',
       fontFamily: 'sans-serif', color: '#1a1a1a',
     }}>
-      <PageLoader images={['/Convoy.png', ...allParticipants.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
+      <PageLoader images={['/laurentian-cars-morning-mirrored.png', ...allParticipants.filter(p => p.photo).map(p => p.photo)]} minMs={2000} />
 
       <button
         className="scroll-btn"
@@ -755,7 +755,7 @@ export default function RiseAndDriveItineraryPage() {
         position: 'relative', padding: '3.5rem 1.25rem 3rem', textAlign: 'center',
         overflow: 'hidden', boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
       }}>
-        <div className="itin-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/Convoy.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+        <div className="itin-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/laurentian-cars-morning-mirrored.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
         <div style={{
           position: 'fixed', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
@@ -775,7 +775,7 @@ export default function RiseAndDriveItineraryPage() {
         <div style={{ position: 'relative', zIndex: 1 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/white-outline.png" alt="Canvas Routes" className="itin-hero-logo" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
-          <h1 className="itin-hero-title" style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Rise and Drive</h1>
+          <h1 className="itin-hero-title" style={{ color: '#F5F1EC', fontFamily: 'Georgia, Times New Roman, serif', fontSize: '28px', letterSpacing: '0.01em', lineHeight: '1.2', margin: 0, fontWeight: '400' }}>Sunday Silhouette</h1>
           <p className="itin-hero-date" style={{ color: 'rgba(245,241,236,0.6)', fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase', marginTop: '0.6rem', marginBottom: 0 }}>{lang === 'fr' ? 'Dimanche · 30 août 2026' : 'Sunday · August 30, 2026'}</p>
           <div className="itin-hero-tags" style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '1.5rem' }}>
             {t.heroTags.map(tag => (

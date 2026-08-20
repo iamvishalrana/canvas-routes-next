@@ -12,7 +12,7 @@ import TermsPrivacyNote from '../../components/TermsPrivacyNote'
 import { computeTax } from '../../lib/tax'
 import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { routeEventSharedT } from '../../lib/i18n/routeEventShared'
-import { radT } from '../../lib/i18n/riseAndDrive'
+import { sundaySilhouetteT } from '../../lib/i18n/sundaySilhouette'
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -51,7 +51,7 @@ function PaymentForm({ email, price, clientSecret, isMember, onSuccess, onBack, 
   const elements = useElements()
   const { lang } = useLanguage()
   const t = routeEventSharedT[lang]
-  const et = radT[lang]
+  const et = sundaySilhouetteT[lang]
   const [paying, setPaying]         = useState(false)
   const [error,  setError]          = useState(null)
   const payingRef                   = useRef(false)
@@ -134,7 +134,7 @@ function PaymentForm({ email, price, clientSecret, isMember, onSuccess, onBack, 
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/rise-and-drive?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/sunday-silhouette?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError(t.paymentErrorGeneric)
@@ -175,13 +175,13 @@ function PaymentForm({ email, price, clientSecret, isMember, onSuccess, onBack, 
       </div>
 
       <div style={{borderTop:'0.5px solid rgba(0,0,0,0.08)',borderBottom:'0.5px solid rgba(0,0,0,0.08)',padding:'1.25rem 0',marginBottom:'1.25rem'}}>
-        <div className="rad-order-summary" style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'1rem',marginBottom:'0.75rem'}}>
+        <div className="ss-order-summary" style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:'1rem',marginBottom:'0.75rem'}}>
           <div>
             <div style={{fontSize:'10px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#c5a882',marginBottom:'0.3rem',fontFamily:'var(--font-inter),sans-serif'}}>{et.orderSummaryDate}</div>
-            <div style={{fontSize:'15px',color:'#1a1a1a',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>Rise and Drive</div>
+            <div style={{fontSize:'15px',color:'#1a1a1a',fontWeight:'500',fontFamily:'var(--font-inter),sans-serif'}}>Sunday Silhouette</div>
             <div style={{fontSize:'12px',color:'#999',marginTop:'0.2rem',fontFamily:'var(--font-inter),sans-serif',wordBreak:'break-all'}}>{email}</div>
           </div>
-          <div className="rad-order-price" style={{textAlign:'right',flexShrink:0}}>
+          <div className="ss-order-price" style={{textAlign:'right',flexShrink:0}}>
             {promoResult ? (
               <>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'1.1rem',fontWeight:'400',color:'#bbb',lineHeight:1,letterSpacing:'0.03em',textDecoration:'line-through'}}>${fmt(originalTotal)}</div>
@@ -283,10 +283,10 @@ function PaymentForm({ email, price, clientSecret, isMember, onSuccess, onBack, 
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function RiseAndDrivePage() {
+export default function SundaySilhouettePage() {
   const { lang } = useLanguage()
   const t = routeEventSharedT[lang]
-  const et = radT[lang]
+  const et = sundaySilhouetteT[lang]
   const [form, setForm] = useState({ name:'', email:'', phone:'', dob_month:'', dob_day:'', dob_year:'', year:'', carMake:'', carModel:'', passengers:'', hasChildren:'', childrenAges:'', source:'', more:'', isMember:'' })
   const [errors, setErrors]           = useState({})
   const [phoneOptOut, setPhoneOptOut] = useState(false)
@@ -334,7 +334,7 @@ export default function RiseAndDrivePage() {
     fetch('/api/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
       .then(routes => {
-        const route = routes.find(r => r.slug === 'rise-and-drive')
+        const route = routes.find(r => r.slug === 'sunday-silhouette')
         if (!route) return // not found while is_active:false — stays closed (default state)
         setRegOpen(route.registration_open !== false)
         setMemberRegOpen(route.member_registration_open !== false)
@@ -349,19 +349,19 @@ export default function RiseAndDrivePage() {
     const piSecret       = params.get('payment_intent_client_secret')
     const redirectStatus = params.get('redirect_status')
     if (!piId) return
-    window.history.replaceState({}, '', '/rise-and-drive')
+    window.history.replaceState({}, '', '/sunday-silhouette')
     if (redirectStatus === 'succeeded') {
       const memberPiParam = params.get('member_pi')
       if (memberPiParam === piId) {
         wasMemberRef.current = true
-        const doConfirm3ds = () => fetch('/api/rise-and-drive-2026-member-confirm', {
+        const doConfirm3ds = () => fetch('/api/sunday-silhouette-2026-member-confirm', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ paymentIntentId: piId }),
         }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
         doConfirm3ds().catch(() => setTimeout(() =>
           doConfirm3ds().catch(err =>
-            import('@sentry/nextjs').then(S => S.captureException(err, { tags: { context: 'rad-member-confirm-3ds-redirect', piId } })).catch(() => {})
+            import('@sentry/nextjs').then(S => S.captureException(err, { tags: { context: 'ss-member-confirm-3ds-redirect', piId } })).catch(() => {})
           ), 4000
         ))
       }
@@ -394,7 +394,7 @@ export default function RiseAndDrivePage() {
             ? m.car_model.replace(new RegExp(`^${(m.car_make || '').trim()}\\s*`, 'i'), '').trim()
             : f.carModel,
         }))
-        fetch('/api/rise-and-drive-2026-member-register')
+        fetch('/api/sunday-silhouette-2026-member-register')
           .then(r => r.ok ? r.json() : null)
           .then(d => { if (d?.alreadyRegistered) setAlreadyRegistered(true) })
           .catch(() => {})
@@ -487,7 +487,7 @@ export default function RiseAndDrivePage() {
       const memberController = new AbortController()
       const memberTimeout = setTimeout(() => memberController.abort(), 30000)
       try {
-        const res = await fetch('/api/rise-and-drive-2026-member-register', {
+        const res = await fetch('/api/sunday-silhouette-2026-member-register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -523,7 +523,7 @@ export default function RiseAndDrivePage() {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 30000)
     try {
-      const res = await fetch('/api/rise-and-drive-2026-register', {
+      const res = await fetch('/api/sunday-silhouette-2026-register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -556,123 +556,123 @@ export default function RiseAndDrivePage() {
 
   return (
     <div style={{background:'#F5F1EC',fontFamily:'var(--font-inter),sans-serif',color:'#1a1a1a',minHeight:'100vh'}}>
-      <PageLoader images={['/Convoy.png']} minMs={1500} />
+      <PageLoader images={['/laurentian-cars-morning-mirrored.png']} minMs={1500} />
       <style>{`
-        @keyframes rad-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes rad-fade-in { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes rad-date-streak {
+        @keyframes ss-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes ss-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes ss-date-streak {
           0%, 100% { left: -110%; opacity: 0; }
           6%        { opacity: 1; }
           20%       { left: 130%; opacity: 0; }
           21%, 99%  { left: -110%; opacity: 0; }
         }
-        .rad-date-badge { position: relative; overflow: hidden; }
-        .rad-date-badge::after {
+        .ss-date-badge { position: relative; overflow: hidden; }
+        .ss-date-badge::after {
           content: ''; position: absolute; top: -20%; left: -110%; width: 55%; height: 140%;
           background: linear-gradient(105deg, transparent 15%, rgba(255,215,100,0.22) 50%, transparent 85%);
-          transform: skewX(-12deg); animation: rad-date-streak 4.5s ease-in-out 1.6s infinite; pointer-events: none;
+          transform: skewX(-12deg); animation: ss-date-streak 4.5s ease-in-out 1.6s infinite; pointer-events: none;
         }
-        @keyframes rad-cta-shimmer {
+        @keyframes ss-cta-shimmer {
           0%   { left: -80%; opacity: 0; }
           15%  { opacity: 1; }
           85%  { opacity: 1; }
           100% { left: 130%; opacity: 0; }
         }
-        .rad-hero-cta { position: relative; overflow: hidden; }
-        .rad-hero-cta::after {
+        .ss-hero-cta { position: relative; overflow: hidden; }
+        .ss-hero-cta::after {
           content: ''; position: absolute; top: -10%; left: -80%; width: 40%; height: 120%;
           background: linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.28) 50%, transparent 90%);
-          transform: skewX(-10deg); animation: rad-cta-shimmer 0.9s cubic-bezier(0.4,0,0.2,1) 1.4s forwards; pointer-events: none;
+          transform: skewX(-10deg); animation: ss-cta-shimmer 0.9s cubic-bezier(0.4,0,0.2,1) 1.4s forwards; pointer-events: none;
         }
-        .rad-details-cta { position: relative; overflow: hidden; }
-        .rad-details-cta::after {
+        .ss-details-cta { position: relative; overflow: hidden; }
+        .ss-details-cta::after {
           content: ''; position: absolute; top: -20%; left: -110%; width: 55%; height: 140%;
           background: linear-gradient(105deg, transparent 15%, rgba(245,241,236,0.16) 50%, transparent 85%);
-          transform: skewX(-12deg); animation: rad-date-streak 5.5s ease-in-out 3s infinite; pointer-events: none;
+          transform: skewX(-12deg); animation: ss-date-streak 5.5s ease-in-out 3s infinite; pointer-events: none;
         }
         /* Prevent iOS input zoom (font-size must be >=16px) — also matters in
            Instagram/Facebook in-app browsers, which inherit Safari/Chrome's
            zoom-on-focus behavior. */
         input, select, textarea { font-size: 16px !important; }
-        .rad-page-root { overflow-x: hidden; }
+        .ss-page-root { overflow-x: hidden; }
         @media (hover: hover) {
-          .rad-hover-underline:hover { text-decoration-color: rgba(0,0,0,0.4) !important; }
+          .ss-hover-underline:hover { text-decoration-color: rgba(0,0,0,0.4) !important; }
         }
         @media (max-width: 768px) {
-          .rad-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
-          .rad-hero-overlay { background: linear-gradient(to bottom, rgba(8,16,10,0.5) 0%, rgba(8,16,10,0.82) 100%) !important; }
-          .rad-details { padding: 3rem 1.25rem !important; }
-          .rad-itinerary  { padding: 3.5rem 1.25rem 4.5rem !important; }
-          .rad-form-section { padding: 2.5rem 1.25rem 4.5rem !important; }
-          .rad-details-cta { display: block !important; text-align: center !important; }
-          .rad-stats-bar  { flex-wrap: wrap !important; gap: 0 !important; padding: 1.25rem 0.5rem !important; justify-content: center !important; }
-          .rad-stats-bar .stat-divider { display: none !important; }
-          .rad-stat       { flex: 0 0 33.333% !important; padding: 0.75rem 0.25rem !important; }
+          .ss-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
+          .ss-hero-overlay { background: linear-gradient(to bottom, rgba(8,16,10,0.5) 0%, rgba(8,16,10,0.82) 100%) !important; }
+          .ss-details { padding: 3rem 1.25rem !important; }
+          .ss-itinerary  { padding: 3.5rem 1.25rem 4.5rem !important; }
+          .ss-form-section { padding: 2.5rem 1.25rem 4.5rem !important; }
+          .ss-details-cta { display: block !important; text-align: center !important; }
+          .ss-stats-bar  { flex-wrap: wrap !important; gap: 0 !important; padding: 1.25rem 0.5rem !important; justify-content: center !important; }
+          .ss-stats-bar .stat-divider { display: none !important; }
+          .ss-stat       { flex: 0 0 33.333% !important; padding: 0.75rem 0.25rem !important; }
           .incl-grid       { grid-template-columns: 1fr !important; gap: 2rem !important; }
-          .rad-price-row  { flex-direction: column !important; gap: 0.75rem !important; }
-          .rad-price-row .price-divider { display: none !important; }
-          .rad-member-grid { grid-template-columns: 1fr 1fr !important; }
+          .ss-price-row  { flex-direction: column !important; gap: 0.75rem !important; }
+          .ss-price-row .price-divider { display: none !important; }
+          .ss-member-grid { grid-template-columns: 1fr 1fr !important; }
           .reg-box-row     { flex-direction: column !important; gap: 0.25rem !important; }
-          .rad-hero-cta   { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
-          .rad-stop       { gap: 1rem !important; padding: 1.25rem 0 !important; }
+          .ss-hero-cta   { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
+          .ss-stop       { gap: 1rem !important; padding: 1.25rem 0 !important; }
         }
         @media (max-width: 480px) {
-          .rad-countdown      { gap: 0 !important; }
-          .rad-countdown-cell { padding: 0.6rem 0.6rem !important; min-width: 46px !important; }
-          .rad-countdown-num  { font-size: 1.6rem !important; }
-          .rad-stat { flex: 0 0 50% !important; }
-          .rad-member-grid { grid-template-columns: 1fr !important; }
+          .ss-countdown      { gap: 0 !important; }
+          .ss-countdown-cell { padding: 0.6rem 0.6rem !important; min-width: 46px !important; }
+          .ss-countdown-num  { font-size: 1.6rem !important; }
+          .ss-stat { flex: 0 0 50% !important; }
+          .ss-member-grid { grid-template-columns: 1fr !important; }
           .join-form-row { flex-direction: column !important; }
-          .rad-dob-grid { grid-template-columns: 1fr 1fr !important; }
-          .rad-dob-year { grid-column: 1 / -1 !important; }
-          .rad-order-summary { flex-direction: column !important; gap: 0.75rem !important; }
-          .rad-order-price   { text-align: left !important; }
-          .rad-hero { padding-left: 1rem !important; padding-right: 1rem !important; }
-          .rad-details, .rad-itinerary, .rad-form-section { padding-left: 1rem !important; padding-right: 1rem !important; }
+          .ss-dob-grid { grid-template-columns: 1fr 1fr !important; }
+          .ss-dob-year { grid-column: 1 / -1 !important; }
+          .ss-order-summary { flex-direction: column !important; gap: 0.75rem !important; }
+          .ss-order-price   { text-align: left !important; }
+          .ss-hero { padding-left: 1rem !important; padding-right: 1rem !important; }
+          .ss-details, .ss-itinerary, .ss-form-section { padding-left: 1rem !important; padding-right: 1rem !important; }
         }
       `}</style>
 
-      <div className="rad-page-root">
+      <div className="ss-page-root">
       <SiteNav />
 
       {/* HERO */}
-      <section className="rad-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/Convoy.png')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
-        <div className="rad-hero-overlay" style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
+      <section className="ss-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/laurentian-cars-morning-mirrored.png')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
+        <div className="ss-hero-overlay" style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
-        <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem',animation:'rad-fade-in 0.7s ease both',animationDelay:'100ms'}}>{et.heroEyebrow}</div>
+        <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem',animation:'ss-fade-in 0.7s ease both',animationDelay:'100ms'}}>{et.heroEyebrow}</div>
         <div style={{position:'relative',zIndex:2}}>
-          <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.05',marginBottom:'0.75rem',letterSpacing:'-0.01em',animation:'rad-fade-up 0.8s ease both',animationDelay:'250ms'}}>
-            Rise and Drive
+          <h1 style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(3rem,7vw,5.5rem)',fontWeight:'300',color:'#F5F1EC',lineHeight:'1.05',marginBottom:'0.75rem',letterSpacing:'-0.01em',animation:'ss-fade-up 0.8s ease both',animationDelay:'250ms'}}>
+            Sunday Silhouette
           </h1>
-          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.2rem,2.8vw,1.55rem)',fontStyle:'italic',color:'rgba(245,241,236,0.82)',marginBottom:'1.2rem',letterSpacing:'0.01em',textShadow:'0 1px 12px rgba(0,0,0,0.6)',animation:'rad-fade-up 0.7s ease both',animationDelay:'450ms'}}>
+          <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'clamp(1.2rem,2.8vw,1.55rem)',fontStyle:'italic',color:'rgba(245,241,236,0.82)',marginBottom:'1.2rem',letterSpacing:'0.01em',textShadow:'0 1px 12px rgba(0,0,0,0.6)',animation:'ss-fade-up 0.7s ease both',animationDelay:'450ms'}}>
             {et.heroDestination}
           </div>
-          <div className="rad-date-badge" style={{display:'inline-block',padding:'0.5rem 1.4rem',border:'1px solid rgba(197,168,130,0.7)',background:'rgba(197,168,130,0.12)',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#F5F1EC',marginBottom:'2.5rem',animation:'rad-fade-in 0.6s ease both',animationDelay:'600ms'}}>
+          <div className="ss-date-badge" style={{display:'inline-block',padding:'0.5rem 1.4rem',border:'1px solid rgba(197,168,130,0.7)',background:'rgba(197,168,130,0.12)',fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#F5F1EC',marginBottom:'2.5rem',animation:'ss-fade-in 0.6s ease both',animationDelay:'600ms'}}>
             {et.heroDateBadge}
           </div>
-          <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'rad-fade-in 0.5s ease both',animationDelay:'700ms'}} />
-          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'rad-fade-up 0.7s ease both',animationDelay:'800ms'}}>
+          <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'ss-fade-in 0.5s ease both',animationDelay:'700ms'}} />
+          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'ss-fade-up 0.7s ease both',animationDelay:'800ms'}}>
             {et.heroBody}
           </p>
 
           {countdown && (
-            <div className="rad-countdown" style={{display:'inline-flex',gap:'0',marginBottom:'3rem',border:'0.5px solid rgba(197,168,130,0.2)',overflow:'hidden',maxWidth:'100%',animation:'rad-fade-in 0.6s ease both',animationDelay:'950ms'}}>
+            <div className="ss-countdown" style={{display:'inline-flex',gap:'0',marginBottom:'3rem',border:'0.5px solid rgba(197,168,130,0.2)',overflow:'hidden',maxWidth:'100%',animation:'ss-fade-in 0.6s ease both',animationDelay:'950ms'}}>
               {[
                 { label: et.countdownDays,    val: countdown.d },
                 { label: et.countdownHours,   val: countdown.h },
                 { label: et.countdownMinutes, val: countdown.m },
                 { label: et.countdownSeconds, val: countdown.s },
               ].map(({ label, val }, i) => (
-                <div key={label} className="rad-countdown-cell" style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
-                  <div className="rad-countdown-num" style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.8rem',fontWeight:'400',color:'#F5F1EC',lineHeight:1,letterSpacing:'0.05em'}}>{String(val).padStart(2,'0')}</div>
+                <div key={label} className="ss-countdown-cell" style={{display:'flex',flexDirection:'column',alignItems:'center',padding:'1rem 1.4rem',borderRight: i < 3 ? '0.5px solid rgba(197,168,130,0.15)' : 'none',minWidth:'72px'}}>
+                  <div className="ss-countdown-num" style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.8rem',fontWeight:'400',color:'#F5F1EC',lineHeight:1,letterSpacing:'0.05em'}}>{String(val).padStart(2,'0')}</div>
                   <div style={{fontSize:'8px',letterSpacing:'0.22em',textTransform:'uppercase',color:'rgba(197,168,130,0.5)',marginTop:'0.4rem',fontFamily:'var(--font-inter),sans-serif'}}>{label}</div>
                 </div>
               ))}
             </div>
           )}
 
-          <div style={{animation:'rad-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
-            <a href="#form" className={effectiveRegOpen ? 'rad-hero-cta' : undefined} onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
+          <div style={{animation:'ss-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
+            <a href="#form" className={effectiveRegOpen ? 'ss-hero-cta' : undefined} onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
               style={{display:'inline-block',padding:'0.9rem 2.5rem',background:effectiveRegOpen?'#F5F1EC':'rgba(245,241,236,0.12)',color:effectiveRegOpen?'#0F1E14':'rgba(245,241,236,0.6)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600',border:effectiveRegOpen?'none':'1px solid rgba(245,241,236,0.25)'}}>
               {effectiveRegOpen ? t.secureYourSeatCta : t.registrationsClosedCta}
             </a>
@@ -684,10 +684,10 @@ export default function RiseAndDrivePage() {
       {/* STATS BAR */}
       <div style={{background:'#F5F1EC',borderBottom:'0.5px solid rgba(0,0,0,0.07)'}}>
         <FadeUp>
-        <div className="rad-stats-bar" style={{maxWidth:'860px',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'0',padding:'1.5rem 3rem'}}>
+        <div className="ss-stats-bar" style={{maxWidth:'860px',margin:'0 auto',display:'flex',alignItems:'center',justifyContent:'center',gap:'0',padding:'1.5rem 3rem'}}>
           {et.stats.map(({ num, unit }, i, arr) => (
             <React.Fragment key={unit}>
-              <div className="rad-stat" style={{textAlign:'center',padding:'0 2rem'}}>
+              <div className="ss-stat" style={{textAlign:'center',padding:'0 2rem'}}>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'2.4rem',fontWeight:'400',color:'#1a1a1a',lineHeight:1,letterSpacing:'0.04em'}}>{num}</div>
                 <div style={{fontSize:'9px',letterSpacing:'0.2em',textTransform:'uppercase',color:'#aaa',marginTop:'4px',fontFamily:'var(--font-inter),sans-serif'}}>{unit}</div>
               </div>
@@ -699,12 +699,12 @@ export default function RiseAndDrivePage() {
       </div>
 
       {/* DETAILS */}
-      <section className="rad-details" style={{background:'#EDE8E1',padding:'5rem 3rem'}}>
+      <section className="ss-details" style={{background:'#EDE8E1',padding:'5rem 3rem'}}>
         <div style={{maxWidth:'680px',margin:'0 auto'}}>
           <FadeUp>
           <div style={{fontSize:'11px',letterSpacing:'0.22em',textTransform:'uppercase',color:'#888',marginBottom:'2rem'}}>{t.pricingAndDetails}</div>
           <div style={{border:'0.5px solid rgba(0,0,0,0.12)',padding:'1.8rem',marginBottom:'1.5rem',background:'#F5F1EC'}}>
-            <div className="rad-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap'}}>
+            <div className="ss-price-row" style={{display:'flex',alignItems:'baseline',gap:'2rem',flexWrap:'wrap'}}>
               <div style={{display:'flex',flexDirection:'column',gap:'0.2rem'}}>
                 <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#c5a882',fontFamily:'var(--font-inter),sans-serif'}}>{t.priceMembersLabel}</div>
                 <div style={{fontFamily:'var(--font-bebas),sans-serif',fontSize:'3rem',fontWeight:'400',color:'#1a1a1a',lineHeight:'1',letterSpacing:'0.03em'}}>${MEMBER_PRICE} <span style={{fontSize:'0.95rem',color:'#aaa',fontFamily:'var(--font-inter),sans-serif',letterSpacing:'0.02em'}}>{t.plusTax}</span></div>
@@ -735,7 +735,7 @@ export default function RiseAndDrivePage() {
           </div>
 
           <a href="#form" onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
-            className="rad-details-cta"
+            className="ss-details-cta"
             style={{display:'inline-block',padding:'0.85rem 2.2rem',background:'#0F1E14',color:'#c5a882',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
             Book Your Spot →
           </a>
@@ -744,7 +744,7 @@ export default function RiseAndDrivePage() {
       </section>
 
       {/* ITINERARY */}
-      <section className="rad-itinerary" style={{position:'relative',padding:'6rem 2rem 7rem',overflow:'hidden',backgroundImage:"url('/Convoy.png')",backgroundSize:'cover',backgroundPosition:'center 40%'}}>
+      <section className="ss-itinerary" style={{position:'relative',padding:'6rem 2rem 7rem',overflow:'hidden',backgroundImage:"url('/laurentian-cars-morning-mirrored.png')",backgroundSize:'cover',backgroundPosition:'center 40%'}}>
         <div style={{position:'absolute',inset:0,background:'rgba(8,16,10,0.88)',zIndex:1}} />
         <div style={{maxWidth:'560px',margin:'0 auto',position:'relative',zIndex:2,textShadow:'0 2px 10px rgba(0,0,0,0.55)'}}>
           <FadeUp>
@@ -757,7 +757,7 @@ export default function RiseAndDrivePage() {
 
           {et.stops.map((stop, i, arr) => (
             <FadeUp key={i} delay={i * 80}>
-            <div className="rad-stop" style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none', background:stop.feature?'rgba(197,168,130,0.06)':'transparent', margin:stop.feature?'0 -1.25rem':0}}>
+            <div className="ss-stop" style={{display:'flex',gap:'1.5rem',padding:'1.75rem 0',borderBottom: i < arr.length-1 ? '0.5px solid rgba(197,168,130,0.1)' : 'none', background:stop.feature?'rgba(197,168,130,0.06)':'transparent', margin:stop.feature?'0 -1.25rem':0}}>
               <div style={{width:stop.feature?'10px':'6px',height:stop.feature?'10px':'6px',borderRadius:'50%',background:stop.pays?'#c5a882':'rgba(197,168,130,0.35)',flexShrink:0,marginTop:stop.feature?'4px':'6px'}} />
               <div style={{flex:1, padding: stop.feature ? '0 1.25rem' : 0}}>
                 <div style={{display:'flex',alignItems:'center',gap:'0.5rem',marginBottom:'0.35rem',flexWrap:'wrap'}}>
@@ -829,7 +829,7 @@ export default function RiseAndDrivePage() {
       </section>
 
       {/* FORM / PAYMENT / SUCCESS */}
-      <section id="form" className="rad-form-section" style={{padding:'6rem 2rem 8rem',background:'#F5F1EC'}}>
+      <section id="form" className="ss-form-section" style={{padding:'6rem 2rem 8rem',background:'#F5F1EC'}}>
         <div style={{maxWidth:'560px',margin:'0 auto'}}>
 
           {!effectiveRegOpen && status !== 'success' && (
@@ -923,13 +923,13 @@ export default function RiseAndDrivePage() {
                   onSuccess={() => setStatus('success')}
                   onBack={() => { setStatus(null); setClientSecret(null) }}
                   onMemberConfirm={piId => {
-                    const confirm = () => fetch('/api/rise-and-drive-2026-member-confirm', {
+                    const confirm = () => fetch('/api/sunday-silhouette-2026-member-confirm', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ paymentIntentId: piId }),
                     }).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`) })
                     confirm().catch(() => setTimeout(() => confirm().catch(err => {
-                      import('@sentry/nextjs').then(S => S.captureException(err, { tags: { context: 'rad-member-confirm-client', piId } })).catch(() => {})
+                      import('@sentry/nextjs').then(S => S.captureException(err, { tags: { context: 'ss-member-confirm-client', piId } })).catch(() => {})
                     }), 4000))
                   }}
                 />
@@ -956,7 +956,7 @@ export default function RiseAndDrivePage() {
                     <div style={{fontSize:'10px',letterSpacing:'0.18em',textTransform:'uppercase',color:'#999',marginBottom:'1rem',fontFamily:'var(--font-inter),sans-serif'}}>
                       {t.chooseOneToSecure}
                     </div>
-                    <div className="rad-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
+                    <div className="ss-member-grid" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0.75rem'}}>
                       {[
                         {val:'yes', price:`$${MEMBER_PRICE}`, label:t.memberRateLabel, sublabel:t.memberOnlyLabel},
                         {val:'no',  price:`$${NONMEMBER_PRICE}`, label:t.standardRateLabel, sublabel:t.nonMemberOnlyLabel},
@@ -993,7 +993,7 @@ export default function RiseAndDrivePage() {
                     <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
                       {t.logInForMemberRateBody(String(MEMBER_PRICE))}
                     </p>
-                    <a href={`/members/login?redirect=${encodeURIComponent('/rise-and-drive')}`}
+                    <a href={`/members/login?redirect=${encodeURIComponent('/sunday-silhouette')}`}
                       style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
                       {t.logInToRegister}
                     </a>
@@ -1058,7 +1058,7 @@ export default function RiseAndDrivePage() {
 
                 <div id="field-dob_month" className="join-form-field" style={{marginBottom:'1rem'}}>
                   <div className="join-label" style={{marginBottom:'0.5rem'}}>{t.fieldDob}<span style={{color:'#93333E',marginLeft:'3px'}}>*</span> <span style={{color:'#888',fontWeight:'300',textTransform:'none',letterSpacing:0,fontSize:'11px'}}>{t.yearOptionalParen}</span></div>
-                  <div className="rad-dob-grid" style={{display:'grid',gridTemplateColumns:'1.4fr 1fr 1.2fr',gap:'0.75rem'}}>
+                  <div className="ss-dob-grid" style={{display:'grid',gridTemplateColumns:'1.4fr 1fr 1.2fr',gap:'0.75rem'}}>
                     <div style={{position:'relative'}}>
                       <select name="bday-month" autoComplete="bday-month" value={form.dob_month} onChange={e => updateForm('dob_month', e.target.value)} style={{...inputStyle('dob_month'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">{t.monthPlaceholder}</option>
@@ -1071,7 +1071,7 @@ export default function RiseAndDrivePage() {
                         {Array.from({length:31},(_,i)=>i+1).map(d => <option key={d} value={String(d)}>{d}</option>)}
                       </select><Chevron />
                     </div>
-                    <div className="rad-dob-year" style={{position:'relative'}}>
+                    <div className="ss-dob-year" style={{position:'relative'}}>
                       <select name="bday-year" autoComplete="bday-year" value={form.dob_year} onChange={e => updateForm('dob_year', e.target.value)} style={{...inputStyle('dob_year'),cursor:'pointer',paddingRight:'2rem'}}>
                         <option value="">{t.yearPlaceholder}</option>
                         {Array.from({length:2015-1945+1},(_,i)=>2015-i).map(y => <option key={y} value={String(y)}>{y}</option>)}
