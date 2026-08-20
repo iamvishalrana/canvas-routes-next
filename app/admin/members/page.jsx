@@ -46,11 +46,19 @@ export default async function MembersPage({ searchParams }) {
 
   const { column, ascending } = SORT_COLUMNS[sortKey]
 
-  const [{ data: members, count }, { data: statRows }] = await Promise.all([
+  const [{ data: members, count }, { data: statRows }, { data: authList }] = await Promise.all([
     query.order(column, { ascending }).range(offset, offset + PAGE_SIZE - 1),
     // Global status/tier counts — the client previously counted only the
     // current page, which under-reported once there was more than one page
     supabase.from('members').select('membership_status, tier'),
+    // "Last login" is Supabase Auth's own last_sign_in_at (auth.users) —
+    // there's no reason to hand-roll tracking for something Auth already
+    // records accurately on every sign-in. Not exposed via PostgREST (auth
+    // schema isn't in the public API), so it's fetched separately via the
+    // Auth Admin API and merged onto each member row below by id. perPage
+    // covers every auth user (members + admins), not just this page's 50 —
+    // fine at this club's scale; would need real pagination past ~1000 users.
+    supabase.auth.admin.listUsers({ page: 1, perPage: 1000 }),
   ])
 
   const statusCounts = { active: 0, pending: 0, suspended: 0, expired: 0, inner_circle: 0 }
@@ -59,9 +67,12 @@ export default async function MembersPage({ searchParams }) {
     if (r.tier === 'inner_circle') statusCounts.inner_circle++
   }
 
+  const lastLoginById = new Map((authList?.users || []).map(u => [u.id, u.last_sign_in_at]))
+  const membersWithLastLogin = (members || []).map(m => ({ ...m, last_login_at: lastLoginById.get(m.id) || null }))
+
   return (
     <MembersClient
-      initialMembers={members || []}
+      initialMembers={membersWithLastLogin}
       total={count || 0}
       page={page}
       pageSize={PAGE_SIZE}

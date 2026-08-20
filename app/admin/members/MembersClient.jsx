@@ -19,6 +19,18 @@ import { formatCarLabel } from '../../../lib/carLabel'
 import { attendanceKey, normalizeEventName } from '../../../lib/eventMeta.js'
 import { formatForDisplay } from '../../../lib/memberNumber.js'
 
+// last_login_at is Supabase Auth's own last_sign_in_at, merged onto each
+// member row server-side (see page.jsx) — never written by app code, so it's
+// exactly as accurate as Supabase's own auth records.
+function fmtLastLogin(d) {
+  if (!d) return 'Never logged in'
+  const days = Math.floor((Date.now() - new Date(d).getTime()) / 86400000)
+  if (days <= 0) return 'Logged in today'
+  if (days === 1) return 'Logged in 1 day ago'
+  if (days < 30) return `Logged in ${days}d ago`
+  return `Last login ${new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}`
+}
+
 // ─── Tier chip ────────────────────────────────────────────────────────────────
 
 function TierChip({ tier }) {
@@ -71,6 +83,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
             <TierChip tier={m.tier} />
           </div>
           {memberSinceStr && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '0.2rem' }}>Member since {memberSinceStr}</div>}
+          <div style={{ fontSize: '11px', color: m.last_login_at ? '#bbb' : '#ddd', marginTop: '0.1rem' }}>{fmtLastLogin(m.last_login_at)}</div>
         </div>
       </div>
 
@@ -809,7 +822,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                 }}
                 style={{ cursor: 'pointer', accentColor: '#93333E', width: '13px', height: '13px' }}
               />
-              {['Name', 'Email', 'Status', 'Car', 'Joined', 'Setup', ''].map((h, i) => (
+              {['Name', 'Email', 'Status', 'Car', 'Joined / Last Login', 'Setup', ''].map((h, i) => (
                 <div key={i} style={{ fontSize: '10px', letterSpacing: '0.13em', textTransform: 'uppercase', color: '#999' }}>{h}</div>
               ))}
             </div>
@@ -1021,6 +1034,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                             Joined {new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
                           </span>
                         )}
+                        <span style={{ fontSize: '11px', color: m.last_login_at ? '#bbb' : '#ddd' }}>{fmtLastLogin(m.last_login_at)}</span>
                       </div>
                     </div>
                   ) : (
@@ -1063,7 +1077,8 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                       {m.cars?.[0]?.paint && <div style={{ fontSize: '11px', color: '#c5a882', marginTop: '1px' }}>{m.cars[0].paint}</div>}
                     </div>
                     <div style={{ fontSize: '11px', color: '#bbb' }}>
-                      {(m.join_date || m.created_at) ? new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}
+                      <div>{(m.join_date || m.created_at) ? new Date(m.join_date || m.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
+                      <div style={{ marginTop: '2px', color: m.last_login_at ? '#bbb' : '#ddd' }}>{fmtLastLogin(m.last_login_at)}</div>
                     </div>
                     <div>
                       {m.password_set_at ? (
