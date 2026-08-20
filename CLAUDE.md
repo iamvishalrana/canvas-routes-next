@@ -511,6 +511,18 @@ After registration, confirmed participants get a password-gated itinerary page a
 
 **The itinerary route's URL must include the year too** (e.g. `/itinerary-sunday-silhouette-august-30-2026`, not `-august-30`), same reasoning as rule 15 below — without it, next year's edition of the same route lands on the exact same URL as this year's frozen page and either collides or silently overwrites it. Standing convention as of the Sunday Silhouette rename (2026-08-20) — apply to every future event's itinerary page, even though the earlier WTET/HTM/Into the Laurentians itinerary pages predate this and were left un-yeared.
 
+### Registration open/closed messaging — required for every new event page
+
+Don't show a flat "Registrations are now closed" for every closed state — use `getRegistrationStatus()` from `lib/routeRegistrationStatus.js` to pick between two different messages, since they mean very different things to a visitor:
+
+- **`'not_yet_open'`** — the event is still in the future and this route has never been launched (`upcoming_routes.launched`). Nothing's wrong, the page just isn't live yet — an encouraging "check back soon" message (`t.registrationNotYetOpen` / `t.registrationsNotYetOpenCta` / `t.notYetOpenLabel` in `lib/i18n/routeEventShared.js`).
+- **`'closed'`** — the event is today or in the past, OR the route WAS launched and registration was since manually turned off. A final "this has ended" message (`t.registrationClosed` / `t.registrationsClosedCta` / `t.closedLabel`).
+- **`'open'`** — normal form flow.
+
+Call it with `{ registrationOpen, launched, eventDate }` — `eventDate` is the page's own hardcoded countdown-timer `Date`, hoisted to module scope so both the countdown effect and the status check share one constant. Mirror the same check in the register API route's 403 fallback (only reachable if someone bypasses the client-side gate, but should still say the right thing). Reference implementation: `app/sunday-silhouette-2026/page.jsx` + `app/api/sunday-silhouette-2026-register/route.js`.
+
+Confirmed standing convention (2026-08-20) — apply to every future event page. Not retrofitted onto WTET (past, don't touch), or the currently-live Hello to Montebello/Calabogie Boogie/Circuit Mont-Tremblant pages unless asked.
+
 ## Fonts & Design Tokens
 
 Three font variables set in `app/layout.jsx`:
