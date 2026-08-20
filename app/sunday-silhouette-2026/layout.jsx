@@ -1,11 +1,61 @@
-// Draft/placeholder build — date and venue not yet confirmed. Deliberately
-// unlisted (not linked from nav, homepage, or /routes) and must not be
-// surfaced by search until Jerry confirms it's ready. noindex is the correct
-// mechanism here (vs. robots.txt disallow, which would also block crawling
-// and hide any future inbound links' context) since the page has zero other
-// discovery paths right now — same pattern as /cbtd-2026 before launch.
+// Launched 2026-08-20 — share preview uses the real hero photo directly (no
+// generated text-overlay image), matching its actual dimensions. Title/OG
+// follow the site convention ("Name — Year" only, never the exact date —
+// see the Route names memory rule); HTM's own August-1-in-the-title is
+// called out there as a deliberate one-off exception, not the pattern to copy.
+const HERO_IMAGE = 'https://www.canvasroutes.com/laurentian-cars-morning-mirrored.png'
+
 export const metadata = {
-  robots: { index: false, follow: false },
+  title: 'Sunday Silhouette — 2026',
+  description: 'A quick loop through the Laurentians — coffee at Café Marius in Saint-Donat, breakfast at a premium brunch restaurant in Saint-Sauveur, back before noon. Out at 7:30 AM from Laval. $99 members / $125.',
+  keywords: 'Laurentians route Montreal, Canvas Routes route, scenic morning drive Quebec, Saint-Donat drive, Saint-Sauveur drive, convoy drive Quebec, car route Montreal, Lanaudière backroads',
+  alternates: { canonical: 'https://canvasroutes.com/sunday-silhouette-2026' },
+  openGraph: {
+    type: 'website',
+    siteName: 'Canvas Routes',
+    title: 'Sunday Silhouette — 2026 | Canvas Routes',
+    description: 'A quick loop through the Laurentians — coffee at Café Marius, breakfast at a premium brunch restaurant, back before noon. $99 members / $125.',
+    url: 'https://canvasroutes.com/sunday-silhouette-2026',
+    images: [{ url: HERO_IMAGE, width: 1535, height: 1024, alt: 'Sunday Silhouette — Canvas Routes Route' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Sunday Silhouette — 2026 | Canvas Routes',
+    description: 'A quick loop through the Laurentians — coffee at Café Marius, breakfast at a premium brunch restaurant, back before noon. $99 members / $125.',
+    images: [HERO_IMAGE],
+  },
+}
+
+const eventSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Event',
+  name: 'Sunday Silhouette — Canvas Routes Route',
+  startDate: '2026-08-30T07:30:00-04:00',
+  endDate: '2026-08-30T12:00:00-04:00',
+  eventStatus: 'https://schema.org/EventScheduled',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  description: 'A quick escape through the Laurentians, back before lunch — coffee at Café Marius in Saint-Donat, breakfast at a premium brunch restaurant in Saint-Sauveur.',
+  image: HERO_IMAGE,
+  url: 'https://canvasroutes.com/sunday-silhouette-2026',
+  location: {
+    '@type': 'Place',
+    name: 'Laval, Quebec',
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Laval',
+      addressRegion: 'QC',
+      addressCountry: 'CA',
+    },
+  },
+  organizer: {
+    '@type': 'Organization',
+    name: 'Canvas Routes',
+    url: 'https://canvasroutes.com',
+  },
+  offers: [
+    { '@type': 'Offer', name: 'Member rate', price: '99', priceCurrency: 'CAD', availability: 'https://schema.org/InStock', url: 'https://canvasroutes.com/sunday-silhouette-2026' },
+    { '@type': 'Offer', name: 'Standard rate', price: '125', priceCurrency: 'CAD', availability: 'https://schema.org/InStock', url: 'https://canvasroutes.com/sunday-silhouette-2026' },
+  ],
 }
 
 export default function SundaySilhouetteLayout({ children }) {
@@ -37,6 +87,10 @@ export default function SundaySilhouetteLayout({ children }) {
           });
         } catch(e) {}
       `}} />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(eventSchema) }}
+      />
       {children}
     </>
   )

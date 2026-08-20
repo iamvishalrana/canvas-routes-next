@@ -10,7 +10,8 @@
 //  - /drive — bare redirect stub, no content of its own
 //  - /unsubscribe — utility page
 //  - /itinerary-hello-to-montebello-august-1, /itinerary-into-the-laurentians-june-7,
-//    /whips-to-eastern-townships — password-gated private itineraries
+//    /itinerary-sunday-silhouette-august-30-2026, /whips-to-eastern-townships —
+//    password-gated private itineraries
 //  - /admin/*, /members/*, /api/*, /test/* — already blocked in robots.txt
 //
 // Past events (WTET, Cars Coffee & Dad Jokes, WTET Awards) ARE included —
@@ -25,6 +26,7 @@ export default function sitemap() {
     { url: `${SITE}/routes`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${SITE}/membership`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${SITE}/hello-to-montebello`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE}/sunday-silhouette-2026`, lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE}/cars-and-coffee-montreal`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/faq`, lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE}/notify`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
