@@ -770,8 +770,13 @@ export default function RoadtripsAdminClient() {
                 </div>
 
                 {/* Registration toggles — same pattern as Admin > Events, own
-                    row so they're always visible at a glance, not buried */}
-                {r.launched && (
+                    row so they're always visible at a glance, not buried.
+                    Gated on registration_url (a real registration page
+                    exists to control), not `launched` — a route can have its
+                    page built and want registration opened/closed pre-launch
+                    (e.g. for testing, or a soft/unannounced open) before the
+                    formal Launch action ever fires. */}
+                {r.registration_url && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1.1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <ToggleSwitch
