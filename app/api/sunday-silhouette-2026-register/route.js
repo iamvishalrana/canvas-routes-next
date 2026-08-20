@@ -6,9 +6,11 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
+import { getRegistrationStatus } from '../../../lib/routeRegistrationStatus.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Sunday Silhouette — 2026'
+const EVENT_DATE = new Date('2026-08-30T11:30:00Z') // matches the page's own countdown constant
 const MEMBER_PRICE_CENTS    = 9900  // $99 CAD
 const NONMEMBER_PRICE_CENTS = 12500 // $125 CAD
 
@@ -28,12 +30,18 @@ export async function POST(request) {
   // Check registration open — Registration Open toggle in admin Routes section
   // (upcoming_routes, same as hello-to-montebello). registration_open is
   // false on today's draft/unlinked row, so this correctly blocks POSTs
-  // until Jerry flips it on at launch.
+  // until Jerry flips it on at launch. Message mirrors the page's own
+  // getRegistrationStatus — this is only reachable if someone bypasses the
+  // client-side gate, so it's a fallback, not the primary UX.
   try {
     const supabase = createAdminClient()
-    const { data: route } = await supabase.from('upcoming_routes').select('registration_open').eq('slug', 'sunday-silhouette-2026').maybeSingle()
+    const { data: route } = await supabase.from('upcoming_routes').select('registration_open, launched').eq('slug', 'sunday-silhouette-2026').maybeSingle()
+    // No row found — fail open, same as before, rather than blocking on a
+    // missing/unexpected DB state.
     if (route && route.registration_open === false) {
-      return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
+      const status = getRegistrationStatus({ registrationOpen: false, launched: route.launched === true, eventDate: EVENT_DATE })
+      const error = status === 'not_yet_open' ? "Registration hasn't opened yet." : 'Registration is currently closed.'
+      return Response.json({ error }, { status: 403 })
     }
   } catch { /* allow through if upcoming_routes unavailable */ }
 

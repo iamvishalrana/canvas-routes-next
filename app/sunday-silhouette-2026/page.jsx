@@ -13,6 +13,9 @@ import { computeTax } from '../../lib/tax'
 import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { routeEventSharedT } from '../../lib/i18n/routeEventShared'
 import { sundaySilhouetteT } from '../../lib/i18n/sundaySilhouette'
+import { getRegistrationStatus } from '../../lib/routeRegistrationStatus'
+
+const EVENT_DATE = new Date('2026-08-30T11:30:00Z') // 7:30 AM EDT — Laval meetup
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -294,13 +297,15 @@ export default function SundaySilhouettePage() {
   const [status, setStatus]           = useState(null) // null | 'loading' | 'payment' | 'success' | 'error'
   const [serverError, setServerError] = useState(null)
   const [focusedField, setFocusedField] = useState(null)
-  // Closed by default — this page's upcoming_routes row is deliberately kept
-  // is_active:false until launch (hides it from /routes and /members/routes),
-  // which also means /api/upcoming-routes never returns it here. Defaulting
-  // to closed reflects that correctly instead of silently opening the form
-  // just because the row couldn't be found.
+  // Not-open-yet by default — this page's upcoming_routes row is deliberately
+  // kept is_active:false until launch (hides it from /routes and
+  // /members/routes), which also means /api/upcoming-routes never returns it
+  // here. regOpen/launched both defaulting to false correctly resolves to
+  // 'not_yet_open' via getRegistrationStatus instead of silently opening the
+  // form just because the row couldn't be found.
   const [regOpen, setRegOpen]         = useState(false)
   const [memberRegOpen, setMemberRegOpen] = useState(false)
+  const [launched, setLaunched]       = useState(false)
   const [closedMsg, setClosedMsg]     = useState(null)
   const [clientSecret, setClientSecret] = useState(null)
   const [countdown, setCountdown]     = useState(null)
@@ -311,9 +316,8 @@ export default function SundaySilhouettePage() {
   const honeypotRef = useRef(null)
 
   useEffect(() => {
-    const EVENT = new Date('2026-08-30T11:30:00Z') // 7:30 AM EDT — Laval meetup
     function tick() {
-      const diff = EVENT - new Date()
+      const diff = EVENT_DATE - new Date()
       if (diff <= 0) { setCountdown(null); return }
       const d = Math.floor(diff / 86400000)
       const h = Math.floor((diff % 86400000) / 3600000)
@@ -335,9 +339,10 @@ export default function SundaySilhouettePage() {
       .then(r => r.ok ? r.json() : [])
       .then(routes => {
         const route = routes.find(r => r.slug === 'sunday-silhouette-2026')
-        if (!route) return // not found while is_active:false — stays closed (default state)
+        if (!route) return // not found while is_active:false — stays 'not_yet_open' (default state)
         setRegOpen(route.registration_open !== false)
         setMemberRegOpen(route.member_registration_open !== false)
+        setLaunched(route.launched === true)
       })
       .catch(() => {})
   }, [])
@@ -551,7 +556,8 @@ export default function SundaySilhouettePage() {
     }
   }
 
-  const effectiveRegOpen = memberProfile ? memberRegOpen : regOpen
+  const regStatus = getRegistrationStatus({ registrationOpen: memberProfile ? memberRegOpen : regOpen, launched, eventDate: EVENT_DATE })
+  const effectiveRegOpen = regStatus === 'open'
   const showForm = effectiveRegOpen && status !== 'success' && status !== 'payment'
 
   return (
@@ -674,7 +680,7 @@ export default function SundaySilhouettePage() {
           <div style={{animation:'ss-fade-up 0.65s ease both',animationDelay:'1100ms'}}>
             <a href="#form" className={effectiveRegOpen ? 'ss-hero-cta' : undefined} onClick={e => { e.preventDefault(); document.getElementById('form')?.scrollIntoView({ behavior:'smooth' }) }}
               style={{display:'inline-block',padding:'0.9rem 2.5rem',background:effectiveRegOpen?'#F5F1EC':'rgba(245,241,236,0.12)',color:effectiveRegOpen?'#0F1E14':'rgba(245,241,236,0.6)',fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600',border:effectiveRegOpen?'none':'1px solid rgba(245,241,236,0.25)'}}>
-              {effectiveRegOpen ? t.secureYourSeatCta : t.registrationsClosedCta}
+              {effectiveRegOpen ? t.secureYourSeatCta : regStatus === 'not_yet_open' ? t.registrationsNotYetOpenCta : t.registrationsClosedCta}
             </a>
           </div>
         </div>
@@ -815,7 +821,7 @@ export default function SundaySilhouettePage() {
               <div style={{height:'0.5px',background:'rgba(197,168,130,0.1)'}} />
               <div className="reg-box-row" style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',flexWrap:'wrap',gap:'0.5rem'}}>
                 <div style={{fontSize:'11px',letterSpacing:'0.2em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)'}}>{t.registrationLabel}</div>
-                <div style={{fontSize:'11px',letterSpacing:'0.06em',textTransform:'uppercase',color:effectiveRegOpen?'#c5a882':'rgba(197,168,130,0.5)'}}>{effectiveRegOpen ? t.openScrollDown : t.closedLabel}</div>
+                <div style={{fontSize:'11px',letterSpacing:'0.06em',textTransform:'uppercase',color:effectiveRegOpen?'#c5a882':'rgba(197,168,130,0.5)'}}>{effectiveRegOpen ? t.openScrollDown : regStatus === 'not_yet_open' ? t.notYetOpenLabel : t.closedLabel}</div>
               </div>
             </div>
           </div>
@@ -835,7 +841,7 @@ export default function SundaySilhouettePage() {
           {!effectiveRegOpen && status !== 'success' && (
             <div style={{textAlign:'center',padding:'5rem 0'}}>
               <div style={{fontFamily:'var(--font-cormorant),serif',fontSize:'2.2rem',fontWeight:'300',color:'#1a1a1a',marginBottom:'1rem'}}>
-                {closedMsg || t.registrationClosed}
+                {closedMsg || (regStatus === 'not_yet_open' ? t.registrationNotYetOpen : t.registrationClosed)}
               </div>
               <div style={{width:'30px',height:'0.5px',background:'#c5a882',margin:'1.2rem auto'}} />
               <p style={{fontSize:'0.9rem',color:'#777',lineHeight:'1.9',maxWidth:'420px',margin:'1.5rem auto'}}>
