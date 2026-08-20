@@ -61,12 +61,13 @@ export default function PersonClient() {
   }
   useEffect(load, [personId])
 
-  // Every folder title used across ALL people, not just this one — the whole
-  // point is reusing the same event name across different people's folders
-  // instead of retyping it (and risking a typo that fragments one event into
-  // two differently-titled folders).
+  // Every folder/album name used anywhere in the photo gallery section — non-
+  // member share folders AND member event/personal albums, not just this
+  // person's own folders — the whole point is reusing the same event name
+  // everywhere it's typed instead of retyping it (and risking a typo that
+  // fragments one event into differently-named folders/albums).
   useEffect(() => {
-    fetch('/api/admin/photo-share-people/folder-titles')
+    fetch('/api/admin/photos/folder-titles')
       .then(r => r.ok ? r.json() : { titles: [] })
       .then(data => setFolderTitleSuggestions(Array.isArray(data.titles) ? data.titles : []))
       .catch(() => {})

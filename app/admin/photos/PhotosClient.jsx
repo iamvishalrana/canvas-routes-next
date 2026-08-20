@@ -164,6 +164,7 @@ export default function PhotosClient() {
   const [creatingPersonalFolder, setCreatingPersonalFolder] = useState(false) // toggles the "+ New Folder" form, mirroring the non-member photo-share "+ New Folder" pattern
   const [notifyStatus, setNotifyStatus] = useState({}) // { [memberId]: 'sending' | 'sent' | <error string> }
   const [submissionsCount, setSubmissionsCount] = useState(0)
+  const [folderTitleSuggestions, setFolderTitleSuggestions] = useState([]) // shared across non-member folders + member event/personal albums — see the API route
   const [albumSearch, setAlbumSearch] = useState('')
   const [openAlbums, setOpenAlbums] = useState(() => new Set()) // expanded album names
   const autoOpenedRef = useRef(false)
@@ -188,6 +189,14 @@ export default function PhotosClient() {
       })
       .catch(() => { setListErr('Failed to load photos.'); setLoading(false) })
     fetch('/api/admin/gallery-submissions').then(r => r.ok ? r.json() : []).then(d => setSubmissionsCount(Array.isArray(d) ? d.length : 0)).catch(() => {})
+    // Every folder/album name used anywhere in the photo gallery section —
+    // non-member share folders too, not just this page's own event/personal
+    // albums — so the same event name can be reused exactly regardless of
+    // which of the three forms it's typed into. See the API route.
+    fetch('/api/admin/photos/folder-titles')
+      .then(r => r.ok ? r.json() : { titles: [] })
+      .then(data => setFolderTitleSuggestions(Array.isArray(data.titles) ? data.titles : []))
+      .catch(() => {})
   }, [])
 
 
@@ -545,7 +554,7 @@ export default function PhotosClient() {
                   <L>Event Name *</L>
                   <input style={inp} list="ph-event-album-names" placeholder="Whips to Eastern Townships — July 5, 2026" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} maxLength={120} />
                   <datalist id="ph-event-album-names">
-                    {[...new Set(photos.filter(p => p.category === 'event' && p.album).map(p => p.album))].map(a => <option key={a} value={a} />)}
+                    {folderTitleSuggestions.map(a => <option key={a} value={a} />)}
                   </datalist>
                   <div style={{ fontSize: '10px', color: '#bbb', marginTop: '0.3rem' }}>Must match the event's name exactly — this is how we know which members attended and can view it.</div>
                 </div>
@@ -699,7 +708,7 @@ export default function PhotosClient() {
                     <input style={inp} list={`ph-folders-${personalMember.id}`} value={personalFolder} onChange={e => setPersonalFolder(e.target.value)}
                       placeholder="Leave blank for General" maxLength={120} autoFocus />
                     <datalist id={`ph-folders-${personalMember.id}`}>
-                      {[...new Set(photos.filter(p => p.category === 'personal' && p.member_id === personalMember.id && p.album).map(p => p.album))].map(a => <option key={a} value={a} />)}
+                      {folderTitleSuggestions.map(a => <option key={a} value={a} />)}
                     </datalist>
                   </div>
                   <PrimaryBtn type="submit">Choose Photos…</PrimaryBtn>
