@@ -6,7 +6,7 @@ import { captureException } from '../../lib/sentry'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 
 const PASSWORD = 'sundaysilhouette'
-const ROUTE_SLUG = 'sunday-silhouette'
+const ROUTE_SLUG = 'sunday-silhouette-2026'
 
 // Only real venues so this one array can drive both the itinerary timeline
 // and the map markers. Meetup is the same Starbucks used for Hello to

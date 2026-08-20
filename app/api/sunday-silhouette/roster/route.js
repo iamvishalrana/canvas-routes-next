@@ -7,12 +7,12 @@ const EVENT_NAME = 'Sunday Silhouette — 2026'
 // Public car roster for the itinerary page — auto-reflects who's actually
 // paid and confirmed (no code/DB edit needed per registrant). Mirrors
 // app/api/hello-to-montebello/roster/route.js. Returns an empty list until
-// Jerry links upcoming_routes.event_id for slug 'sunday-silhouette' to a
+// Jerry links upcoming_routes.event_id for slug 'sunday-silhouette-2026' to a
 // generic check-in event.
 export async function GET() {
   const admin = createAdminClient()
 
-  const { data: route } = await admin.from('upcoming_routes').select('event_id').eq('slug', 'sunday-silhouette').maybeSingle()
+  const { data: route } = await admin.from('upcoming_routes').select('event_id').eq('slug', 'sunday-silhouette-2026').maybeSingle()
   if (!route?.event_id) return Response.json({ participants: [] })
 
   try {

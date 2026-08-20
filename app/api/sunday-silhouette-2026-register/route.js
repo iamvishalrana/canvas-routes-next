@@ -31,7 +31,7 @@ export async function POST(request) {
   // until Jerry flips it on at launch.
   try {
     const supabase = createAdminClient()
-    const { data: route } = await supabase.from('upcoming_routes').select('registration_open').eq('slug', 'sunday-silhouette').maybeSingle()
+    const { data: route } = await supabase.from('upcoming_routes').select('registration_open').eq('slug', 'sunday-silhouette-2026').maybeSingle()
     if (route && route.registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }

@@ -134,7 +134,7 @@ function PaymentForm({ email, price, clientSecret, isMember, onSuccess, onBack, 
 
     let confirmError
     try {
-      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/sunday-silhouette?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
+      const result = await stripe.confirmPayment({ elements, clientSecret, confirmParams: { return_url: `${window.location.origin}/sunday-silhouette-2026?member_pi=${isMember ? paymentIntentId : ''}` }, redirect: 'if_required' })
       confirmError = result.error
     } catch {
       setError(t.paymentErrorGeneric)
@@ -334,7 +334,7 @@ export default function SundaySilhouettePage() {
     fetch('/api/upcoming-routes')
       .then(r => r.ok ? r.json() : [])
       .then(routes => {
-        const route = routes.find(r => r.slug === 'sunday-silhouette')
+        const route = routes.find(r => r.slug === 'sunday-silhouette-2026')
         if (!route) return // not found while is_active:false — stays closed (default state)
         setRegOpen(route.registration_open !== false)
         setMemberRegOpen(route.member_registration_open !== false)
@@ -349,7 +349,7 @@ export default function SundaySilhouettePage() {
     const piSecret       = params.get('payment_intent_client_secret')
     const redirectStatus = params.get('redirect_status')
     if (!piId) return
-    window.history.replaceState({}, '', '/sunday-silhouette')
+    window.history.replaceState({}, '', '/sunday-silhouette-2026')
     if (redirectStatus === 'succeeded') {
       const memberPiParam = params.get('member_pi')
       if (memberPiParam === piId) {
@@ -993,7 +993,7 @@ export default function SundaySilhouettePage() {
                     <p style={{fontSize:'13px',color:'rgba(245,241,236,0.65)',lineHeight:'1.7',margin:'0 0 1.25rem',fontFamily:'var(--font-inter),sans-serif'}}>
                       {t.logInForMemberRateBody(String(MEMBER_PRICE))}
                     </p>
-                    <a href={`/members/login?redirect=${encodeURIComponent('/sunday-silhouette')}`}
+                    <a href={`/members/login?redirect=${encodeURIComponent('/sunday-silhouette-2026')}`}
                       style={{display:'inline-block',padding:'0.75rem 1.75rem',background:'#F5F1EC',color:'#0F1E14',fontSize:'11px',letterSpacing:'0.18em',textTransform:'uppercase',textDecoration:'none',fontFamily:'var(--font-inter),sans-serif',fontWeight:'600'}}>
                       {t.logInToRegister}
                     </a>

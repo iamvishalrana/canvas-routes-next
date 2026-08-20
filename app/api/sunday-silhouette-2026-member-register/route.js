@@ -53,7 +53,7 @@ export async function POST(request) {
   // e.g. prioritizing remaining spots for members only.
   try {
     const adminCheck = createAdminClient()
-    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open').eq('slug', 'sunday-silhouette').maybeSingle()
+    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open').eq('slug', 'sunday-silhouette-2026').maybeSingle()
     if (route && route.member_registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
     }
