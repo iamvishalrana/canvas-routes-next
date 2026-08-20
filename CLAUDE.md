@@ -511,6 +511,15 @@ After registration, confirmed participants get a password-gated itinerary page a
 
 **The itinerary route's URL must include the year too** (e.g. `/itinerary-sunday-silhouette-august-30-2026`, not `-august-30`), same reasoning as rule 15 below — without it, next year's edition of the same route lands on the exact same URL as this year's frozen page and either collides or silently overwrites it. Standing convention as of the Sunday Silhouette rename (2026-08-20) — apply to every future event's itinerary page, even though the earlier WTET/HTM/Into the Laurentians itinerary pages predate this and were left un-yeared.
 
+### `upcoming_routes.photo_url` must match the page's own hero image — required for every new event page
+
+Set `photo_url` on the route's `upcoming_routes` row to the exact same image used as the page's hero (e.g. `/laurentian-cars-morning-mirrored.png` for Sunday Silhouette, matching the existing convention: `/montebello-hero.jpg` for HTM, `/wtet.png` for WTET, `/trem-trip.jpg` for Into the Laurentians). This one field feeds three surfaces automatically — no per-surface code needed:
+- The members-portal dashboard's "registration open" card (`app/members/(portal)/dashboard/page.jsx`)
+- The homepage/routes-popup specific-route card (`app/page.jsx`'s `resolvePopupCard`)
+- The homepage teaser grid and `/members/routes` (`components/UpcomingRoadtrips.jsx`), which already fall back to the generic `ROUTE_PHOTOS` gradient art for routes without a real photo yet — don't add an entry there for a launched route, just set `photo_url`.
+
+Leaving `photo_url` null doesn't break anything (the dashboard card just renders with no image, a plain dark background) but is a launch-checklist miss, not a deliberate choice — set it whenever the page's real hero image exists, ideally before or at launch. Confirmed standing convention (2026-08-20) — apply to every future event.
+
 ### Registration open/closed messaging — required for every new event page
 
 Don't show a flat "Registrations are now closed" for every closed state — use `getRegistrationStatus()` from `lib/routeRegistrationStatus.js` to pick between two different messages, since they mean very different things to a visitor:
