@@ -45,6 +45,7 @@ export default async function EventsPage() {
   const ROAD_TRIP_TYPE_TO_NAME = {
     'road_trip_wtet': 'Whips to Eastern Townships — July 5, 2026',
     'road_trip_hello-to-montebello': 'Hello to Montebello — 2026',
+    'road_trip_sunday-silhouette-2026': 'Sunday Silhouette — 2026',
   }
   const paidRoadTripEventName = (['paid', 'authorized'].includes(application?.stripe_payment_status) && application?.stripe_payment_type)
     ? (ROAD_TRIP_TYPE_TO_NAME[application.stripe_payment_type] || null)
