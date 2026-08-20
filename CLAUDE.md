@@ -509,6 +509,8 @@ Prices always use Bebas Neue at `3rem` with a `0.5px solid rgba(0,0,0,0.1)` vert
 
 After registration, confirmed participants get a password-gated itinerary page at a separate route (e.g., `/whips-to-eastern-townships`). See that file for the full pattern — it includes: password gate with `?pw=` URL fallback, Google Maps integration, route stops list with tap-to-open-in-Maps, convoy rules accordion, and an About the Drive section. The password is stored in a `const PASSWORD = '...'` at the top of the file.
 
+**The itinerary route's URL must include the year too** (e.g. `/itinerary-sunday-silhouette-august-30-2026`, not `-august-30`), same reasoning as rule 15 below — without it, next year's edition of the same route lands on the exact same URL as this year's frozen page and either collides or silently overwrites it. Standing convention as of the Sunday Silhouette rename (2026-08-20) — apply to every future event's itinerary page, even though the earlier WTET/HTM/Into the Laurentians itinerary pages predate this and were left un-yeared.
+
 ## Fonts & Design Tokens
 
 Three font variables set in `app/layout.jsx`:
