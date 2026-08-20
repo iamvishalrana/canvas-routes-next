@@ -20,6 +20,16 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function fmtViewed(d) {
+  if (!d) return 'Never opened'
+  const diffMs = Date.now() - new Date(d).getTime()
+  const days = Math.floor(diffMs / 86400000)
+  if (days <= 0) return 'Opened today'
+  if (days === 1) return 'Opened 1 day ago'
+  if (days < 30) return `Opened ${days} days ago`
+  return `Opened ${fmtDate(d)}`
+}
+
 export default function PersonClient() {
   const confirm = useConfirm()
   const { personId } = useParams()
@@ -175,6 +185,7 @@ export default function PersonClient() {
               Password: <span style={{ color: '#8a7a5c' }}>{person.email}</span><CopyBtn value={person.email} />
               {' · '}<button type="button" onClick={startEditPerson} style={{ background: 'none', border: 'none', color: '#8a7a5c', textDecoration: 'underline', cursor: 'pointer', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>Edit</button>
             </div>
+            <div style={{ fontSize: '11px', color: person.last_viewed_at ? '#999' : '#bbb', marginTop: '0.35rem' }}>{fmtViewed(person.last_viewed_at)}</div>
           </>
         ) : (
           <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', maxWidth: '480px' }}>

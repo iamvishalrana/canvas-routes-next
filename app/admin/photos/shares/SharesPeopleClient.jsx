@@ -8,6 +8,16 @@ import ContactSearchSelect from '../../_components/ContactSearchSelect'
 
 const EMPTY_FORM = { name: '', email: '' }
 
+function fmtViewed(d) {
+  if (!d) return 'Never opened'
+  const diffMs = Date.now() - new Date(d).getTime()
+  const days = Math.floor(diffMs / 86400000)
+  if (days <= 0) return 'Opened today'
+  if (days === 1) return 'Opened 1 day ago'
+  if (days < 30) return `Opened ${days}d ago`
+  return `Opened ${new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`
+}
+
 export default function SharesPeopleClient() {
   const router = useRouter()
   const confirm = useConfirm()
@@ -15,7 +25,7 @@ export default function SharesPeopleClient() {
   const [loading, setLoading] = useState(true)
   const [listErr, setListErr] = useState('')
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState('name') // name | newest | folders | photos
+  const [sortBy, setSortBy] = useState('name') // name | newest | folders | photos | viewed
   const [emptyOnly, setEmptyOnly] = useState(false)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState(EMPTY_FORM)
@@ -68,6 +78,7 @@ export default function SharesPeopleClient() {
     if (sortBy === 'newest') sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
     else if (sortBy === 'folders') sorted.sort((a, b) => b.folderCount - a.folderCount)
     else if (sortBy === 'photos') sorted.sort((a, b) => b.photoCount - a.photoCount)
+    else if (sortBy === 'viewed') sorted.sort((a, b) => new Date(b.last_viewed_at || 0) - new Date(a.last_viewed_at || 0))
     else sorted.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
     return sorted
   }, [people, search, sortBy, emptyOnly])
@@ -149,6 +160,7 @@ export default function SharesPeopleClient() {
               <option value="newest">Sort: Newest added</option>
               <option value="folders">Sort: Most folders</option>
               <option value="photos">Sort: Most photos</option>
+              <option value="viewed">Sort: Last opened</option>
             </select>
             <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
           </div>
@@ -182,8 +194,13 @@ export default function SharesPeopleClient() {
                   <CopyBtn value={person.email} />
                 </div>
               </div>
-              <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#bbb', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                {person.folderCount} folder{person.folderCount !== 1 ? 's' : ''} · {person.photoCount} photo{person.photoCount !== 1 ? 's' : ''}
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#bbb', whiteSpace: 'nowrap' }}>
+                  {person.folderCount} folder{person.folderCount !== 1 ? 's' : ''} · {person.photoCount} photo{person.photoCount !== 1 ? 's' : ''}
+                </div>
+                <div style={{ fontSize: '10px', color: person.last_viewed_at ? '#aaa' : '#ccc', marginTop: '2px', whiteSpace: 'nowrap' }}>
+                  {fmtViewed(person.last_viewed_at)}
+                </div>
               </div>
             </div>
           ))}
