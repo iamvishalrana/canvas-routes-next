@@ -195,9 +195,32 @@ export async function POST(request) {
   recipients = recipients.slice(0, MAX_RECIPIENTS)
   if (recipients.length === 0) return Response.json({ sent: 0, failed: 0, truncated: false, totalRecipients: 0 })
 
+  // Insert the history row BEFORE sending (not after) — its id is what links
+  // every broadcast_recipients row below back to this broadcast, and needs
+  // to exist while the send loop runs, not just once it's finished. Counts
+  // are corrected via UPDATE once the actual send results are known.
+  const { data: broadcastRow, error: createErr } = await supabase.from('broadcasts').insert({
+    subject: subject.trim(),
+    body_html: body_html || null,
+    audience,
+    specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
+    sent_count: 0,
+    failed_count: 0,
+  }).select('id').single()
+  if (createErr) {
+    captureMessage('Broadcast history insert failed', { error: createErr.message, audience })
+    return Response.json({ error: `Could not start the broadcast (${createErr.message}).` }, { status: 500 })
+  }
+
   let sent = 0
   let failed = 0
   const failedRecipients = []
+  // Every recipient the send loop attempts, successful or not — resend_message_id
+  // is what later joins against email_events for delivered/opened/clicked/bounced
+  // status (see app/api/admin/broadcasts/[id]/stats/route.js). Batch responses
+  // guarantee array order matches the request payload order (Resend docs), so
+  // zipping recipients[i] with data[i] is a reliable pairing, not a guess.
+  const recipientRows = []
 
   const emailFor = recipient =>
     buildBulkEmail({ from: fromHeader, recipient, subject: subject.trim(), html, attachments: cleanAttachments })
@@ -218,15 +241,22 @@ export async function POST(request) {
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
             body: JSON.stringify(emailFor(recipient)),
           })
-          if (res.ok) { sent += 1 } else {
+          if (res.ok) {
+            sent += 1
+            const d = await res.json().catch(() => ({}))
+            recipientRows.push({ broadcast_id: broadcastRow.id, email: recipient.email, name: recipient.name || null, resend_message_id: d.id || null })
+          } else {
             let reason = `HTTP ${res.status}`
             try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
             failed += 1
             failedRecipients.push({ email: recipient.email, name: recipient.name || '', reason })
+            recipientRows.push({ broadcast_id: broadcastRow.id, email: recipient.email, name: recipient.name || null, send_error: reason })
           }
         } catch (err) {
+          const reason = err.message || 'Network error'
           failed += 1
-          failedRecipients.push({ email: recipient.email, name: recipient.name || '', reason: err.message || 'Network error' })
+          failedRecipients.push({ email: recipient.email, name: recipient.name || '', reason })
+          recipientRows.push({ broadcast_id: broadcastRow.id, email: recipient.email, name: recipient.name || null, send_error: reason })
         }
       }))
       if (i + 2 < recipients.length) await new Promise(r => setTimeout(r, 600))
@@ -244,16 +274,25 @@ export async function POST(request) {
         })
         if (res.ok) {
           sent += batch.length
+          const d = await res.json().catch(() => ({}))
+          const ids = Array.isArray(d.data) ? d.data : []
+          batch.forEach((r, idx) => recipientRows.push({ broadcast_id: broadcastRow.id, email: r.email, name: r.name || null, resend_message_id: ids[idx]?.id || null }))
         } else {
           let reason = `HTTP ${res.status}`
           try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
           failed += batch.length
-          for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
+          for (const r of batch) {
+            failedRecipients.push({ email: r.email, name: r.name || '', reason })
+            recipientRows.push({ broadcast_id: broadcastRow.id, email: r.email, name: r.name || null, send_error: reason })
+          }
         }
       } catch (err) {
         const reason = err.message || 'Network error'
         failed += batch.length
-        for (const r of batch) failedRecipients.push({ email: r.email, name: r.name || '', reason })
+        for (const r of batch) {
+          failedRecipients.push({ email: r.email, name: r.name || '', reason })
+          recipientRows.push({ broadcast_id: broadcastRow.id, email: r.email, name: r.name || null, send_error: reason })
+        }
       }
       // Space out batches — Resend's account default is ~2 requests/second, and
       // firing 20 batch calls back-to-back for a large audience can trip a 429
@@ -263,20 +302,23 @@ export async function POST(request) {
     }
   }
 
-  // Save to broadcast history using normalized emails, not the raw client input.
+  // Best-effort — a failure here loses per-recipient delivery tracking for
+  // this send, not the emails themselves (already sent) or the aggregate
+  // counts (updated separately below).
+  if (recipientRows.length > 0) {
+    const { error: recipientsErr } = await supabase.from('broadcast_recipients').insert(recipientRows)
+    if (recipientsErr) captureMessage('broadcast_recipients insert failed', { error: recipientsErr.message, broadcastId: broadcastRow.id })
+  }
+
   // supabase-js returns errors instead of throwing — check `error` explicitly,
-  // otherwise a failed insert (missing grants, missing column) is invisible.
-  const { error: historyError } = await supabase.from('broadcasts').insert({
-    subject: subject.trim(),
-    body_html: body_html || null,
-    audience,
-    specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
+  // otherwise a failed update (missing grants, missing column) is invisible.
+  const { error: historyError } = await supabase.from('broadcasts').update({
     sent_count: sent,
     failed_count: failed,
     failed_recipients: failedRecipients.length > 0 ? failedRecipients : null,
-  })
+  }).eq('id', broadcastRow.id)
   if (historyError) {
-    captureMessage('Broadcast history insert failed', { error: historyError.message, audience, sent, failed })
+    captureMessage('Broadcast history update failed', { error: historyError.message, audience, sent, failed })
   }
 
   await logAdminAction(supabase, adminUser?.email, {

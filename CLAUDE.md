@@ -558,6 +558,7 @@ Required for full functionality:
 | `STRIPE_SECRET_KEY` | Server-side Stripe API |
 | `STRIPE_WEBHOOK_SECRET` | Webhook signature verification |
 | `RESEND_API_KEY` | Transactional email |
+| `RESEND_WEBHOOK_SECRET` | Verifies Resend's delivery/open/click/bounce webhook (`app/api/webhooks/resend/route.js`, Svix-signed) — absent = endpoint returns 503, no events captured |
 | `ADMIN_EMAILS` | Comma-separated list of admin email addresses |
 | `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis (rate limiting) |
 | `ANTHROPIC_API_KEY` | AI email draft generation in admin |

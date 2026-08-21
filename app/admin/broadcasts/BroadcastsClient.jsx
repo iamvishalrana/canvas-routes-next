@@ -26,6 +26,20 @@ const AUDIENCE_LABELS = {
   specific_emails:      'Specific Emails',
 }
 
+// Per-recipient delivery status — same keys/colors as EVENT_META in
+// app/admin/email-activity/EmailActivityClient.jsx, plus 'pending' and
+// 'send_failed' which that page has no use for.
+const DELIVERY_STATUS_META = {
+  'email.sent':        { label: 'Sent',       color: '#888' },
+  'email.delivered':   { label: 'Delivered',  color: '#3B6B2F' },
+  'email.opened':      { label: 'Opened',     color: '#4FA3A5' },
+  'email.clicked':     { label: 'Clicked',    color: '#4FA3A5' },
+  'email.bounced':     { label: 'Bounced',    color: '#93333E' },
+  'email.complained':  { label: 'Complaint',  color: '#93333E' },
+  pending:             { label: 'Pending',    color: '#bbb' },
+  send_failed:         { label: 'Failed',     color: '#93333E' },
+}
+
 const AUDIENCE_OPTIONS = [
   { value: 'canvas_routes_member', label: 'Canvas Routes Member'   },
   { value: 'inner_circle',         label: 'Inner Circle'           },
@@ -406,6 +420,7 @@ export default function BroadcastsClient() {
   const [historyLoading, setHistoryLoading]     = useState(false)
   const [historyError, setHistoryError]         = useState(null)
   const [expandedHistoryId, setExpandedHistoryId] = useState(null)     // 3. history expand
+  const [deliveryStats, setDeliveryStats]       = useState({})        // { [broadcastId]: { loading, error, counts, recipients, showList } }
   const [historySearch, setHistorySearch]       = useState('')
   const [historyAudience, setHistoryAudience]   = useState('all')
   const [historySort, setHistorySort]           = useState('newest')
@@ -770,6 +785,20 @@ export default function BroadcastsClient() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Lazy-loaded per-broadcast delivery status (delivered/opened/clicked/
+  // bounced), fetched once per row on first expand and cached in state.
+  // Broadcasts sent before broadcast_recipients existed (2026-08-21) come
+  // back with an empty recipients array — handled as "no data" in the UI,
+  // not zero counts.
+  function loadDeliveryStats(id) {
+    if (deliveryStats[id]) return // already loaded or loading
+    setDeliveryStats(prev => ({ ...prev, [id]: { loading: true } }))
+    fetch(`/api/admin/broadcasts/${id}/stats`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setDeliveryStats(prev => ({ ...prev, [id]: { loading: false, counts: data.counts, recipients: data.recipients } })))
+      .catch(() => setDeliveryStats(prev => ({ ...prev, [id]: { loading: false, error: true } })))
+  }
+
   // Filter → sort → group by send month
   const filteredHistory = history
     .filter(h => historyAudience === 'all' || h.audience === historyAudience)
@@ -1032,14 +1061,16 @@ export default function BroadcastsClient() {
                             </span>
                             <span style={{ fontSize: '11px', fontWeight: '500', color: '#3B6B2F' }}>{h.sent_count}✓</span>
                             {h.failed_count > 0 && <span style={{ fontSize: '11px', fontWeight: '500', color: '#93333E' }}>{h.failed_count}✗</span>}
-                            {(h.body_html || h.failed_recipients?.length > 0) && (
-                              <button
-                                onClick={() => setExpandedHistoryId(expandedHistoryId === h.id ? null : h.id)}
-                                style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: h.failed_count > 0 ? '#93333E' : '#888', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
-                              >
-                                {expandedHistoryId === h.id ? 'Hide' : h.failed_count > 0 ? 'Details' : 'Preview'}
-                              </button>
-                            )}
+                            <button
+                              onClick={() => {
+                                const next = expandedHistoryId === h.id ? null : h.id
+                                setExpandedHistoryId(next)
+                                if (next) loadDeliveryStats(next)
+                              }}
+                              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: h.failed_count > 0 ? '#93333E' : '#888', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
+                            >
+                              {expandedHistoryId === h.id ? 'Hide' : h.failed_count > 0 ? 'Details' : 'Delivery'}
+                            </button>
                             <button
                               className="bc-reuse-btn"
                               onClick={() => reuseHistory(h)}
@@ -1059,10 +1090,57 @@ export default function BroadcastsClient() {
                         {expandedHistoryId === h.id && (
                           <div style={{ padding: '1rem 1.25rem 1rem 2rem', background: '#fafaf9', borderTop: '0.5px solid rgba(0,0,0,0.05)' }}>
                             {h.audience === 'specific_emails' && h.specific_emails?.length > 0 && (
-                              <div style={{ fontSize: '11px', color: '#999', marginBottom: (h.failed_recipients?.length > 0 || h.body_html) ? '0.75rem' : 0, wordBreak: 'break-word' }}>
+                              <div style={{ fontSize: '11px', color: '#999', marginBottom: '0.75rem', wordBreak: 'break-word' }}>
                                 To: {h.specific_emails.join(', ')}
                               </div>
                             )}
+                            {(() => {
+                              const ds = deliveryStats[h.id]
+                              if (!ds || ds.loading) {
+                                return <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.75rem' }}>{ds?.loading ? 'Loading delivery status…' : ''}</div>
+                              }
+                              if (ds.error) {
+                                return <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '0.75rem' }}>Could not load delivery status.</div>
+                              }
+                              if (!ds.counts || ds.counts.total === 0) {
+                                return <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.75rem' }}>No delivery data — this broadcast was sent before per-recipient tracking was added.</div>
+                              }
+                              const c = ds.counts
+                              return (
+                                <div style={{ marginBottom: '0.75rem' }}>
+                                  <div style={{ display: 'flex', gap: '0.9rem', flexWrap: 'wrap', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                    <span style={{ color: '#3B6B2F' }}>{c.delivered} delivered</span>
+                                    <span style={{ color: '#4FA3A5' }}>{c.opened} opened</span>
+                                    <span style={{ color: '#4FA3A5' }}>{c.clicked} clicked</span>
+                                    {c.bounced > 0 && <span style={{ color: '#93333E' }}>{c.bounced} bounced</span>}
+                                    {c.complained > 0 && <span style={{ color: '#93333E' }}>{c.complained} complained</span>}
+                                    {c.pending > 0 && <span style={{ color: '#bbb' }}>{c.pending} pending</span>}
+                                    {c.sendFailed > 0 && <span style={{ color: '#93333E' }}>{c.sendFailed} failed to send</span>}
+                                  </div>
+                                  {ds.recipients?.length > 0 && (
+                                    <>
+                                      <button type="button"
+                                        onClick={() => setDeliveryStats(prev => ({ ...prev, [h.id]: { ...prev[h.id], showList: !prev[h.id].showList } }))}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8A6535', fontSize: '10px', textDecoration: 'underline', padding: 0, marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                        {ds.showList ? 'Hide recipient list' : `Show recipient list (${ds.recipients.length})`}
+                                      </button>
+                                      {ds.showList && (
+                                        <div style={{ marginTop: '0.5rem', maxHeight: '220px', overflowY: 'auto', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '6px', background: '#fff' }}>
+                                          {ds.recipients.map((r, ri) => (
+                                            <div key={ri} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0.6rem', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', borderBottom: ri < ds.recipients.length - 1 ? '0.5px solid rgba(0,0,0,0.04)' : 'none' }}>
+                                              <span style={{ color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || r.email}</span>
+                                              <span style={{ flexShrink: 0, color: DELIVERY_STATUS_META[r.status]?.color || '#999', letterSpacing: '0.04em' }}>
+                                                {DELIVERY_STATUS_META[r.status]?.label || r.status}
+                                              </span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })()}
                             {h.failed_recipients?.length > 0 && (
                               <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.75rem 0.9rem', background: 'rgba(147,51,62,0.04)', border: '0.5px solid rgba(147,51,62,0.18)' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
