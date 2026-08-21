@@ -3,7 +3,14 @@
 // that changes. noindex is the correct mechanism here (vs. robots.txt
 // disallow, which would also block crawling and hide any future inbound
 // links' context) since the page has zero other discovery paths right now.
+//
+// Only `title` is set below — a real browser-tab title costs nothing (it
+// doesn't affect indexing or link-preview discoverability) but no OG/
+// description/JSON-LD yet, since adding those would make the page's content
+// visible the moment anyone pastes the link anywhere, ahead of launch.
+// Same treatment as app/cbtd-2026/layout.jsx.
 export const metadata = {
+  title: 'Circuit Mont-Tremblant — Track Day — 2026',
   robots: { index: false, follow: false },
 }
 
