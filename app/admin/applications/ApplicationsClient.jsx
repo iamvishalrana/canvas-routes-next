@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, CANONICAL_EVENTS, MONTHS, DOB_YEARS,
   normalizeEventName, parseCarMakeModel,
-  inp, sel, L, CopyBtn, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu, FilterMenu, DateRangeMenu,
+  inp, sel, L, CopyBtn, EmailLink, PrimaryBtn, GhostBtn, DangerBtn, Err, AdminNotesPanel, AttendanceToggle, ConfirmDialog, KebabMenu, FilterMenu, DateRangeMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { useConfirm } from '../_components/ConfirmProvider'
@@ -788,7 +788,7 @@ export default function ApplicationsClient() {
                         </div>
                         {inviteCell}
                       </div>
-                      <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
+                      <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><EmailLink email={a.email} /><CopyBtn value={a.email} /></div>
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>{(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
                         {a.car_paint && <span style={{ fontSize: '11px', color: isGreyed ? '#ccc' : '#c5a882' }}>{a.car_paint}</span>}
@@ -822,7 +822,7 @@ export default function ApplicationsClient() {
                     {a.reregistered_at && <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.5)', padding: '2px 6px', background: 'rgba(197,168,130,0.08)', whiteSpace: 'nowrap', flexShrink: 0 }}>↩ Re-registered</span>}
                     {a.name || <span style={{ color: '#ccc' }}>—</span>}
                   </div>
-                  <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{a.email}<CopyBtn value={a.email} /></div>
+                  <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><EmailLink email={a.email} /><CopyBtn value={a.email} /></div>
                   <div style={{ fontSize: '12px', color: isGreyed ? '#bbb' : '#888' }}>
                     <div>{(() => { const {make,model} = parseCarMakeModel(a.car_model); return [a.car_year, make, model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span> })()}</div>
                     {a.car_paint && <div style={{ fontSize: '11px', color: isGreyed ? '#ccc' : '#c5a882', marginTop: '1px' }}>{a.car_paint}</div>}

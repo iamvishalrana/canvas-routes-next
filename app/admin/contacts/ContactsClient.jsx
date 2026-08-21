@@ -5,7 +5,7 @@ import { useRealtimeSync } from '../_components/useRealtimeSync'
 import {
   CAR_MAKES, MONTHS, DOB_YEARS, CANONICAL_EVENTS,
   normalizeEventName, parseCarMakeModel,
-  inp, sel, L, CopyBtn, AdminNotesPanel,
+  inp, sel, L, CopyBtn, EmailLink, AdminNotesPanel,
   GhostBtn, PrimaryBtn, DangerBtn, Err, AttendanceToggle, DateRangeMenu,
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
@@ -628,7 +628,7 @@ export default function ContactsClient() {
                       </button>
                     </div>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
+                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><EmailLink email={c.email} /><CopyBtn value={c.email} /></div>
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '12px', color: '#888' }}>{(() => { const {make,model} = parseCarMakeModel(c.car_model); return [c.car_year, make, model].filter(Boolean).join(' ') || '—' })()}</span>
                     {c.car_paint && <span style={{ fontSize: '11px', color: '#c5a882' }}>{c.car_paint}</span>}
@@ -654,7 +654,7 @@ export default function ContactsClient() {
                   </div>
                   {c.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{c.notes}</div>}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>{c.email}<CopyBtn value={c.email} /></div>
+                <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><EmailLink email={c.email} /><CopyBtn value={c.email} /></div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
                   <div>{[c.car_year, c.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}</div>
                   {c.car_paint && <div style={{ fontSize: '11px', color: '#c5a882', marginTop: '1px' }}>{c.car_paint}</div>}

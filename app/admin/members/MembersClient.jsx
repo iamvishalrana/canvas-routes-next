@@ -7,7 +7,7 @@ import {
   CANONICAL_EVENTS,
   parseCarMakeModel,
   inp, sel,
-  L, Badge, CopyBtn, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
+  L, Badge, CopyBtn, EmailLink, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, Success,
   AdminNotesPanel, Pagination, AttendanceToggle, KebabMenu, DateRangeMenu,
 } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
@@ -92,10 +92,10 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
         <div style={{ ...sectionPad, ...sep, display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.5rem', alignItems: 'center' }}>
           {m.email && (
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.1rem' }}>
-              <a href={`mailto:${m.email}`} style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '12px', color: '#555', textDecoration: 'none' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '12px', color: '#555' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#bbb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                {m.email}
-              </a>
+                <EmailLink email={m.email} />
+              </span>
               <CopyBtn value={m.email} />
             </span>
           )}
@@ -999,7 +999,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                           ]} />
                         </div>
                       </div>
-                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '0.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}><EmailLink email={m.email} /><CopyBtn value={m.email} /></div>
                       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '12px', color: '#888' }}>
                           {m.cars?.length > 0
@@ -1062,7 +1062,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                       {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{m.notes}</div>}
                     </div>
                     <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                      {m.email}
+                      <EmailLink email={m.email} />
                       <CopyBtn value={m.email} />
                     </div>
                     <div><Badge status={m.membership_status} /></div>

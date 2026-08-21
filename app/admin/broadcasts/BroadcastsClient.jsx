@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -388,6 +389,7 @@ function Toolbar({ editor }) {
 
 export default function BroadcastsClient() {
   const confirm = useConfirm()
+  const searchParams = useSearchParams()
   const [tab, setTab]                           = useState('compose')
   const [audience, setAudience]                 = useState('specific_emails')
   const [fromEmail, setFromEmail]               = useState('info@canvasroutes.com')
@@ -480,6 +482,22 @@ export default function BroadcastsClient() {
       }
     } catch {}
   }, [editor])
+
+  // Pre-fill from ?email= — the EmailLink shortcut on Members/Applications/
+  // Contacts (see shared.jsx) lands here with a specific address to message.
+  // Declared after the draft-restore effect above so it always runs second
+  // in the same commit (both gated on `editor` first becoming ready) — a
+  // stale saved draft can never silently drop the address someone just
+  // clicked through for.
+  const emailParamAppliedRef = useRef(false)
+  useEffect(() => {
+    if (!editor || emailParamAppliedRef.current) return
+    const emailParam = searchParams.get('email')?.trim().toLowerCase()
+    if (!emailParam) return
+    emailParamAppliedRef.current = true
+    setAudience('specific_emails')
+    setChipEmails(prev => prev.includes(emailParam) ? prev : [...prev, emailParam])
+  }, [editor, searchParams])
 
   // 4. Auto-save draft to localStorage on any change
   useEffect(() => {

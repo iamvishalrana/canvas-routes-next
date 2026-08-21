@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { EVENT_ATTENDANCE_KEYS, EVENT_NAME_ALIASES, normalizeEventName as _normalizeEventName } from '../../../lib/eventMeta.js'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
@@ -353,6 +354,26 @@ export function CopyBtn({ value }) {
         : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
       }
     </button>
+  )
+}
+
+// Every email display in Members/Applications/Contacts routes through this —
+// clicking it jumps to Broadcasts with that address pre-loaded as a Specific
+// Email recipient (see the ?email= param handling in BroadcastsClient.jsx).
+// Same-tab navigation on purpose: the admin panel runs as an installed iOS
+// home-screen app (no tab bar), and target="_blank" there kicks the user out
+// to Safari instead of opening a second in-app view — same-tab is the only
+// option that behaves consistently in both that PWA context and a normal
+// browser tab. color:inherit so it drops into whatever text color each
+// caller already uses; the underline is what signals it's clickable.
+export function EmailLink({ email }) {
+  if (!email) return null
+  return (
+    <Link href={`/admin/broadcasts?email=${encodeURIComponent(email)}`}
+      title="Email via Broadcasts"
+      style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.18)', textUnderlineOffset: '2px' }}>
+      {email}
+    </Link>
   )
 }
 
