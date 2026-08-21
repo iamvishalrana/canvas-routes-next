@@ -1208,7 +1208,7 @@ export default function SundaySilhouettePage() {
                 </div>
 
                 <div style={{display:'none'}} aria-hidden="true">
-                  <input ref={honeypotRef} type="text" name="cr_rad_field" tabIndex={-1} autoComplete="off" />
+                  <input ref={honeypotRef} type="text" name="cr_ss_field" tabIndex={-1} autoComplete="off" />
                 </div>
 
                 {(status==='error') && <div style={{fontSize:'12px',color:'#93333E',marginBottom:'0.75rem'}}>{serverError}</div>}
