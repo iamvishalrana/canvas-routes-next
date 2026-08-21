@@ -371,6 +371,12 @@ export function EmailLink({ email }) {
   return (
     <Link href={`/admin/broadcasts?email=${encodeURIComponent(email)}`}
       title="Email via Broadcasts"
+      // Every call site sits inside a row that toggles expand/collapse (or
+      // similar) on its own onClick — without this, clicking the email
+      // bubbles up and fires that too, flashing the row open right before
+      // navigation carries it away. Doesn't affect Next's own click handling
+      // on this same Link (that's a separate listener on the same element).
+      onClick={e => e.stopPropagation()}
       style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.18)', textUnderlineOffset: '2px' }}>
       {email}
     </Link>

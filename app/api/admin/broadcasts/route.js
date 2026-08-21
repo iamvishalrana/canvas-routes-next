@@ -195,22 +195,15 @@ export async function POST(request) {
   recipients = recipients.slice(0, MAX_RECIPIENTS)
   if (recipients.length === 0) return Response.json({ sent: 0, failed: 0, truncated: false, totalRecipients: 0 })
 
-  // Insert the history row BEFORE sending (not after) — its id is what links
-  // every broadcast_recipients row below back to this broadcast, and needs
-  // to exist while the send loop runs, not just once it's finished. Counts
-  // are corrected via UPDATE once the actual send results are known.
-  const { data: broadcastRow, error: createErr } = await supabase.from('broadcasts').insert({
-    subject: subject.trim(),
-    body_html: body_html || null,
-    audience,
-    specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
-    sent_count: 0,
-    failed_count: 0,
-  }).select('id').single()
-  if (createErr) {
-    captureMessage('Broadcast history insert failed', { error: createErr.message, audience })
-    return Response.json({ error: `Could not start the broadcast (${createErr.message}).` }, { status: 500 })
-  }
+  // Pre-generated so every broadcast_recipients row can reference it during
+  // the send loop below, without having to insert the broadcasts row itself
+  // until sending is actually done. Inserting early with placeholder 0/0
+  // counts (then UPDATEing after) was the first version of this — dropped
+  // because a large broadcast can take 10-30+ seconds to send, and an admin
+  // who opens History mid-send would see a confusing "0 sent" row the whole
+  // time. Generating the id upfront keeps the single insert-with-real-counts
+  // behavior this route always had.
+  const broadcastId = crypto.randomUUID()
 
   let sent = 0
   let failed = 0
@@ -244,19 +237,19 @@ export async function POST(request) {
           if (res.ok) {
             sent += 1
             const d = await res.json().catch(() => ({}))
-            recipientRows.push({ broadcast_id: broadcastRow.id, email: recipient.email, name: recipient.name || null, resend_message_id: d.id || null })
+            recipientRows.push({ broadcast_id: broadcastId, email: recipient.email, name: recipient.name || null, resend_message_id: d.id || null })
           } else {
             let reason = `HTTP ${res.status}`
             try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
             failed += 1
             failedRecipients.push({ email: recipient.email, name: recipient.name || '', reason })
-            recipientRows.push({ broadcast_id: broadcastRow.id, email: recipient.email, name: recipient.name || null, send_error: reason })
+            recipientRows.push({ broadcast_id: broadcastId, email: recipient.email, name: recipient.name || null, send_error: reason })
           }
         } catch (err) {
           const reason = err.message || 'Network error'
           failed += 1
           failedRecipients.push({ email: recipient.email, name: recipient.name || '', reason })
-          recipientRows.push({ broadcast_id: broadcastRow.id, email: recipient.email, name: recipient.name || null, send_error: reason })
+          recipientRows.push({ broadcast_id: broadcastId, email: recipient.email, name: recipient.name || null, send_error: reason })
         }
       }))
       if (i + 2 < recipients.length) await new Promise(r => setTimeout(r, 600))
@@ -273,17 +266,32 @@ export async function POST(request) {
           body: JSON.stringify(payload),
         })
         if (res.ok) {
-          sent += batch.length
           const d = await res.json().catch(() => ({}))
           const ids = Array.isArray(d.data) ? d.data : []
-          batch.forEach((r, idx) => recipientRows.push({ broadcast_id: broadcastRow.id, email: r.email, name: r.name || null, resend_message_id: ids[idx]?.id || null }))
+          // Count per-item, not per-batch — Resend's docs don't rule out a
+          // 200 response containing an entry with no id (a partial failure
+          // within an otherwise-successful batch), and silently counting
+          // that as "sent" while recording a null message id would make it
+          // permanently untrackable and inflate the sent count.
+          batch.forEach((r, idx) => {
+            const id = ids[idx]?.id || null
+            if (id) {
+              sent += 1
+              recipientRows.push({ broadcast_id: broadcastId, email: r.email, name: r.name || null, resend_message_id: id })
+            } else {
+              failed += 1
+              const reason = 'No message id returned for this recipient'
+              failedRecipients.push({ email: r.email, name: r.name || '', reason })
+              recipientRows.push({ broadcast_id: broadcastId, email: r.email, name: r.name || null, send_error: reason })
+            }
+          })
         } else {
           let reason = `HTTP ${res.status}`
           try { const d = await res.json(); reason = d.message || d.name || reason } catch {}
           failed += batch.length
           for (const r of batch) {
             failedRecipients.push({ email: r.email, name: r.name || '', reason })
-            recipientRows.push({ broadcast_id: broadcastRow.id, email: r.email, name: r.name || null, send_error: reason })
+            recipientRows.push({ broadcast_id: broadcastId, email: r.email, name: r.name || null, send_error: reason })
           }
         }
       } catch (err) {
@@ -291,7 +299,7 @@ export async function POST(request) {
         failed += batch.length
         for (const r of batch) {
           failedRecipients.push({ email: r.email, name: r.name || '', reason })
-          recipientRows.push({ broadcast_id: broadcastRow.id, email: r.email, name: r.name || null, send_error: reason })
+          recipientRows.push({ broadcast_id: broadcastId, email: r.email, name: r.name || null, send_error: reason })
         }
       }
       // Space out batches — Resend's account default is ~2 requests/second, and
@@ -302,23 +310,30 @@ export async function POST(request) {
     }
   }
 
-  // Best-effort — a failure here loses per-recipient delivery tracking for
-  // this send, not the emails themselves (already sent) or the aggregate
-  // counts (updated separately below).
-  if (recipientRows.length > 0) {
-    const { error: recipientsErr } = await supabase.from('broadcast_recipients').insert(recipientRows)
-    if (recipientsErr) captureMessage('broadcast_recipients insert failed', { error: recipientsErr.message, broadcastId: broadcastRow.id })
-  }
-
-  // supabase-js returns errors instead of throwing — check `error` explicitly,
-  // otherwise a failed update (missing grants, missing column) is invisible.
-  const { error: historyError } = await supabase.from('broadcasts').update({
+  // Save to broadcast history using normalized emails, not the raw client
+  // input, with the id generated before the send loop above. supabase-js
+  // returns errors instead of throwing — check `error` explicitly, otherwise
+  // a failed insert (missing grants, missing column) is invisible.
+  const { error: historyError } = await supabase.from('broadcasts').insert({
+    id: broadcastId,
+    subject: subject.trim(),
+    body_html: body_html || null,
+    audience,
+    specific_emails: audience === 'specific_emails' ? normalizedSpecificEmails : null,
     sent_count: sent,
     failed_count: failed,
     failed_recipients: failedRecipients.length > 0 ? failedRecipients : null,
-  }).eq('id', broadcastRow.id)
+  })
   if (historyError) {
-    captureMessage('Broadcast history update failed', { error: historyError.message, audience, sent, failed })
+    captureMessage('Broadcast history insert failed', { error: historyError.message, audience, sent, failed })
+  }
+
+  // Depends on the broadcasts row above existing first (FK). Best-effort —
+  // a failure here loses per-recipient delivery tracking for this send, not
+  // the emails themselves (already sent) or the aggregate counts (already saved).
+  if (!historyError && recipientRows.length > 0) {
+    const { error: recipientsErr } = await supabase.from('broadcast_recipients').insert(recipientRows)
+    if (recipientsErr) captureMessage('broadcast_recipients insert failed', { error: recipientsErr.message, broadcastId })
   }
 
   await logAdminAction(supabase, adminUser?.email, {
