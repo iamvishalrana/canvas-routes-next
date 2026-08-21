@@ -491,7 +491,7 @@ export default function SundaySilhouetteItineraryPage() {
     // its `if (!checked) return null` blank screen. Same failure class as
     // the messageHandlers crash the layout.jsx polyfill guards against.
     let storedAuth = null
-    try { storedAuth = localStorage.getItem('rad_itinerary_auth') } catch {}
+    try { storedAuth = localStorage.getItem('ss_itinerary_auth') } catch {}
     if (storedAuth === '1') { setAuthed(true); setChecked(true); return }
     setChecked(true)
 
@@ -508,7 +508,7 @@ export default function SundaySilhouetteItineraryPage() {
     setErrMsg(null)
     const entered = normalizeEmail(emailOverride ?? email)
     if (entered === PASSWORD.toLowerCase()) {
-      try { localStorage.setItem('rad_itinerary_auth', '1') } catch {}
+      try { localStorage.setItem('ss_itinerary_auth', '1') } catch {}
       setAuthed(true)
       return
     }
@@ -548,7 +548,7 @@ export default function SundaySilhouetteItineraryPage() {
         && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
 
       if (allDone) {
-        try { localStorage.setItem('rad_itinerary_auth', '1') } catch {}
+        try { localStorage.setItem('ss_itinerary_auth', '1') } catch {}
         setAuthed(true)
       } else {
         window.location.href = `/checkin/${idData.eventId}?email=${encodeURIComponent(entered)}`
