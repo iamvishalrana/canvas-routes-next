@@ -201,6 +201,40 @@ function ChipInput({ chips, onAdd, onRemove }) {
   )
 }
 
+// Search members by name/email and add their email as a chip — same
+// search-by-name-or-email pattern as MemberSearchSelect (app/admin/photos/PhotosClient.jsx)
+// and ContactSearchSelect, adapted for multi-add instead of single-select.
+// Sits above the free-text ChipInput so an admin can find a member without
+// knowing their exact email, while still being able to paste/type raw
+// addresses (non-members, past applicants) below.
+function MemberEmailSearch({ members, addedEmails, onAdd }) {
+  const [search, setSearch] = useState('')
+  const q = search.trim().toLowerCase()
+  const added = new Set(addedEmails)
+  const filtered = q
+    ? members.filter(m => m.email && !added.has(m.email.toLowerCase())
+        && (m.name?.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))).slice(0, 8)
+    : []
+  return (
+    <div style={{ position: 'relative' }}>
+      <input value={search} onChange={e => setSearch(e.target.value)}
+        placeholder="Search members by name or email…"
+        style={{ width: '100%', padding: '0.5rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.15)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px', boxSizing: 'border-box' }} />
+      {filtered.length > 0 && (
+        <div style={{ position: 'absolute', zIndex: 20, top: '100%', left: 0, right: 0, marginTop: '4px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', boxShadow: '0 6px 20px rgba(0,0,0,0.12)', maxHeight: '220px', overflowY: 'auto' }}>
+          {filtered.map(m => (
+            <button key={m.id} type="button" onClick={() => { onAdd(m.email.toLowerCase()); setSearch('') }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.55rem 0.75rem', background: 'none', border: 'none', borderBottom: '0.5px solid rgba(0,0,0,0.05)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              <div style={{ fontSize: '12px', color: '#1a1a1a' }}>{m.name || '(no name)'}</div>
+              <div style={{ fontSize: '10px', color: '#999' }}>{m.email}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── React preview signature ──────────────────────────────────────────────────
 function Signature() {
   return (
@@ -358,6 +392,7 @@ export default function BroadcastsClient() {
   const [audience, setAudience]                 = useState('specific_emails')
   const [fromEmail, setFromEmail]               = useState('info@canvasroutes.com')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
+  const [members, setMembers]                   = useState([])          // for the specific-emails search-select
   const [extraEmails, setExtraEmails]           = useState([])          // one list — treated as include OR exclude per emailMode
   const [emailMode, setEmailMode]               = useState(null)        // null | 'exclude' | 'include' — field greyed until one is picked
   const [subject, setSubject]                   = useState('')
@@ -395,6 +430,15 @@ export default function BroadcastsClient() {
   const tabRef          = useRef(tab)
   const draftRestoredRef = useRef(false)
   useEffect(() => { tabRef.current = tab }, [tab])
+
+  // For the "Specific Emails" search-select — loaded once, independent of
+  // audience/tab so it's ready the moment an admin switches to that mode.
+  useEffect(() => {
+    fetch('/api/admin/members')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => setMembers(Array.isArray(data) ? data.map(m => ({ id: m.id, name: m.name, email: m.email })) : []))
+      .catch(() => {})
+  }, [])
 
   const editor = useEditor({
     extensions: [
@@ -1149,6 +1193,12 @@ export default function BroadcastsClient() {
                     {/* 1. Chip email input */}
                     {audience === 'specific_emails' && (
                       <div style={{ marginTop: '0.5rem' }}>
+                        <MemberEmailSearch
+                          members={members}
+                          addedEmails={chipEmails}
+                          onAdd={email => setChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
+                        />
+                        <div style={{ margin: '0.5rem 0', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc', textAlign: 'center' }}>or paste/type emails directly</div>
                         <ChipInput
                           chips={chipEmails}
                           onAdd={email => setChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
