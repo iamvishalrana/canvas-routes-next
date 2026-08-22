@@ -1,6 +1,7 @@
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
+import { ensureRouteEventLinked } from '../../../../lib/routeEventLink'
 
 function slugify(str) {
   return (str || '').trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
@@ -85,27 +86,7 @@ export async function POST(request) {
   // have — matches the pattern Hello to Montebello's events row follows.
   // check-in/awards stay off by default; admin turns them on once the route's
   // details (waiver text, lunch options, award categories) are ready.
-  let eventData = data
-  try {
-    const { data: ev, error: evErr } = await supabase.from('events').insert({
-      name,
-      date: monthLabel,
-      date_display: monthLabel,
-      location: destination,
-      description: (body.description || '').trim(),
-      type: 'Route',
-      registration_url: (body.registration_url || '').trim() || `https://canvasroutes.com/routes`,
-    }).select('id').single()
-    if (evErr) captureException(evErr, { context: 'admin-roadtrips-create-linked-event', routeId: data.id })
-    else if (ev?.id) {
-      const { data: linked, error: linkErr } = await supabase.from('upcoming_routes')
-        .update({ event_id: ev.id }).eq('id', data.id).select('*').single()
-      if (linkErr) captureException(linkErr, { context: 'admin-roadtrips-link-event', routeId: data.id, eventId: ev.id })
-      else eventData = linked
-    }
-  } catch (e) {
-    captureException(e, { context: 'admin-roadtrips-create-linked-event-outer', routeId: data.id })
-  }
+  const eventData = await ensureRouteEventLinked(supabase, data)
 
   return Response.json({ ...eventData, interest: [], interested_count: 0 })
 }

@@ -4,6 +4,7 @@ import { captureException, captureMessage } from '../../../../../../lib/sentry'
 import { logAdminAction } from '../../../../../../lib/adminAudit.js'
 import { buildRouteLaunchHtml } from '../../../../../../lib/roadtripEmail'
 import { buildBulkEmail, filterUnsubscribed } from '../../../../../../lib/emailUnsubscribe.js'
+import { ensureRouteEventLinked } from '../../../../../../lib/routeEventLink'
 
 const MAX_RECIPIENTS = 2000
 const RESEND_BATCH_SIZE = 100 // Resend /emails/batch max per call
@@ -34,6 +35,11 @@ export async function POST(request, { params }) {
     captureException(updErr, { context: 'admin-roadtrips-launch', id })
     return Response.json({ error: updErr.message }, { status: 500 })
   }
+
+  // Safety net: routes created before the auto-link existed (or via any path
+  // that skipped it) would otherwise launch with no Registrants/Check-in/
+  // Awards tabs and no way to get them short of a manual DB fix.
+  const linkedRoute = await ensureRouteEventLinked(supabase, updated)
 
   let recipients = (interest || []).filter(r => r.email)
   let sent = 0, failed = 0
@@ -89,5 +95,5 @@ export async function POST(request, { params }) {
     metadata: { sent, failed },
   })
 
-  return Response.json({ ...updated, sent, failed, emailed: sent })
+  return Response.json({ ...linkedRoute, sent, failed, emailed: sent })
 }
