@@ -407,8 +407,7 @@ export default function AdminShell({ children }) {
         width: '220px', flexShrink: 0, background: '#0F1E14',
         display: 'flex', flexDirection: 'column',
         borderRight: '1px solid rgba(197,168,130,0.1)',
-        minHeight: '100vh', position: 'sticky', top: 0, height: '100vh',
-        overflow: 'hidden',
+        minHeight: '100vh', position: 'sticky', top: 0,
       }}>
         <div className="admin-sidebar-safe-top" style={{ padding: '0.2rem 1.25rem', borderBottom: '0.5px solid rgba(197,168,130,0.1)', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
           <Link href="/" className="admin-sidebar-logo" style={{ display: 'flex' }}>
@@ -416,7 +415,7 @@ export default function AdminShell({ children }) {
             <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '110px', height: 'auto', opacity: 0.9 }} />
           </Link>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
           <NavContent pathname={pathname} onNavClick={undefined} />
         </div>
       </aside>
