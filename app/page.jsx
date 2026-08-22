@@ -984,7 +984,13 @@ export default function Home() {
                               <span style={{fontSize:"9px",letterSpacing:"0.2em",textTransform:"uppercase",color:"#c5a882",fontWeight:500}}>{r.month_label}</span>
                             </div>
                             <div style={{position:"absolute",top:"12px",left:"12px",background:"rgba(15,30,20,0.75)",backdropFilter:"blur(6px)",padding:"4px 10px",border:"0.5px solid rgba(255,255,255,0.08)"}}>
-                              <span style={{fontSize:"9px",color:"rgba(245,241,236,0.6)",letterSpacing:"0.1em"}}>{rt.interestedCount(r.interested_count)}</span>
+                              {r.launched ? (
+                                <span style={{fontSize:"9px",letterSpacing:"0.1em",textTransform:"uppercase",color:r.registration_open!==false?"#c5a882":"rgba(245,241,236,0.6)"}}>
+                                  {r.registration_open!==false ? t.registrationOpenBadge : t.registrationClosed}
+                                </span>
+                              ) : (
+                                <span style={{fontSize:"9px",color:"rgba(245,241,236,0.6)",letterSpacing:"0.1em"}}>{rt.interestedCount(r.interested_count)}</span>
+                              )}
                             </div>
                           </>
                         )}
