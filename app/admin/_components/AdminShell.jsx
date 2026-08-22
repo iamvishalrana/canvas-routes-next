@@ -249,7 +249,7 @@ function NavContent({ pathname, onNavClick }) {
         </button>
       </div>
 
-      <nav style={{ flex: 1, minHeight: 0, padding: '0.25rem 0', overflowY: 'auto' }}>
+      <nav style={{ padding: '0.25rem 0' }}>
         {SECTIONS.map((section, sectionIdx) => {
           const isCollapsible = !!section.label
           const isCollapsed = isCollapsible && collapsed[section.id]
@@ -416,7 +416,7 @@ export default function AdminShell({ children }) {
             <img src="/white-outline.png" alt="Canvas Routes" width={1024} height={1536} style={{ width: '110px', height: 'auto', opacity: 0.9 }} />
           </Link>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, overflowY: 'auto' }}>
           <NavContent pathname={pathname} onNavClick={undefined} />
         </div>
       </aside>
