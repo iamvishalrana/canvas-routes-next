@@ -901,6 +901,7 @@ export default function SundaySilhouettePage() {
               <Elements
                 key={lang}
                 stripe={getStripe()}
+                fonts={[{ cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap' }]}
                 options={{
                   mode: 'payment',
                   amount: computeTax(price * 100).total,
@@ -914,7 +915,7 @@ export default function SundaySilhouettePage() {
                       colorBackground: '#ffffff',
                       colorText: '#1a1a1a',
                       colorDanger: '#93333E',
-                      fontFamily: 'var(--font-inter), sans-serif',
+                      fontFamily: 'Inter, system-ui, sans-serif',
                       borderRadius: '0px',
                       focusBoxShadow: '0 0 0 3px rgba(197,168,130,0.25)',
                     },

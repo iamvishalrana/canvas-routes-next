@@ -366,7 +366,7 @@ export default function EventRegisterButton({ event, isRegistered, memberTier, c
                 )
               })()}
             </div>
-            <Elements key={lang} stripe={getStripe()} options={{ clientSecret, locale: lang === 'fr' ? 'fr-CA' : 'en', appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, sans-serif', borderRadius: '0px' } } }}>
+            <Elements key={lang} stripe={getStripe()} fonts={[{ cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap' }]} options={{ clientSecret, locale: lang === 'fr' ? 'fr-CA' : 'en', appearance: { theme: 'stripe', variables: { colorPrimary: '#0F1E14', fontFamily: 'Inter, system-ui, sans-serif', borderRadius: '0px' } } }}>
               <PayForm
                 event={event}
                 onSuccess={() => {
