@@ -1643,7 +1643,7 @@ export default function ExpensesClient() {
           <input ref={fileRef} type="file" accept="image/*,.pdf" multiple style={{ display: 'none' }} onChange={handleFileChange} />
           <button type="button" className="exp-tap" onClick={() => fileRef.current?.click()} disabled={uploadingFile}
             title="Attaches the file without running receipt scanning/auto-fill"
-            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '8px 12px', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '6px', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
+            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '6px', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
             {uploadingFile ? 'Uploading…' : `↑ Attach only, no scan${attachments.length ? ' — more' : ''}`}
           </button>
           {attachments.map(a => (
@@ -1678,7 +1678,7 @@ export default function ExpensesClient() {
                     onClick={() => setFilterEvent(name)}
                     style={{
                       fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase',
-                      padding: '6px 11px', border: '0.5px solid', borderRadius: '6px',
+                      padding: '0.35rem 0.7rem', border: '0.5px solid', borderRadius: '6px',
                       cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
                       background: active ? '#0F1E14' : 'none',
                       color:      active ? '#F5F1EC' : '#888',
@@ -1768,7 +1768,7 @@ export default function ExpensesClient() {
               <div style={{ display: 'inline-flex', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '8px', overflow: 'hidden', width: isMobile ? '100%' : 'auto' }}>
                 {[['flat', 'By date'], ['folders', 'Folders']].map(([key, label]) => (
                   <button key={key} type="button" className="exp-tap" onClick={() => setViewMode(key)}
-                    style={{ flex: 1, padding: '0.45rem 0.9rem', border: 'none', cursor: 'pointer', fontSize: '11px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif',
+                    style={{ flex: 1, padding: '0.35rem 0.75rem', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif',
                       background: viewMode === key ? '#0F1E14' : '#fff', color: viewMode === key ? '#F5F1EC' : '#777' }}>
                     {label}
                   </button>
@@ -1780,7 +1780,7 @@ export default function ExpensesClient() {
                 const active = key === 'all' ? !hasDateFilter : false
                 return (
                   <button key={key} type="button" className="exp-tap" onClick={() => setRangePreset(key)}
-                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '8px 10px', border: '0.5px solid', borderRadius: '6px', background: active ? '#0F1E14' : 'none', color: active ? '#F5F1EC' : '#777', borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.15)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '0.35rem 0.7rem', border: '0.5px solid', borderRadius: '6px', background: active ? '#0F1E14' : 'none', color: active ? '#F5F1EC' : '#777', borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.15)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                     {label}
                   </button>
                 )
@@ -1795,24 +1795,24 @@ export default function ExpensesClient() {
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
               {(hasDateFilter || filterCategory !== 'all' || filterPayment !== 'all' || filterProvince !== 'all' || filterCurrency !== 'all' || filterMissing || filterUnreconciled || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
             </div>
-            <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginLeft: isMobile ? 0 : 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
-                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', background: showSummary ? '#0F1E14' : 'none', color: showSummary ? '#F5F1EC' : '#555', borderColor: showSummary ? '#0F1E14' : 'rgba(0,0,0,0.18)' }}>
+                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', background: showSummary ? '#0F1E14' : 'none', color: showSummary ? '#F5F1EC' : '#555', borderColor: showSummary ? '#0F1E14' : 'rgba(0,0,0,0.18)' }}>
                 {showSummary ? 'Hide summary' : 'Summary'}
               </button>
               <button onClick={exportCSV} className="exp-tap"
-                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
+                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
                 Export CSV
               </button>
               <button onClick={exportPDF} disabled={exportingPdf} className="exp-tap"
                 title="Formal report with a Canvas Routes header, category/payment/tax breakdowns, and clickable receipt links — same filters as what's on screen"
-                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: exportingPdf ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: exportingPdf ? 0.6 : 1 }}>
+                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: exportingPdf ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: exportingPdf ? 0.6 : 1 }}>
                 {exportingPdf ? 'Building PDF…' : 'Export PDF'}
               </button>
               {visibleReceiptCount > 0 && (
                 <button onClick={() => downloadReceiptsZip(visibleExpenses, `canvas-routes-receipts-${today}`)} disabled={!!zippingReceipts} className="exp-tap"
                   title="Download all receipt files in view as a .zip (for your accountant)"
-                  style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '6px 12px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: zippingReceipts ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: zippingReceipts ? 0.6 : 1 }}>
+                  style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: zippingReceipts ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: zippingReceipts ? 0.6 : 1 }}>
                   {zippingReceipts ? `Zipping ${zippingReceipts.done}/${zippingReceipts.total}…` : `⬇ Receipts (${visibleReceiptCount})`}
                 </button>
               )}
