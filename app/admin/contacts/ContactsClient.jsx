@@ -83,7 +83,7 @@ export default function ContactsClient() {
   const [selected, setSelected] = useState(new Set())
   const [emailsCopied, setEmailsCopied] = useState(false)
   const [contactInviteStatus, setContactInviteStatus] = useState({}) // keyed by contact_id: 'sending'|'sent'|'error'
-  const [contactTierPick, setContactTierPick] = useState(null) // contact_id being tier-picked
+  const [contactTierPick, setContactTierPick] = useState(null) // contact being tier-picked, shown in a popup
   const [contactInviteConfirm, setContactInviteConfirm] = useState(null) // { contact, tier }
   const [editingContact, setEditingContact] = useState(null) // contact_id
   const [editContactForm, setEditContactForm] = useState({})
@@ -395,6 +395,24 @@ export default function ContactsClient() {
            desktop density, kills zoom-on-focus in the home-screen app. */
         @media (pointer: coarse) { .con-wrap input, .con-wrap select, .con-wrap textarea { font-size: 16px !important; } }
       `}</style>
+      {/* Invite tier-pick popup */}
+      {contactTierPick && (
+        <div onClick={() => setContactTierPick(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2rem', maxWidth: '380px', width: '90%' }}>
+            <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.25rem', fontWeight: '500' }}>Invite to membership</div>
+            <div style={{ fontSize: '13px', color: '#555', marginBottom: '1.5rem' }}>
+              Choose a tier for <strong>{contactTierPick.name || contactTierPick.email}</strong>.
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <PrimaryBtn onClick={() => { const contact = contactTierPick; setContactTierPick(null); setContactInviteConfirm({ contact, tier: 'routes_member' }) }}>Routes Member</PrimaryBtn>
+              <PrimaryBtn onClick={() => { const contact = contactTierPick; setContactTierPick(null); setContactInviteConfirm({ contact, tier: 'inner_circle' }) }}>Inner Circle</PrimaryBtn>
+              <GhostBtn onClick={() => setContactTierPick(null)}>Cancel</GhostBtn>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Invite confirm overlay */}
       {contactInviteConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -579,7 +597,7 @@ export default function ContactsClient() {
               {/* Summary row */}
               {isMobile ? (
                 <div style={{ padding: '0.85rem 1rem', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(147,51,62,0.03)' : undefined }}
-                  onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null); if (contactTierPick === c.contact_id) setContactTierPick(null) }}>
+                  onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null) }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '0.3rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }} onClick={e => e.stopPropagation()}>
                       <input type="checkbox"
@@ -598,22 +616,9 @@ export default function ContactsClient() {
                     <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                       {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
                         <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
-                      ) : contactTierPick === c.contact_id ? (
-                        <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                          <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'routes_member' }); setContactTierPick(null) }}
-                            style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
-                            Routes
-                          </button>
-                          <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'inner_circle' }); setContactTierPick(null) }}
-                            style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
-                            Inner Circle
-                          </button>
-                          <button onClick={() => setContactTierPick(null)}
-                            style={{ fontSize: '11px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
-                        </div>
                       ) : (
                         <button
-                          onClick={() => setContactTierPick(c.contact_id)}
+                          onClick={() => setContactTierPick(c)}
                           disabled={contactInviteStatus[c.contact_id] === 'sending'}
                           style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#93333E' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
                         >
@@ -638,7 +643,7 @@ export default function ContactsClient() {
               ) : (
               <div
                 style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 140px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(c.contact_id) ? 'rgba(147,51,62,0.03)' : undefined }}
-                onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null); if (contactTierPick === c.contact_id) setContactTierPick(null) }}
+                onClick={() => { setExpanded(expanded === c.contact_id ? null : c.contact_id); if (editingContact === c.contact_id) setEditingContact(null) }}
               >
                 <div onClick={e => e.stopPropagation()}>
                   <input type="checkbox"
@@ -668,22 +673,9 @@ export default function ContactsClient() {
                 <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
                     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
-                  ) : contactTierPick === c.contact_id ? (
-                    <div style={{ display: 'flex', gap: '0.3rem', alignItems: 'center' }}>
-                      <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'routes_member' }); setContactTierPick(null) }}
-                        style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
-                        Routes
-                      </button>
-                      <button onClick={() => { setContactInviteConfirm({ contact: c, tier: 'inner_circle' }); setContactTierPick(null) }}
-                        style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 7px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}>
-                        Inner Circle
-                      </button>
-                      <button onClick={() => setContactTierPick(null)}
-                        style={{ fontSize: '11px', color: '#bbb', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px', fontFamily: 'var(--font-inter),sans-serif' }}>×</button>
-                    </div>
                   ) : (
                     <button
-                      onClick={() => setContactTierPick(c.contact_id)}
+                      onClick={() => setContactTierPick(c)}
                       disabled={contactInviteStatus[c.contact_id] === 'sending'}
                       style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '3px 8px', cursor: contactInviteStatus[c.contact_id] === 'sending' ? 'wait' : 'pointer', color: contactInviteStatus[c.contact_id] === 'error' || typeof contactInviteStatus[c.contact_id] === 'string' && contactInviteStatus[c.contact_id] !== 'sending' ? '#93333E' : '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap' }}
                     >

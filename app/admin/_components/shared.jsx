@@ -185,7 +185,7 @@ export function FilterMenu({ options, value, onChange, compact }) {
 // onToChange('') separately in that case can race (the second call reads a
 // stale snapshot from before the first's URL update lands), so this never
 // assumes two independent setters are safe to call back to back.
-export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, onToChange, onClear }) {
+export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, onToChange, onClear, maxDate }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   useEffect(() => {
@@ -209,9 +209,9 @@ export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, on
         <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '240px' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>{label}</div>
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-            <input type="date" value={from} max={to || undefined} onChange={e => onFromChange(e.target.value)} aria-label={`${label} from`} style={rangeInp} />
+            <input type="date" value={from} max={to || maxDate || undefined} onChange={e => onFromChange(e.target.value)} aria-label={`${label} from`} style={rangeInp} />
             <span style={{ fontSize: '11px', color: '#bbb' }}>–</span>
-            <input type="date" value={to} min={from || undefined} onChange={e => onToChange(e.target.value)} aria-label={`${label} to`} style={rangeInp} />
+            <input type="date" value={to} min={from || undefined} max={maxDate || undefined} onChange={e => onToChange(e.target.value)} aria-label={`${label} to`} style={rangeInp} />
           </div>
           {active && (
             <button type="button" onClick={() => onClear ? onClear() : (onFromChange(''), onToChange(''))}

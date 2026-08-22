@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import JSZip from 'jszip'
-import { inp, sel, L, GhostBtn, DangerBtn, Err } from '../_components/shared'
+import { inp, sel, L, GhostBtn, DangerBtn, Err, DateRangeMenu } from '../_components/shared'
 import { EXPENSE_CATEGORIES, MEALS_ENTERTAINMENT_CATEGORY, MEALS_ENTERTAINMENT_DEDUCTIBLE_RATE } from '../../../lib/expenseCategories'
 import { EXPENSE_PAYMENT_METHODS, EXPENSE_PAYMENT_LABELS } from '../../../lib/expensePaymentMethods'
 import { EXPENSE_PROVINCES, EXPENSE_PROVINCE_MAP } from '../../../lib/expenseProvinces'
@@ -1315,11 +1315,9 @@ export default function ExpensesClient() {
         @media (max-width: 640px) {
           .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
           .exp-actions-row { flex-wrap: wrap; }
-          /* Stack the filter controls cleanly instead of letting fixed widths
-             collide; date range stays two-up, everything else full width. */
+          /* Stack the filter controls cleanly instead of letting fixed widths collide. */
           .exp-filters { gap: 0.5rem !important; }
           .exp-filters > div { flex: 1 1 100% !important; width: 100% !important; }
-          .exp-filters > .exp-filter-half { flex: 1 1 calc(50% - 0.25rem) !important; width: auto !important; }
         }
 
         /* Scan button — recurring gold shimmer sweep, plus a stronger attention
@@ -1700,15 +1698,9 @@ export default function ExpensesClient() {
               <input style={inp} value={searchQuery} placeholder="Vendor, event, category, notes…"
                 onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <div className="exp-filter-half" style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
-              <L>From</L>
-              <input type="date" style={inp} value={dateFrom} max={dateTo || today}
-                onChange={e => setDateFrom(e.target.value)} />
-            </div>
-            <div className="exp-filter-half" style={{ width: isMobile ? 'calc(50% - 0.3rem)' : '150px' }}>
-              <L>To</L>
-              <input type="date" style={inp} value={dateTo} min={dateFrom || undefined} max={today}
-                onChange={e => setDateTo(e.target.value)} />
+            <div>
+              <L>Date Range</L>
+              <DateRangeMenu from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} maxDate={today} />
             </div>
             <div style={{ width: isMobile ? '100%' : '180px' }}>
               <L>Category</L>

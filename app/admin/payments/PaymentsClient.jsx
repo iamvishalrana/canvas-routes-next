@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
-import { inp, GhostBtn, DangerBtn, CopyBtn } from '../_components/shared'
+import { inp, GhostBtn, DangerBtn, CopyBtn, DateRangeMenu } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -40,8 +40,6 @@ function montrealDateKey(iso) {
   const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: MONTREAL_TZ }).formatToParts(new Date(iso))
   return `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}-${parts.find(p => p.type === 'day').value}`
 }
-
-const DATE_INPUT = { padding: '0.4rem 0.6rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px' }
 
 const WALLET_LABELS = { apple_pay: 'Apple Pay', google_pay: 'Google Pay', link: 'Link' }
 const CARD_BRANDS   = { visa: 'Visa', mastercard: 'Mastercard', amex: 'Amex', discover: 'Discover', interac: 'Interac' }
@@ -553,10 +551,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-        <span style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999' }}>Date Range</span>
-        <input type="date" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} style={DATE_INPUT} />
-        <span style={{ fontSize: '11px', color: '#bbb' }}>to</span>
-        <input type="date" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} style={DATE_INPUT} />
+        <DateRangeMenu label="Date Range" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
         {/* Quick presets — matches the Montreal-local day the date inputs compare against */}
         {[['month', 'This month'], ['30d', 'Last 30d'], ['year', 'This year'], ['all', 'All time']].map(([key, label]) => (
           <button key={key} type="button" onClick={() => setDatePreset(key)}
@@ -564,12 +559,6 @@ export default function PaymentsClient({ initialRecords = [] }) {
             {label}
           </button>
         ))}
-        {(dateFrom || dateTo) && (
-          <button type="button" onClick={() => { setDateFrom(''); setDateTo('') }}
-            style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif' }}>
-            Clear
-          </button>
-        )}
       </div>
 
       {/* Live summary of exactly what the table is showing right now — reflects
