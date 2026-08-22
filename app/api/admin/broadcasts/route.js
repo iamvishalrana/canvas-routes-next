@@ -66,7 +66,7 @@ export async function POST(request) {
     if (totalB64 > 4_400_000) return Response.json({ error: 'Attachments are limited to 3 MB total.' }, { status: 400 })
   }
   const ALLOWED_FROM = ['info@canvasroutes.com', 'jerry@canvasroutes.com']
-  const resolvedFrom = ALLOWED_FROM.includes(fromEmail) ? fromEmail : 'info@canvasroutes.com'
+  const resolvedFrom = ALLOWED_FROM.includes(fromEmail) ? fromEmail : 'jerry@canvasroutes.com'
   const fromHeader = resolvedFrom === 'jerry@canvasroutes.com'
     ? 'Canvas Routes <jerry@canvasroutes.com>'
     : 'Canvas Routes <info@canvasroutes.com>'

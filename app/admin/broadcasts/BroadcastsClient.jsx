@@ -280,7 +280,7 @@ function PreviewPanel({ bodyHtml, bodyEmpty, maxHeight, subject, fromEmail }) {
       <div style={{ padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf9' }}>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline', marginBottom: '0.2rem' }}>
           <span style={{ fontSize: '10px', color: '#ccc', fontFamily: 'Arial,sans-serif', width: '44px', flexShrink: 0 }}>From</span>
-          <span style={{ fontSize: '12px', color: '#555', fontFamily: 'Arial,sans-serif' }}>Canvas Routes &lt;{fromEmail || 'info@canvasroutes.com'}&gt;</span>
+          <span style={{ fontSize: '12px', color: '#555', fontFamily: 'Arial,sans-serif' }}>Canvas Routes &lt;{fromEmail || 'jerry@canvasroutes.com'}&gt;</span>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'baseline' }}>
           <span style={{ fontSize: '10px', color: '#ccc', fontFamily: 'Arial,sans-serif', width: '44px', flexShrink: 0 }}>Subject</span>
@@ -405,7 +405,7 @@ export default function BroadcastsClient() {
   const searchParams = useSearchParams()
   const [tab, setTab]                           = useState('compose')
   const [audience, setAudience]                 = useState('specific_emails')
-  const [fromEmail, setFromEmail]               = useState('info@canvasroutes.com')
+  const [fromEmail, setFromEmail]               = useState('jerry@canvasroutes.com')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
   const [members, setMembers]                   = useState([])          // for the specific-emails search-select
   const [extraEmails, setExtraEmails]           = useState([])          // one list — treated as include OR exclude per emailMode
