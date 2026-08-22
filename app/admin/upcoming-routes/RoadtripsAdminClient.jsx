@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu, ToggleSwitch, CopyBtn } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import RouteEventConfigClient from '../_components/RouteEventConfigClient'
@@ -173,6 +173,11 @@ function PopupToggle({ label, description, value, onChange, saving }) {
 
 export default function RoadtripsAdminClient() {
   const confirm = useConfirm()
+  // FLIP-style animation for reorder (move up/down): rowRefs tracks each row's
+  // DOM node, reorderPrevTops snapshots their positions right before a reorder
+  // so the layout effect below can animate from old position to new.
+  const rowRefs = useRef({})
+  const reorderPrevTops = useRef(null)
   const [routes, setRoutes]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [form, setForm]           = useState(EMPTY)
@@ -343,6 +348,16 @@ export default function RoadtripsAdminClient() {
     ;[arr[idx], arr[t]] = [arr[t], arr[idx]]
     const withOrder = arr.map((r, i) => ({ ...r, sort_order: i + 1 }))
     const changed = withOrder.filter(r => (ordered.find(o => o.id === r.id)?.sort_order) !== r.sort_order)
+
+    // Snapshot current row positions so the layout effect can FLIP-animate
+    // from here to wherever each row lands after the reorder.
+    const tops = {}
+    for (const rid in rowRefs.current) {
+      const el = rowRefs.current[rid]
+      if (el) tops[rid] = el.getBoundingClientRect().top
+    }
+    reorderPrevTops.current = tops
+
     setRoutes(withOrder) // optimistic
     try {
       await Promise.all(changed.map(r => fetch(`/api/admin/upcoming-routes/${r.id}`, {
@@ -351,6 +366,27 @@ export default function RoadtripsAdminClient() {
       })))
     } catch { load() } // reload on failure to resync
   }
+
+  // Plays the FLIP animation captured by move() above — runs after the
+  // reordered list has painted in its new positions, translates each row back
+  // to where it used to be with no transition, then animates to 0.
+  useLayoutEffect(() => {
+    const prev = reorderPrevTops.current
+    if (!prev) return
+    reorderPrevTops.current = null
+    for (const rid in rowRefs.current) {
+      const el = rowRefs.current[rid]
+      if (!el || !(rid in prev)) continue
+      const delta = prev[rid] - el.getBoundingClientRect().top
+      if (!delta) continue
+      el.style.transition = 'none'
+      el.style.transform = `translateY(${delta}px)`
+      requestAnimationFrame(() => {
+        el.style.transition = 'transform 0.25s cubic-bezier(0.4,0,0.2,1)'
+        el.style.transform = ''
+      })
+    }
+  }, [routes])
 
   async function toggleActive(r) {
     setBusyId(r.id)
@@ -694,7 +730,7 @@ export default function RoadtripsAdminClient() {
             const isEditing = editId === r.id
             const isOpen = !!expanded[r.id]
             return (
-              <div key={r.id} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', opacity: r.is_active ? 1 : 0.6 }}>
+              <div key={r.id} ref={el => { rowRefs.current[r.id] = el }} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.25rem', opacity: r.is_active ? 1 : 0.6 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
