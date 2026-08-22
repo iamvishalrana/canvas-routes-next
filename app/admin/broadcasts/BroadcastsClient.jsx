@@ -55,7 +55,6 @@ const FONTS = [
   { label: 'Arial',           value: 'Arial, sans-serif'          },
   { label: 'Georgia',         value: 'Georgia, serif'             },
   { label: 'Helvetica',       value: 'Helvetica Neue, sans-serif' },
-  { label: 'Times New Roman', value: 'Times New Roman, serif'     },
   { label: 'Courier',         value: 'Courier New, monospace'     },
 ]
 

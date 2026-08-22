@@ -18,7 +18,7 @@ function printWaiver(name, email, waiver) {
   const html = `<!DOCTYPE html><html><head><title>Signed Waiver — ${esc(waiver.full_name)}</title>
 <style>
   @page { size: letter; margin: 18mm 16mm; }
-  body { font-family: Georgia, 'Times New Roman', serif; color: #1a1a1a; line-height: 1.6; font-size: 12px; }
+  body { font-family: Georgia, serif; color: #1a1a1a; line-height: 1.6; font-size: 12px; }
   h1 { font-family: Arial, sans-serif; font-size: 18px; font-weight: 400; margin: 0 0 4px; }
   .meta { font-family: Arial, sans-serif; font-size: 10px; color: #666; margin-bottom: 20px; }
   .waiver-body { white-space: pre-wrap; font-size: 11px; line-height: 1.65; border-top: 1px solid #ccc; border-bottom: 1px solid #ccc; padding: 16px 0; margin-bottom: 20px; }

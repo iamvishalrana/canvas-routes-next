@@ -60,7 +60,7 @@ function buildAnnouncementEmail(title, content) {
             <td style="background:#F5F1EC;padding:36px 36px 28px;">
               <p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:10px;text-transform:uppercase;color:#c5a882;">Member Update</p>
               <!-- Using <p> not <h1> — Outlook adds its own margins/weight to heading elements -->
-              <p style="margin:0 0 20px;font-family:Georgia,'Times New Roman',Times,serif;font-size:26px;font-weight:400;color:#1a1a1a;line-height:1.25;mso-line-height-rule:exactly;">${escapedTitle}</p>
+              <p style="margin:0 0 20px;font-family:Georgia,serif;font-size:26px;font-weight:400;color:#1a1a1a;line-height:1.25;mso-line-height-rule:exactly;">${escapedTitle}</p>
               <!-- Divider: hex color instead of rgba() for Outlook 2007-2016 compat -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:24px;">
                 <tr><td height="1" style="height:1px;max-height:1px;font-size:0;line-height:1px;mso-line-height-rule:exactly;background-color:#d4c4aa;"> </td></tr>

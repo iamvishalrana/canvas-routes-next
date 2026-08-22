@@ -13,7 +13,7 @@ function h(str) {
 function textToHtml(text) {
   return text
     .split(/\n\n+/)
-    .map(p => `<p style="margin:0 0 1.2em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">${h(p).replace(/\n/g, '<br/>')}</p>`)
+    .map(p => `<p style="margin:0 0 1.2em 0;font-family:Georgia,serif;font-size:15px;line-height:1.85;color:#333;">${h(p).replace(/\n/g, '<br/>')}</p>`)
     .join('')
 }
 

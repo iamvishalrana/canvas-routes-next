@@ -361,7 +361,7 @@ export default function ApplicationsClient() {
   function previewEmailHtml(subject, body) {
     const escaped = body
       .split(/\n\n+/)
-      .map(p => `<p style="margin:0 0 1.2em 0;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#333;">${p.replace(/\n/g, '<br/>')}</p>`)
+      .map(p => `<p style="margin:0 0 1.2em 0;font-family:Georgia,serif;font-size:15px;line-height:1.85;color:#333;">${p.replace(/\n/g, '<br/>')}</p>`)
       .join('')
     return `<div style="padding:48px 40px 20px;">${escaped}</div><div style="padding:20px 40px 40px;border-top:0.5px solid rgba(0,0,0,0.08);font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#bbb;line-height:1.6;">Canvas Routes · Montreal, QC · info@canvasroutes.com</div>`
   }
