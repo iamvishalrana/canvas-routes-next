@@ -165,10 +165,10 @@ export default function CheckinWaiverSection({ waiverText, waiverTextFr, identif
             {hasPassengers && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }} className="wtetci-fade-in">
                 {passengers.map((p, i) => (
-                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 24px', gap: '0.5rem', alignItems: 'center' }}>
+                  <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 36px', gap: '0.5rem', alignItems: 'center' }}>
                     <input type="text" className="wtetci-input" value={p.name} onChange={e => updatePassenger(i, 'name', e.target.value)} placeholder={t.passengerNamePlaceholder} style={inp} />
                     <input type="number" min="1" max="120" className="wtetci-input" value={p.age} onChange={e => updatePassenger(i, 'age', e.target.value)} placeholder={t.agePlaceholder} style={inp} />
-                    <button type="button" onClick={() => removePassenger(i)} className="wtetci-btn-ghost" style={{ background: 'none', border: 'none', color: '#bbb', cursor: 'pointer', fontSize: '16px', lineHeight: 1 }}>×</button>
+                    <button type="button" onClick={() => removePassenger(i)} className="wtetci-btn-ghost" aria-label={t.removeBtn} style={{ background: 'none', border: 'none', color: '#bbb', cursor: 'pointer', fontSize: '18px', lineHeight: 1, width: '36px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', WebkitTapHighlightColor: 'transparent' }}>×</button>
                   </div>
                 ))}
                 {passengers.length >= maxExtra ? (

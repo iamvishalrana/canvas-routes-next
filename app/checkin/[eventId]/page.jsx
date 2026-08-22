@@ -196,7 +196,7 @@ function CheckinContent() {
               type="button"
               className="scroll-btn"
               aria-label={t.scrollCue}
-              style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto', bottom: `calc(1.75rem + ${bannerHeight}px)` }}
+              style={{ opacity: atBottom ? 0 : 1, pointerEvents: atBottom ? 'none' : 'auto', bottom: `calc(1.75rem + ${bannerHeight}px + env(safe-area-inset-bottom))` }}
               onClick={() => window.scrollBy({ top: window.innerHeight * 0.75, behavior: 'smooth' })}
             >
               <svg className="scroll-chevron" width="16" height="10" viewBox="0 0 16 10" fill="none">

@@ -104,7 +104,7 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
                   </span>
                   {i > 0 && (
                     <button type="button" onClick={() => removePassenger(i)} className="wtetci-btn-ghost"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#bbb', padding: '0 2px', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1 }}>
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#bbb', padding: '10px 8px', margin: '-10px -8px', minHeight: '32px', fontFamily: 'var(--font-inter), sans-serif', lineHeight: 1, WebkitTapHighlightColor: 'transparent' }}>
                       {t.removeBtn}
                     </button>
                   )}
