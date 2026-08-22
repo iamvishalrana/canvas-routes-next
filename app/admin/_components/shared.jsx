@@ -53,13 +53,13 @@ export const sel = { ...inp, cursor: 'pointer', WebkitAppearance: 'none', appear
 // ── Base components ───────────────────────────────────────────────────────────
 
 export function L({ children }) {
-  return <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.35rem' }}>{children}</div>
+  return <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.35rem', fontFamily: 'var(--font-inter),sans-serif' }}>{children}</div>
 }
 
 export function Badge({ status }) {
   const s = STATUS_COLORS[status] || STATUS_COLORS.pending
   return (
-    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', border: `0.5px solid ${s.border}`, background: s.bg, color: s.text, whiteSpace: 'nowrap', borderRadius: '99px' }}>
+    <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '3px 10px', border: `0.5px solid ${s.border}`, background: s.bg, color: s.text, whiteSpace: 'nowrap', borderRadius: '99px', fontFamily: 'var(--font-inter),sans-serif' }}>
       {status}
     </span>
   )
@@ -207,10 +207,10 @@ export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, on
       </button>
       {open && (
         <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '240px' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999' }}>{label}</div>
+          <div style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{label}</div>
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
             <input type="date" value={from} max={to || maxDate || undefined} onChange={e => onFromChange(e.target.value)} aria-label={`${label} from`} style={rangeInp} />
-            <span style={{ fontSize: '11px', color: '#bbb' }}>–</span>
+            <span style={{ fontSize: '11px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif' }}>–</span>
             <input type="date" value={to} min={from || undefined} max={maxDate || undefined} onChange={e => onToChange(e.target.value)} aria-label={`${label} to`} style={rangeInp} />
           </div>
           {active && (
@@ -242,9 +242,9 @@ export function ConfirmDialog({ title, message, details, confirmLabel = 'Yes, co
         style={{ background: '#fff', width: '100%', maxWidth: '440px', border: '0.5px solid rgba(0,0,0,0.12)', borderTop: `2px solid ${danger ? '#93333E' : '#45643c'}`, boxShadow: '0 12px 40px rgba(15,30,20,0.25)', maxHeight: '90dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: '16px' }}>
         <div style={{ padding: '1.4rem 1.5rem 1.25rem' }}>
           <div style={{ fontSize: '15px', fontWeight: '500', color: '#1a1a1a', marginBottom: message ? '0.5rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>{title}</div>
-          {message && <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65' }}>{message}</div>}
+          {message && <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65', fontFamily: 'var(--font-inter),sans-serif' }}>{message}</div>}
           {details && (
-            <div style={{ marginTop: '0.85rem', padding: '0.75rem 0.9rem', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.07)', fontSize: '12px', color: '#444', lineHeight: '1.7' }}>
+            <div style={{ marginTop: '0.85rem', padding: '0.75rem 0.9rem', background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.07)', fontSize: '12px', color: '#444', lineHeight: '1.7', fontFamily: 'var(--font-inter),sans-serif' }}>
               {details}
             </div>
           )}
@@ -329,12 +329,12 @@ export function AttendanceToggle({ value, onChange, disabled }) {
 
 export function Err({ msg }) {
   if (!msg) return null
-  return <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.6rem' }}>{msg}</div>
+  return <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{msg}</div>
 }
 
 export function Success({ msg }) {
   if (!msg) return null
-  return <div style={{ fontSize: '12px', color: '#3B6B2F', marginTop: '0.6rem' }}>{msg}</div>
+  return <div style={{ fontSize: '12px', color: '#3B6B2F', marginTop: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{msg}</div>
 }
 
 export function CopyBtn({ value }) {
@@ -441,14 +441,14 @@ export function AdminNotesPanel({ initialNotes, onSave }) {
 
   return (
     <div>
-      <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.65rem' }}>Admin Notes</div>
+      <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.65rem', fontFamily: 'var(--font-inter),sans-serif' }}>Admin Notes</div>
       {notes.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
           {notes.map(note => (
             <div key={note.id} style={{ background: 'rgba(0,0,0,0.03)', border: '0.5px solid rgba(0,0,0,0.07)', padding: '0.6rem 0.75rem', borderRadius: '10px' }}>
-              <div style={{ fontSize: '12px', color: '#333', lineHeight: '1.6', marginBottom: '0.3rem', whiteSpace: 'pre-wrap' }}>{note.text}</div>
+              <div style={{ fontSize: '12px', color: '#333', lineHeight: '1.6', marginBottom: '0.3rem', whiteSpace: 'pre-wrap', fontFamily: 'var(--font-inter),sans-serif' }}>{note.text}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '10px', color: '#bbb' }}>{note.createdAt ? fmt(note.createdAt) : ''}</span>
+                <span style={{ fontSize: '10px', color: '#bbb', fontFamily: 'var(--font-inter),sans-serif' }}>{note.createdAt ? fmt(note.createdAt) : ''}</span>
                 <button onClick={() => deleteNote(note.id)} style={{ background: 'none', border: 'none', padding: '0', cursor: 'pointer', fontSize: '10px', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.04em' }}>Delete</button>
               </div>
             </div>
@@ -479,13 +479,13 @@ export function Pagination({ total, page, pageSize, onPageChange }) {
   const to = Math.min(page * pageSize, total)
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem 1.25rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fff' }}>
-      <span style={{ fontSize: '12px', color: '#999' }}>{from}–{to} of {total}</span>
+      <span style={{ fontSize: '12px', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{from}–{to} of {total}</span>
       <div style={{ display: 'flex', gap: '0.4rem' }}>
         <button onClick={() => onPageChange(page - 1)} disabled={page <= 1}
           style={{ padding: '0.35rem 0.75rem', background: 'transparent', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '11px', color: page <= 1 ? '#ccc' : '#555', cursor: page <= 1 ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
           ←
         </button>
-        <span style={{ padding: '0.35rem 0.75rem', fontSize: '12px', color: '#333', border: '0.5px solid rgba(0,0,0,0.1)', background: '#f7f7f5', borderRadius: '8px' }}>
+        <span style={{ padding: '0.35rem 0.75rem', fontSize: '12px', color: '#333', border: '0.5px solid rgba(0,0,0,0.1)', background: '#f7f7f5', borderRadius: '8px', fontFamily: 'var(--font-inter),sans-serif' }}>
           {page} / {totalPages}
         </span>
         <button onClick={() => onPageChange(page + 1)} disabled={page >= totalPages}
