@@ -53,7 +53,10 @@ export async function PATCH(request, { params }) {
     if ('car_year' in body) memberSync.car_year = body.car_year || null
     if ('car_make' in body) memberSync.car_make = body.car_make || null
     if ('car_model' in body) memberSync.car_model = body.car_model || null
-    if ('car_paint' in body) memberSync.car_paint = body.car_paint || null
+    // car_paint is not a column on members — it lives in members.cars[].paint,
+    // synced the other way by app/api/admin/members/[id]/route.js. Writing it
+    // here throws (column does not exist) and silently fails every other
+    // field in this same UPDATE call too.
     if (Object.keys(memberSync).length > 0) {
       const { data: mem } = await supabase.from('members').select('id').eq('email', app.email.toLowerCase()).maybeSingle()
       if (mem) {
