@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { inp, CopyBtn, Pagination, FilterMenu, DateRangeMenu } from '../_components/shared'
+import { inp, CopyBtn, Pagination, FilterMenu, DateRangeMenu, CountUp } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
@@ -191,12 +191,53 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-        {Object.entries(EVENT_META).map(([type, meta]) => (
-          <div key={type} style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: '99px', background: meta.bg, color: meta.color, border: `0.5px solid ${meta.color}33` }}>
-            {meta.label} <strong>{counts[type] || 0}</strong>
-          </div>
-        ))}
+      <style>{`
+        @keyframes ea-pill-in { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .ea-pill { animation: ea-pill-in 0.35s cubic-bezier(0.16,1,0.3,1) both; }
+        @media (hover: hover) {
+          .ea-pill:hover { transform: translateY(-1px) scale(1.04); }
+        }
+        .ea-pill:active { transform: scale(0.96); }
+        @media (prefers-reduced-motion: reduce) {
+          .ea-pill { animation: none; }
+          .ea-pill:hover, .ea-pill:active { transform: none; }
+        }
+      `}</style>
+      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
+        {Object.entries(EVENT_META).map(([type, meta], i) => {
+          const active = typeFilter === type
+          return (
+            <button
+              key={type}
+              type="button"
+              className="ea-pill"
+              onClick={() => setTypeFilter(f => f === type ? 'all' : type)}
+              title={active ? 'Click to clear this filter' : `Show only ${meta.label} events`}
+              style={{
+                fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 12px',
+                borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
+                background: active ? meta.color : meta.bg,
+                color: active ? '#fff' : meta.color,
+                border: `0.5px solid ${active ? meta.color : `${meta.color}33`}`,
+                boxShadow: active ? `0 3px 12px ${meta.color}55` : 'none',
+                transition: 'background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
+                animationDelay: `${i * 40}ms`,
+              }}
+            >
+              {meta.label} <strong><CountUp value={counts[type] || 0} /></strong>
+            </button>
+          )
+        })}
+        {typeFilter !== 'all' && (
+          <button
+            type="button"
+            onClick={() => setTypeFilter('all')}
+            className="ea-pill"
+            style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 12px', borderRadius: '99px', cursor: 'pointer', background: 'transparent', color: '#aaa', border: '0.5px solid rgba(0,0,0,0.15)', fontFamily: 'var(--font-inter),sans-serif' }}
+          >
+            Clear filter ×
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
