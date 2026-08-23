@@ -26,5 +26,5 @@ export default async function EmailActivityPage() {
     return acc
   }, {})
 
-  return <EmailActivityClient events={events} counts={counts} configured={!!process.env.RESEND_WEBHOOK_SECRET} loadError={loadError} />
+  return <EmailActivityClient events={events} counts={counts} configured={!!process.env.RESEND_WEBHOOK_SECRET} loadError={loadError} fetchedAt={new Date().toISOString()} />
 }
