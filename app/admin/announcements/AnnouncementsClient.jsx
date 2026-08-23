@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog } from '../_components/shared'
+import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu, FilterMenu } from '../_components/shared'
+import { ExportButton } from '../_components/ExportModal'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
@@ -256,6 +257,15 @@ export default function AnnouncementsClient() {
         setEmailResult(prev => ({ ...prev, [item.id]: { error: data.error || 'Failed to send.' } }))
       } else {
         setEmailResult(prev => ({ ...prev, [item.id]: { sent: data.sent, failed: data.failed } }))
+        // Persist so the "Sent to N" badge survives a page refresh — the
+        // emailResult above is session-only client state. Best-effort: the
+        // email already went out, so a failure here shouldn't surface as an error.
+        const lastEmailedAt = new Date().toISOString()
+        setItems(prev => prev.map(a => a.id === item.id ? { ...a, last_emailed_at: lastEmailedAt, last_emailed_count: data.sent } : a))
+        fetch(`/api/admin/announcements/${item.id}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ last_emailed_at: lastEmailedAt, last_emailed_count: data.sent }),
+        }).catch(() => {})
       }
     } catch {
       setEmailResult(prev => ({ ...prev, [item.id]: { error: 'Network error.' } }))
@@ -263,6 +273,10 @@ export default function AnnouncementsClient() {
       setEmailSending(false)
       setEmailingId(null)
     }
+  }
+
+  function fmtEmailedDate(iso) {
+    return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
   }
 
   const filteredAnnouncements = items.filter(a => {
@@ -305,22 +319,40 @@ export default function AnnouncementsClient() {
               Publish immediately
             </label>
             <PrimaryBtn type="submit" disabled={posting}>{posting ? 'Posting…' : 'Post'}</PrimaryBtn>
+            <GhostBtn
+              onClick={() => {
+                if (!form.title.trim() || !form.content.trim()) { setPostError('Add a title and content to preview.'); return }
+                setPostError(null)
+                setPreviewItem({ title: form.title, content: form.content })
+              }}
+            >
+              Preview
+            </GhostBtn>
           </div>
           <Err msg={postError} />
         </form>
       </div>
 
       {!loading && items.length > 0 && (
-        <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <input style={{ ...inp, maxWidth: '260px', flex: '1 1 160px' }} placeholder="Search announcements…" value={announcementSearch} onChange={e => setAnnouncementSearch(e.target.value)} />
-          <div style={{ position: 'relative' }}>
-            <select style={{ ...sel, width: 'auto', paddingRight: '2rem' }} value={announcementFilter} onChange={e => setAnnouncementFilter(e.target.value)}>
-              <option value="all">All</option>
-              <option value="published">Published</option>
-              <option value="draft">Draft</option>
-            </select>
-            <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-          </div>
+          <FilterMenu
+            options={[{ id: 'all', label: 'All' }, { id: 'published', label: 'Published' }, { id: 'draft', label: 'Draft' }]}
+            value={announcementFilter}
+            onChange={setAnnouncementFilter}
+          />
+          {filteredAnnouncements.length > 0 && (
+            <ExportButton
+              filename="announcements"
+              title="Announcements"
+              headers={['Title', 'Status', 'Pinned', 'Audience', 'Created', 'Last Emailed', 'Emailed To']}
+              rows={filteredAnnouncements.map(a => [
+                a.title || '', a.published ? 'Published' : 'Draft', a.pinned ? 'Yes' : 'No',
+                a.audience || 'all', a.created_at ? fmtEmailedDate(a.created_at) : '',
+                a.last_emailed_at ? fmtEmailedDate(a.last_emailed_at) : '', a.last_emailed_count ?? '',
+              ])}
+            />
+          )}
         </div>
       )}
 
@@ -381,41 +413,55 @@ export default function AnnouncementsClient() {
                             {item.audience === 'members' ? 'Members only' : 'Contacts only'}
                           </span>
                         )}
-                        {/* Show prior send result */}
-                        {emailResult[item.id] && !emailResult[item.id].error && (
-                          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(59,107,47,0.35)', background: 'rgba(59,107,47,0.07)', color: '#3B6B2F' }}>
-                            ✓ Sent to {emailResult[item.id].sent}
-                          </span>
-                        )}
+                        {/* Prefer this-session's result; fall back to the persisted last send so
+                            the badge survives a page refresh instead of only lasting the session */}
+                        {(() => {
+                          const sentCount = emailResult[item.id]
+                            ? (emailResult[item.id].error ? null : emailResult[item.id].sent)
+                            : (item.last_emailed_count ?? null)
+                          return sentCount != null && (
+                            <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(59,107,47,0.35)', background: 'rgba(59,107,47,0.07)', color: '#3B6B2F' }}>
+                              ✓ Sent to {sentCount}
+                            </span>
+                          )
+                        })()}
                       </div>
                       <div style={{ fontSize: '13px', color: '#666', lineHeight: '1.65', whiteSpace: 'pre-wrap' }}>{item.content}</div>
                       <div style={{ fontSize: '11px', color: '#ccc', marginTop: '0.5rem' }}>
                         {new Date(item.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}
+                        {item.last_emailed_at && <span> · Last emailed {fmtEmailedDate(item.last_emailed_at)}</span>}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap', justifyContent: isMobile ? 'flex-start' : 'flex-end', alignItems: 'center' }}>
-                      <button
-                        onClick={() => togglePin(item)}
-                        disabled={pinning === item.id}
-                        title={item.pinned ? 'Unpin from top' : 'Pin to top of the list and the members dashboard'}
-                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: item.pinned ? '0.5px solid rgba(138,101,53,0.5)' : '0.5px solid rgba(0,0,0,0.15)', background: item.pinned ? 'rgba(197,168,130,0.12)' : 'transparent', color: item.pinned ? '#8A6535' : '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
-                      >
-                        {pinning === item.id ? '…' : item.pinned ? '★ Pinned' : 'Pin'}
-                      </button>
-                      <button
-                        onClick={() => setPreviewItem(item)}
-                        title="Preview the email exactly as members receive it"
-                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
-                      >
-                        Preview
-                      </button>
-                      <button
-                        onClick={() => duplicate(item)}
-                        title="Copy into the New Announcement form"
-                        style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
-                      >
-                        Duplicate
-                      </button>
+                      {/* Desktop shows every action inline; mobile keeps only the
+                          frequently-used ones visible and folds the rest into a kebab
+                          to cut clutter on narrow screens */}
+                      {!isMobile && (
+                        <>
+                          <button
+                            onClick={() => togglePin(item)}
+                            disabled={pinning === item.id}
+                            title={item.pinned ? 'Unpin from top' : 'Pin to top of the list and the members dashboard'}
+                            style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: item.pinned ? '0.5px solid rgba(138,101,53,0.5)' : '0.5px solid rgba(0,0,0,0.15)', background: item.pinned ? 'rgba(197,168,130,0.12)' : 'transparent', color: item.pinned ? '#8A6535' : '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
+                          >
+                            {pinning === item.id ? '…' : item.pinned ? '★ Pinned' : 'Pin'}
+                          </button>
+                          <button
+                            onClick={() => setPreviewItem(item)}
+                            title="Preview the email exactly as members receive it"
+                            style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
+                          >
+                            Preview
+                          </button>
+                          <button
+                            onClick={() => duplicate(item)}
+                            title="Copy into the New Announcement form"
+                            style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', padding: '4px 10px', minHeight: '28px', border: '0.5px solid rgba(0,0,0,0.15)', background: 'transparent', color: '#888', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent' }}
+                          >
+                            Duplicate
+                          </button>
+                        </>
+                      )}
                       {/* Email button */}
                       <button
                         onClick={() => { setEmailingId(emailingId === item.id ? null : item.id); setEmailResult(p => ({ ...p, [item.id]: undefined })) }}
@@ -431,7 +477,16 @@ export default function AnnouncementsClient() {
                         {publishError[item.id] && <Err msg={publishError[item.id]} />}
                       </div>
                       <GhostBtn onClick={() => { setEditing(item.id); setEditForm({ title: item.title, content: item.content, audience: item.audience || 'all' }); setSaveError(null) }} small>Edit</GhostBtn>
-                      <DangerBtn small onClick={() => setDeleteConfirm(item.id)}>Delete</DangerBtn>
+                      {isMobile ? (
+                        <KebabMenu items={[
+                          { label: item.pinned ? 'Unpin' : 'Pin to top', onClick: () => togglePin(item) },
+                          { label: 'Preview email', onClick: () => setPreviewItem(item) },
+                          { label: 'Duplicate', onClick: () => duplicate(item) },
+                          { label: 'Delete', danger: true, onClick: () => setDeleteConfirm(item.id) },
+                        ]} />
+                      ) : (
+                        <DangerBtn small onClick={() => setDeleteConfirm(item.id)}>Delete</DangerBtn>
+                      )}
                     </div>
                   </div>
 
