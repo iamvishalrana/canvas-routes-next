@@ -308,7 +308,6 @@ export default function AnnouncementsClient() {
               <select style={sel} value={form.audience} onChange={e => setForm(p => ({ ...p, audience: e.target.value }))}>
                 <option value="all">Everyone</option>
                 <option value="members">Members only</option>
-                <option value="contacts">Contacts only</option>
               </select>
               <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
@@ -382,7 +381,6 @@ export default function AnnouncementsClient() {
                       <select style={sel} value={editForm.audience || 'all'} onChange={e => setEditForm(p => ({ ...p, audience: e.target.value }))}>
                         <option value="all">Everyone</option>
                         <option value="members">Members only</option>
-                        <option value="contacts">Contacts only</option>
                       </select>
                       <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                     </div>
@@ -408,9 +406,9 @@ export default function AnnouncementsClient() {
                         <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: item.published ? '0.5px solid rgba(59,107,47,0.3)' : '0.5px solid rgba(0,0,0,0.12)', background: item.published ? 'rgba(59,107,47,0.08)' : 'transparent', color: item.published ? '#3B6B2F' : '#bbb' }}>
                           {item.published ? 'Published' : 'Draft'}
                         </span>
-                        {item.audience && item.audience !== 'all' && (
+                        {item.audience === 'members' && (
                           <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: '0.5px solid rgba(197,168,130,0.45)', background: 'rgba(197,168,130,0.1)', color: '#8A6535' }}>
-                            {item.audience === 'members' ? 'Members only' : 'Contacts only'}
+                            Members only
                           </span>
                         )}
                         {/* Prefer this-session's result; fall back to the persisted last send so
