@@ -696,7 +696,6 @@ export default function BroadcastsClient() {
       message: `This emails everyone in the selected audience and cannot be undone.`,
       details: <>To: <strong>{audienceLabel}</strong>{countStr ? <> · {countStr}</> : null}<br />Subject: {subject.trim() || '—'}</>,
       confirmLabel: 'Yes, send broadcast',
-      danger: true,
     }))) return
     confirmSend()
   }
