@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
-import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, Success, CopyBtn } from '../_components/shared'
+import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, Success, CopyBtn, FilterMenu } from '../_components/shared'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const SECTION = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
@@ -46,10 +46,30 @@ function StatusChip({ code }) {
   return <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '2px 8px', border: `0.5px solid ${s.border}`, background: s.bg, color: s.color, whiteSpace: 'nowrap' }}>{s.label}</span>
 }
 
+// Distinct from GhostBtn/Edit — surfaced only for expired/maxed codes to make
+// "bring this code back" a discoverable action of its own, not just a relabel.
+function RenewBtn({ onClick, small }) {
+  return (
+    <button type="button" onClick={onClick} className="admin-btn"
+      style={{ padding: small ? '0.35rem 0.8rem' : '0.65rem 1.2rem', background: 'rgba(197,168,130,0.14)', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.55)', borderRadius: '8px', fontSize: small ? '10px' : '11px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+      Renew
+    </button>
+  )
+}
+
+const STATUS_FILTER_OPTIONS = [
+  { id: 'all',      label: 'All Statuses' },
+  { id: 'active',   label: 'Live' },
+  { id: 'expired',  label: 'Expired' },
+  { id: 'maxed',    label: 'Fully Used' },
+  { id: 'inactive', label: 'Inactive' },
+]
+
 const MEMBERSHIP_APPLIES_TO_OPTIONS = [
   { value: 'membership_routes',       label: 'Membership — Routes' },
   { value: 'membership_inner_circle', label: 'Membership — Inner Circle' },
 ]
+const MEMBERSHIP_VALUES = MEMBERSHIP_APPLIES_TO_OPTIONS.map(o => o.value)
 // road_trip_wtet is no longer selectable (WTET is closed) but existing codes
 // may still reference it — keep the label so history displays cleanly.
 const LEGACY_APPLIES_TO_LABELS = {
@@ -153,6 +173,9 @@ export default function PromoCodesClient() {
   const [reactivating, setReactivating] = useState(null)
   const [reactivateErr, setReactivateErr] = useState(null)
   const [routes, setRoutes] = useState([])
+  // Which "Applies to" category panels are expanded in the create/duplicate form
+  const [applyPanels, setApplyPanels] = useState({ membership: false, events: false })
+  const [statusFilter, setStatusFilter] = useState('all')
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
@@ -179,19 +202,24 @@ export default function PromoCodesClient() {
       .catch(() => setRoutes([]))
   }, [])
 
-  const appliesToOptions = [
-    ...MEMBERSHIP_APPLIES_TO_OPTIONS,
+  // Split into the two categories the create form now toggles independently
+  const eventsApplyOptions = [
     { value: 'road_trip_any', label: LEGACY_APPLIES_TO_LABELS.road_trip_any },
     ...routes.map(r => ({ value: `road_trip_${r.slug}`, label: `${r.name} — ${r.month_label}` })),
   ]
+  const appliesToOptions = [...MEMBERSHIP_APPLIES_TO_OPTIONS, ...eventsApplyOptions]
 
   const [search, setSearch] = useState('')
   const q = search.trim().toUpperCase()
   const matchesSearch = c => !q
     || c.code.toUpperCase().includes(q)
     || fmtAppliesTo(c.metadata, appliesToOptions).toUpperCase().includes(q)
-  const activeList     = codes.filter(c => c.active).filter(matchesSearch)
-  const inactiveList   = codes.filter(c => !c.active).filter(matchesSearch)
+  const matchesFilter  = c => statusFilter === 'all' || codeStatus(c) === statusFilter
+  const activeList     = codes.filter(c => c.active).filter(matchesSearch).filter(matchesFilter)
+  const inactiveList   = codes.filter(c => !c.active).filter(matchesSearch).filter(matchesFilter)
+  // A status filter targeting inactive codes should surface them immediately
+  // rather than leaving them behind the collapsed "N Inactive Codes" toggle
+  const inactiveVisible = showInactive || statusFilter === 'inactive'
   const totalRedeemed  = codes.reduce((s, c) => s + (c.times_redeemed || 0), 0)
   const totalDiscount  = codes.reduce((s, c) => s + (c.total_discount || 0), 0)
   const liveCount      = codes.filter(c => codeStatus(c) === 'active').length
@@ -239,6 +267,7 @@ export default function PromoCodesClient() {
       if (!res.ok) return setFormErr(data.error || 'Failed to create code.')
       setCodes(prev => [{ ...data, coupon: data.coupon }, ...prev])
       setForm(EMPTY_FORM)
+      setApplyPanels({ membership: false, events: false })
       setShowForm(false)
       setFormOk(`Code "${data.code}" created.`)
     } catch {
@@ -282,6 +311,7 @@ export default function PromoCodesClient() {
   // Prefill the create form from an existing code — everything but the code
   // string itself carries over (Stripe requires unique active code strings).
   function startDuplicate(c) {
+    const existingApplies = c.metadata?.applies_to ? c.metadata.applies_to.split(',').map(s => s.trim()) : []
     setForm({
       code: '',
       discountType: c.coupon?.percent_off ? 'percent' : 'amount',
@@ -289,8 +319,14 @@ export default function PromoCodesClient() {
         : c.coupon?.amount_off ? String(c.coupon.amount_off / 100) : '',
       maxRedemptions: c.max_redemptions ? String(c.max_redemptions) : '',
       expiresAt: c.expires_at ? new Date(c.expires_at * 1000).toISOString().slice(0, 10) : '',
-      appliesTo: c.metadata?.applies_to ? c.metadata.applies_to.split(',').map(s => s.trim()) : [],
+      appliesTo: existingApplies,
       minimumAmount: c.restrictions?.minimum_amount ? String(c.restrictions.minimum_amount / 100) : '',
+    })
+    // Open whichever category panels already have a selection, so the
+    // carried-over choices are visible instead of hidden behind a collapsed button
+    setApplyPanels({
+      membership: existingApplies.some(v => MEMBERSHIP_VALUES.includes(v)),
+      events: existingApplies.some(v => !MEMBERSHIP_VALUES.includes(v)),
     })
     setShowForm(true)
     setFormErr(null)
@@ -300,9 +336,15 @@ export default function PromoCodesClient() {
 
   function startEdit(c) {
     setEditing(c.id)
+    const status = codeStatus(c)
     setEditForm({
       maxRedemptions: c.max_redemptions ? String(c.max_redemptions) : '',
-      expiresAt: c.expires_at ? new Date(c.expires_at * 1000).toISOString().slice(0, 10) : '',
+      // An expired code's own expiry date is in the past and saving it
+      // unchanged would just recreate another dead code — suggest 30 days
+      // out instead so "Renew" actually brings it back to life.
+      expiresAt: status === 'expired'
+        ? new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10)
+        : (c.expires_at ? new Date(c.expires_at * 1000).toISOString().slice(0, 10) : ''),
     })
     setEditErr(null)
     setEditUnlimitedConfirm(false)
@@ -448,21 +490,84 @@ export default function PromoCodesClient() {
             </div>
             <div style={{ marginBottom: '1rem' }}>
               <L>Applies to (leave blank for all)</L>
-              <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
-                {appliesToOptions.map(opt => (
-                  <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '13px', color: '#555', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', userSelect: 'none' }}>
-                    <input
-                      type="checkbox"
-                      checked={form.appliesTo.includes(opt.value)}
-                      onChange={e => setField('appliesTo', e.target.checked
-                        ? [...form.appliesTo, opt.value]
-                        : form.appliesTo.filter(v => v !== opt.value)
-                      )}
-                    />
-                    {opt.label}
-                  </label>
-                ))}
+              <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                {[
+                  { key: 'membership', label: 'Membership', options: MEMBERSHIP_APPLIES_TO_OPTIONS },
+                  { key: 'events',     label: 'Events / Routes', options: eventsApplyOptions },
+                ].map(cat => {
+                  const count = form.appliesTo.filter(v => cat.options.some(o => o.value === v)).length
+                  const open = applyPanels[cat.key]
+                  return (
+                    <button
+                      key={cat.key}
+                      type="button"
+                      onClick={() => setApplyPanels(p => ({ ...p, [cat.key]: !p[cat.key] }))}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '0.45rem',
+                        padding: '0.6rem 1rem', minHeight: '40px', borderRadius: '8px', cursor: 'pointer',
+                        border: `0.5px solid ${open ? 'rgba(15,30,20,0.55)' : count ? 'rgba(197,168,130,0.5)' : 'rgba(0,0,0,0.15)'}`,
+                        background: open ? '#0F1E14' : count ? 'rgba(197,168,130,0.12)' : 'transparent',
+                        color: open ? '#F5F1EC' : count ? '#8A6535' : '#555',
+                        fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase',
+                        fontFamily: 'var(--font-inter),sans-serif',
+                      }}
+                    >
+                      {cat.label}{count > 0 ? ` (${count})` : ''}
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none', flexShrink: 0 }}><polyline points="6 9 12 15 18 9" /></svg>
+                    </button>
+                  )
+                })}
               </div>
+
+              {(applyPanels.membership || applyPanels.events) && (
+                <div style={{ marginTop: '0.75rem', padding: '0.9rem 1rem', background: '#fafaf8', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  {applyPanels.membership && (
+                    <div>
+                      <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>Membership</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                        {MEMBERSHIP_APPLIES_TO_OPTIONS.map(opt => (
+                          <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '13px', color: '#444', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', userSelect: 'none', minHeight: '38px' }}>
+                            <input
+                              type="checkbox"
+                              checked={form.appliesTo.includes(opt.value)}
+                              onChange={e => setField('appliesTo', e.target.checked
+                                ? [...form.appliesTo, opt.value]
+                                : form.appliesTo.filter(v => v !== opt.value)
+                              )}
+                              style={{ width: '16px', height: '16px', flexShrink: 0 }}
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {applyPanels.events && (
+                    <div>
+                      <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>Events / Routes</div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem', maxHeight: '240px', overflowY: 'auto' }}>
+                        {eventsApplyOptions.map(opt => (
+                          <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '13px', color: '#444', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', userSelect: 'none', minHeight: '38px' }}>
+                            <input
+                              type="checkbox"
+                              checked={form.appliesTo.includes(opt.value)}
+                              onChange={e => setField('appliesTo', e.target.checked
+                                ? [...form.appliesTo, opt.value]
+                                : form.appliesTo.filter(v => v !== opt.value)
+                              )}
+                              style={{ width: '16px', height: '16px', flexShrink: 0 }}
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {form.appliesTo.length === 0 && (
+                <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.5rem', fontFamily: 'var(--font-inter),sans-serif' }}>No restriction selected — this code will apply to everything.</div>
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <PrimaryBtn type="submit" disabled={submitting}>
@@ -500,14 +605,17 @@ export default function PromoCodesClient() {
         ))}
       </div>
 
-      {/* Search */}
+      {/* Search + status filter */}
       {codes.length > 0 && (
-        <input
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          placeholder="Search codes…"
-          style={{ ...inp, width: isMobile ? '100%' : '260px', marginBottom: '1.25rem', padding: '0.55rem 0.9rem' }}
-        />
+        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search codes…"
+            style={{ ...inp, width: isMobile ? '100%' : '260px', padding: '0.55rem 0.9rem' }}
+          />
+          <FilterMenu options={STATUS_FILTER_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
+        </div>
       )}
 
       {/* Table / Cards */}
@@ -516,7 +624,7 @@ export default function PromoCodesClient() {
       ) : codes.length === 0 ? (
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No promo codes yet.</div>
       ) : activeList.length === 0 && inactiveList.length === 0 ? (
-        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No codes match “{search.trim()}”.</div>
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>{search.trim() ? `No codes match “${search.trim()}”.` : 'No codes match this filter.'}</div>
       ) : isMobile ? (
         <div>
           {activeList.map(c => (
@@ -540,6 +648,13 @@ export default function PromoCodesClient() {
               </div>
               {c.active && editing === c.id ? (
                 <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {codeStatus(c) !== 'active' && (
+                    <div style={{ fontSize: '11px', color: '#8A6535', lineHeight: '1.5', background: 'rgba(197,168,130,0.12)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', padding: '0.5rem 0.7rem' }}>
+                      {codeStatus(c) === 'expired'
+                        ? "This code expired — we've suggested a new date 30 days out. Adjust and Save to bring it back."
+                        : 'This code hit its redemption limit — raise Max Uses (or clear it for unlimited) and Save to allow more redemptions.'}
+                    </div>
+                  )}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                     <div>
                       <div style={{ fontSize: '10px', color: '#bbb', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>Max Uses</div>
@@ -565,8 +680,10 @@ export default function PromoCodesClient() {
                   >
                     {usageLoading === c.id ? '…' : 'Usage'}
                   </button>
-                  <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
-                        <GhostBtn small onClick={() => startDuplicate(c)}>Duplicate</GhostBtn>
+                  {codeStatus(c) === 'active'
+                    ? <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
+                    : <RenewBtn small onClick={() => startEdit(c)} />}
+                  <GhostBtn small onClick={() => startDuplicate(c)}>Duplicate</GhostBtn>
                   {deactivateConfirm === c.id ? (
                     <>
                       <span style={{ fontSize: '11px', color: '#93333E' }}>Deactivate?</span>
@@ -593,10 +710,10 @@ export default function PromoCodesClient() {
                 onClick={() => setShowInactive(f => !f)}
                 style={{ width: '100%', padding: '0.75rem 1rem', background: '#fafaf8', border: '0.5px solid rgba(0,0,0,0.08)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#aaa', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}
               >
-                <span style={{ display: 'inline-block', width: '10px', textAlign: 'center', fontSize: '8px' }}>{showInactive ? '▲' : '▼'}</span>
+                <span style={{ display: 'inline-block', width: '10px', textAlign: 'center', fontSize: '8px' }}>{inactiveVisible ? '▲' : '▼'}</span>
                 {inactiveList.length} Inactive Code{inactiveList.length !== 1 ? 's' : ''}
               </button>
-              {showInactive && inactiveList.map(c => (
+              {inactiveVisible && inactiveList.map(c => (
                 <div key={c.id} style={{ background: '#fafaf8', border: '0.5px solid rgba(0,0,0,0.08)', padding: '1rem', marginBottom: '0.5rem', opacity: 0.75 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -668,9 +785,16 @@ export default function PromoCodesClient() {
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtDate(c.expires_at)}</td>
                   <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
                   <td style={TD}><StatusChip code={c} /></td>
-                  <td style={{ ...TD, minWidth: editing === c.id ? '280px' : undefined }}>
+                  <td style={{ ...TD, minWidth: editing === c.id ? '300px' : undefined }}>
                     {editing === c.id ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        {codeStatus(c) !== 'active' && (
+                          <div style={{ fontSize: '11px', color: '#8A6535', lineHeight: '1.5', background: 'rgba(197,168,130,0.12)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '8px', padding: '0.5rem 0.7rem', maxWidth: '280px' }}>
+                            {codeStatus(c) === 'expired'
+                              ? "Expired — we've suggested a new date 30 days out. Adjust and Save to bring it back."
+                              : 'Redemption limit reached — raise Max Uses (or clear it) and Save to allow more.'}
+                          </div>
+                        )}
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                           <input style={{ width: '90px', padding: '0.35rem 0.5rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff' }} type="number" min="1" placeholder="Max uses" value={editForm.maxRedemptions} onChange={e => setEditForm(f => ({ ...f, maxRedemptions: e.target.value }))} />
                           <input style={{ width: '120px', padding: '0.35rem 0.5rem', fontSize: '12px', border: '0.5px solid rgba(0,0,0,0.2)', background: '#fff' }} type="date" value={editForm.expiresAt} onChange={e => setEditForm(f => ({ ...f, expiresAt: e.target.value }))} />
@@ -690,7 +814,9 @@ export default function PromoCodesClient() {
                         >
                           {usageLoading === c.id ? '…' : 'Usage'}
                         </button>
-                        <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
+                        {codeStatus(c) === 'active'
+                          ? <GhostBtn small onClick={() => startEdit(c)}>Edit</GhostBtn>
+                          : <RenewBtn small onClick={() => startEdit(c)} />}
                         <GhostBtn small onClick={() => startDuplicate(c)}>Duplicate</GhostBtn>
                         {deactivateConfirm === c.id ? (
                           <>
@@ -725,12 +851,12 @@ export default function PromoCodesClient() {
                       onClick={() => setShowInactive(f => !f)}
                       style={{ width: '100%', padding: '0.6rem 1rem', background: '#fafaf8', border: 'none', borderTop: '0.5px solid rgba(0,0,0,0.07)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                     >
-                      <span style={{ fontSize: '8px' }}>{showInactive ? '▲' : '▼'}</span>
+                      <span style={{ fontSize: '8px' }}>{inactiveVisible ? '▲' : '▼'}</span>
                       {inactiveList.length} Inactive Code{inactiveList.length !== 1 ? 's' : ''}
                     </button>
                   </td>
                 </tr>
-                {showInactive && inactiveList.map((c, i) => (
+                {inactiveVisible && inactiveList.map((c, i) => (
                   <React.Fragment key={c.id}>
                   <tr style={{ background: i % 2 === 0 ? '#fafaf8' : '#f5f4f2', opacity: 0.75 }}>
                     <td style={{ ...TD, fontFamily: 'monospace', fontWeight: '600', fontSize: '13px' }}><div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>{c.code}<CopyBtn value={c.code} /></div></td>
