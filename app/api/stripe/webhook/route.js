@@ -16,6 +16,16 @@ import { buildMembershipConfirmHtml, buildMembershipConfirmText } from '../../..
 // Stripe requires the raw body — Next.js must NOT parse it
 export const runtime = 'nodejs'
 
+// Road-trip types whose client-side page fires fbq('track','Purchase', { eventID: pi.id })
+// for dedup — safe to also fire the server-side Meta CAPI Purchase event here without
+// double-counting. Routes not listed here don't pass an eventID from their client yet,
+// so firing CAPI for them would double-count instead of deduping. Add a route's slug here
+// only after wiring the matching client-side eventID Purchase call.
+const META_CAPI_PURCHASE_ROUTES = {
+  'road_trip_hello-to-montebello':     'hello-to-montebello',
+  'road_trip_sunday-silhouette-2026':  'sunday-silhouette-2026',
+}
+
 
 export async function POST(request) {
   if (!stripe) {
@@ -275,14 +285,13 @@ export async function POST(request) {
               // the atomic stripe_paid_at claim above. Trackable, but not a page.
               captureMessage('Member road-trip webhook rescue fired — client confirm did not win the race', { email: normalEmail, type, piId: pi.id }, 'info')
 
-              // Meta CAPI Purchase — HTM only for now. Its client (app/hello-to-montebello/page.jsx)
-              // passes eventId=pi.id to fbq('track','Purchase',...) for dedup; WTET's client doesn't
-              // yet, so firing this for WTET here would double-count instead of deduping.
-              if (type === 'road_trip_hello-to-montebello') {
+              // Meta CAPI Purchase — see META_CAPI_PURCHASE_ROUTES above for why only
+              // some road-trip types fire this (client-side eventID dedup required).
+              if (META_CAPI_PURCHASE_ROUTES[type]) {
                 after(() => sendMetaCapiEvent({
                   eventName: 'Purchase',
                   eventId: pi.id,
-                  eventSourceUrl: 'https://canvasroutes.com/hello-to-montebello',
+                  eventSourceUrl: `https://canvasroutes.com/${META_CAPI_PURCHASE_ROUTES[type]}`,
                   email: normalEmail,
                   phone: pi.metadata?.phone || null,
                   clientIp: pi.metadata?.client_ip || null,
@@ -467,17 +476,16 @@ export async function POST(request) {
           const eventLabel  = piEventName || 'Canvas Routes Road Trip'
           const amountFmt   = `$${(amountHeld / 100).toFixed(2)} CAD`
 
-          // Meta CAPI Purchase — HTM only for now. The non-member client fires
-          // fbq('track','Purchase', eventID: pi.id) as soon as this same
-          // authorization hold succeeds (redirect:'if_required' resolves), so
-          // this is the matching server-side moment for dedup. WTET's client
-          // doesn't pass an eventID yet, so firing this for WTET here would
-          // double-count instead of deduping.
-          if (type === 'road_trip_hello-to-montebello') {
+          // Meta CAPI Purchase — the non-member client fires fbq('track','Purchase',
+          // eventID: pi.id) as soon as this same authorization hold succeeds
+          // (redirect:'if_required' resolves), so this is the matching server-side
+          // moment for dedup. See META_CAPI_PURCHASE_ROUTES above for why only some
+          // road-trip types fire this.
+          if (META_CAPI_PURCHASE_ROUTES[type]) {
             after(() => sendMetaCapiEvent({
               eventName: 'Purchase',
               eventId: pi.id,
-              eventSourceUrl: 'https://canvasroutes.com/hello-to-montebello',
+              eventSourceUrl: `https://canvasroutes.com/${META_CAPI_PURCHASE_ROUTES[type]}`,
               email: normalEmail,
               phone: pi.metadata?.phone || null,
               clientIp: pi.metadata?.client_ip || null,

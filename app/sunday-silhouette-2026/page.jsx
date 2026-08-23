@@ -378,6 +378,28 @@ export default function SundaySilhouettePage() {
     }
   }, [])
 
+  // Meta Pixel — ViewContent on page load
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.fbq) {
+      window.fbq('track', 'ViewContent', { content_name: 'Sunday Silhouette Registration', content_category: 'Road Trip', currency: 'CAD' })
+    }
+  }, [])
+
+  // Meta Pixel — InitiateCheckout when payment step opens, Purchase on success
+  useEffect(() => {
+    if (!window.fbq) return
+    if (status === 'payment') {
+      window.fbq('track', 'InitiateCheckout', { value: wasMemberRef.current ? MEMBER_PRICE : NONMEMBER_PRICE, currency: 'CAD', num_items: 1 })
+    }
+    if (status === 'success') {
+      // eventID = the Stripe PaymentIntent id, matching what the server-side
+      // Meta CAPI Purchase event (webhook / member-confirm route) sends for
+      // the same PI — lets Meta dedupe the two instead of double-counting.
+      const paymentIntentId = clientSecret?.split('_secret_')[0]
+      window.fbq('track', 'Purchase', { value: wasMemberRef.current ? MEMBER_PRICE : NONMEMBER_PRICE, currency: 'CAD' }, { eventID: paymentIntentId })
+    }
+  }, [status])
+
   // Detect logged-in members and pre-fill their details. Until this settles,
   // memberCheckDone gates the "are you a member?" selector below.
   useEffect(() => {
