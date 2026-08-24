@@ -227,8 +227,10 @@ function CheckoutForm({ formData, honeypot, tier, price, clientSecret, countryCo
     payingRef.current = false
     // Pass the true final charged amount (tax-inclusive, and net of any promo
     // discount) up for ad-pixel Purchase tracking — a hardcoded pre-tax price
-    // would under-report real revenue to Meta/etc.
-    onSuccess(parseFloat(displayPrice))
+    // would under-report real revenue to Meta/etc. paymentIntentId also goes up
+    // so the pixel Purchase event can carry the same eventID the server-side
+    // Meta CAPI Purchase event uses, letting Meta dedupe the two.
+    onSuccess(parseFloat(displayPrice), paymentIntentId)
   }
 
   const perks = t.tierPerks[tier] || t.tierPerks['Routes Member']
@@ -403,6 +405,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
       setSubmitError(t.threeDsFailed)
       return
     }
+    purchasePiIdRef.current = piId
     try {
       const saved = localStorage.getItem('membership_form_pending')
       localStorage.removeItem('membership_form_pending')
@@ -442,6 +445,10 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
   const honeypotRef                       = useRef(null)
   const submittingRef                     = useRef(false)
   const purchasePriceRef                  = useRef(null)
+  // PaymentIntent id for the pixel Purchase event's eventID — must match what
+  // the server-side Meta CAPI Purchase event (membership-waitlist / webhook
+  // rescue) sends for the same PI, or Meta double-counts instead of deduping.
+  const purchasePiIdRef                   = useRef(null)
   // Survives onBack (which nulls clientSecret) so a re-submit can still cancel
   // the abandoned PI — deriving previousPiId from clientSecret always sent null.
   const lastPiIdRef                       = useRef(null)
@@ -451,7 +458,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
   useEffect(() => {
     if (status !== 'success' || !purchasePriceRef.current) return
     if (typeof window !== 'undefined' && window.fbq) {
-      window.fbq('track', 'Purchase', { value: purchasePriceRef.current, currency: 'CAD' })
+      window.fbq('track', 'Purchase', { value: purchasePriceRef.current, currency: 'CAD' }, { eventID: purchasePiIdRef.current })
     }
   }, [status])
 
@@ -936,7 +943,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                 price={form.tier === 'Inner Circle' ? '249' : '99'}
                 clientSecret={clientSecret}
                 countryCode={countryCode}
-                onSuccess={finalAmount => { if (finalAmount) purchasePriceRef.current = finalAmount; setStatus('success') }}
+                onSuccess={(finalAmount, piId) => { if (finalAmount) purchasePriceRef.current = finalAmount; if (piId) purchasePiIdRef.current = piId; setStatus('success') }}
                 onBack={() => { setPaymentStep(false); setClientSecret(null) }}
               />
             </Elements>

@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
 import { captureException } from '../../../../lib/sentry.js'
 import { PRICES } from '../../../../lib/prices.js'
 import { computeTax } from '../../../../lib/tax.js'
+import { getFbCookiesFromRequest } from '../../../../lib/metaConversionsApi.js'
 
 const VALID_TYPES = Object.keys(PRICES)
 
@@ -39,6 +40,11 @@ export async function POST(request) {
 
   const isMembership = type.startsWith('membership_')
   const { total } = computeTax(PRICES[type])
+  // Stashed for the Meta CAPI Purchase event fired later from membership-waitlist /
+  // the webhook rescue — same pattern as hello-to-montebello-register — since
+  // neither of those has the original browser request to read cookies/IP from.
+  const { fbc, fbp } = getFbCookiesFromRequest(request)
+  const clientUa = (request.headers.get('user-agent') || '').slice(0, 450)
 
   try {
     const paymentIntent = await stripe.paymentIntents.create({
@@ -63,6 +69,10 @@ export async function POST(request) {
           referred_by: (referredBy || '').slice(0, 200),
           car_paint:   (carPaint  || '').slice(0, 100),
           more:        (more      || '').slice(0, 450), // Stripe metadata values cap at 500 chars
+          ...(fbc ? { fbc } : {}),
+          ...(fbp ? { fbp } : {}),
+          client_ip: ip || '',
+          client_ua: clientUa,
         } : {}),
         ...(_health_check ? {
           source: 'health_check',

@@ -7,6 +7,7 @@ import { stripe } from '../../../lib/stripe.js'
 import { PRICES, MEMBERSHIP_TIER_TYPE } from '../../../lib/prices.js'
 import { computeTax } from '../../../lib/tax.js'
 import { buildMembershipConfirmHtml, buildMembershipConfirmText } from '../../../lib/membershipEmail.js'
+import { sendMetaCapiEvent } from '../../../lib/metaConversionsApi.js'
 
 function h(str) {
   return String(str ?? '')
@@ -122,11 +123,15 @@ export async function POST(request) {
   // downgrade an already-'authorized' row back to 'pending' and hide the admin
   // Capture button. Falls back to 'pending' only if verification is skipped/fails.
   let stripePaymentStatus = 'pending'
+  // Kept for the Meta CAPI Purchase event fired further down — needs pi.amount
+  // (the true tax-inclusive, discount-net charge) and pi.metadata (phone/fbc/fbp/ip/ua).
+  let verifiedPi = null
 
   // Verify the PaymentIntent belongs to this user and matches the submitted tier
   if (paymentIntentId && stripe) {
     try {
       const pi = await stripe.paymentIntents.retrieve(paymentIntentId)
+      verifiedPi = pi
       const expectedType = MEMBERSHIP_TIER_TYPE[tier]
       const piEmail = pi.metadata?.email?.toLowerCase().trim()
       if (
@@ -308,6 +313,27 @@ export async function POST(request) {
       }).then(r => { if (!r.ok) captureMessage(`Membership notify email failed — ${normalEmail}`, { status: r.status }) })
         .catch(err => captureException(err, { context: 'membership-notify-email', email: normalEmail })),
     ]))
+  }
+
+  // Meta CAPI Purchase — same dedup gate as the emails above (alreadyNotified).
+  // eventId = paymentIntentId, matching what the client's fbq('track','Purchase',
+  // { eventID }) sends for the same PI (see components/MembershipContent.jsx),
+  // so Meta dedupes the two instead of double-counting.
+  if (paymentIntentId && verifiedPi && !alreadyNotified) {
+    after(() => sendMetaCapiEvent({
+      eventName: 'Purchase',
+      eventId: paymentIntentId,
+      eventSourceUrl: 'https://canvasroutes.com/membership',
+      email: normalEmail,
+      phone: verifiedPi.metadata?.phone || null,
+      clientIp: verifiedPi.metadata?.client_ip || null,
+      clientUserAgent: verifiedPi.metadata?.client_ua || null,
+      fbc: verifiedPi.metadata?.fbc || null,
+      fbp: verifiedPi.metadata?.fbp || null,
+      value: verifiedPi.amount / 100,
+      currency: 'CAD',
+      contentName: tier === 'Inner Circle' ? 'Inner Circle Membership' : 'Routes Membership',
+    }).catch(err => captureException(err, { context: 'membership-waitlist-meta-capi', paymentIntentId })))
   }
 
   return Response.json({ success: true })

@@ -578,6 +578,26 @@ export async function POST(request) {
           const firstName  = (name || '').trim().split(' ')[0] || 'there'
           const tierLabel  = type === 'membership_inner_circle' ? 'Inner Circle' : 'Routes Member'
           const amountFmt  = `$${(amountHeld / 100).toFixed(2)} CAD`
+
+          // Meta CAPI Purchase — this rescue only fires when membership-waitlist
+          // never ran (tab closed before the client's own POST), which is also
+          // the only case where membership-waitlist's own CAPI call (same
+          // eventId=pi.id) never fired — so there's no double-count risk here.
+          after(() => sendMetaCapiEvent({
+            eventName: 'Purchase',
+            eventId: pi.id,
+            eventSourceUrl: 'https://canvasroutes.com/membership',
+            email: normalEmail,
+            phone: pi.metadata?.phone || null,
+            clientIp: pi.metadata?.client_ip || null,
+            clientUserAgent: pi.metadata?.client_ua || null,
+            fbc: pi.metadata?.fbc || null,
+            fbp: pi.metadata?.fbp || null,
+            value: amountHeld / 100,
+            currency: 'CAD',
+            contentName: tierLabel === 'Inner Circle' ? 'Inner Circle Membership' : 'Routes Membership',
+          }).catch(err => captureException(err, { context: 'membership-hold-meta-capi', piId: pi.id })))
+
           after(() => Promise.allSettled([
             fetch('https://api.resend.com/emails', {
               method: 'POST',
