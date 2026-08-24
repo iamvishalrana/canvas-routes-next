@@ -121,7 +121,14 @@ export default function AdminPhotoLightbox({ photos, openIndex, onNavigate, onCl
           <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.7)' }}>
             {openIndex + 1} / {photos.length}
           </div>
-          <a href={photo.originalUrl || photo.url} target="_blank" rel="noopener noreferrer" download
+          {/* ?download makes Supabase serve the file as an attachment (Content-Disposition)
+              instead of rendering it inline — the `download` attribute alone is silently
+              ignored by browsers for cross-origin links (this storage domain differs from
+              canvasroutes.com), so without the query param this would just open the raw
+              file in a new tab. Matches the pattern already used in
+              components/MembersGallery.jsx, app/admin/photos/PhotosClient.jsx, and
+              app/admin/photos/shares/[personId]/[folderId]/FolderClient.jsx. */}
+          <a href={`${photo.originalUrl || photo.url}?download`} target="_blank" rel="noopener noreferrer" download
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#F5F1EC', textDecoration: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '0.45rem 1rem' }}>
             Download
           </a>

@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { ALLOWED_EXTS, ALLOWED_MIME_TYPES } from '../../../../../lib/allowedImageTypes'
 import { attendanceKey } from '../../../../../lib/eventMeta'
+import { captureException } from '../../../../../lib/sentry'
 
 const BUCKET = 'gallery-photos'
 
@@ -34,8 +35,12 @@ export async function POST(request) {
   }
 
   const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '100MB' }
+  // A failed updateBucket must not be silently swallowed — the server-side
+  // allowlist is the real gate here. See lib/allowedImageTypes.js's SVG
+  // comment (2026-08-24).
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
+    admin.storage.updateBucket(BUCKET, bucketOpts).catch(err =>
+      captureException(err, { context: 'member-gallery-submission-bucket-config', bucket: BUCKET })))
 
   const base = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
   const originalPath = `submissions/${user.id}/originals/${base}.${origExt}`

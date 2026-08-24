@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { MIME_TO_EXT, ALLOWED_MIME_TYPES } from '../../../../../lib/allowedImageTypes'
+import { captureException } from '../../../../../lib/sentry'
 
 const UPLOAD_PASSWORD = 'laurentians'
 const BUCKET = 'drive-photos'
@@ -28,8 +29,15 @@ export async function POST(request) {
 
   const admin = createAdminClient()
   const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
+  // A failure here must not be silently swallowed — it means the bucket's
+  // server-side type/size allowlist (the actual enforcement point, since
+  // this is a signed-upload-URL flow the app server never sees the bytes
+  // of) is stale or missing entirely. Found 2026-08-24: several buckets'
+  // updateBucket calls had been failing silently for an unknown period,
+  // leaving them with no allowedMimeTypes/fileSizeLimit enforced at all.
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
+    admin.storage.updateBucket(BUCKET, bucketOpts).catch(err =>
+      captureException(err, { context: 'drive-upload-photo-bucket-config', bucket: BUCKET })))
 
   // Timestamped so a re-upload never collides with (or gets served stale
   // from a CDN cache alongside) a previous one.

@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../../lib/supabase/authCheck'
 import { MIME_TO_EXT, ALLOWED_MIME_TYPES } from '../../../../../../../lib/allowedImageTypes'
+import { captureException } from '../../../../../../../lib/sentry'
 
 const BUCKET = 'event-photos'
 const EXT_BY_MIME = MIME_TO_EXT
@@ -22,9 +23,12 @@ export async function POST(request, { params }) {
   const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '50MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
-  // updateBucket() for the already-exists case.
+  // updateBucket() for the already-exists case. A failure of THAT call must
+  // also not be silently swallowed — see lib/allowedImageTypes.js's SVG
+  // comment (2026-08-24 review).
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
+    admin.storage.updateBucket(BUCKET, bucketOpts).catch(err =>
+      captureException(err, { context: 'admin-event-photo-bucket-config', bucket: BUCKET })))
 
   // Timestamp in filename busts CDN and browser caches on every upload
   const path = `${id}-${Date.now()}.${ext}`

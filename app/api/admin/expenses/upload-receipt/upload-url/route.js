@@ -1,5 +1,6 @@
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
+import { captureException } from '../../../../../../lib/sentry'
 
 const BUCKET = 'receipts'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
@@ -37,9 +38,12 @@ export async function POST(request) {
   const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_TYPES, fileSizeLimit: '25MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
-  // updateBucket() for the already-exists case.
+  // updateBucket() for the already-exists case. A failure of THAT call must
+  // also not be silently swallowed — see lib/allowedImageTypes.js's SVG
+  // comment (2026-08-24 review).
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
+    admin.storage.updateBucket(BUCKET, bucketOpts).catch(err =>
+      captureException(err, { context: 'upload-receipt-bucket-config', bucket: BUCKET })))
 
   const folder = sanitizeFolderPath(folderPath)
   const ext = (fileName || '').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'

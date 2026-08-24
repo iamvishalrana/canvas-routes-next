@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIp } from '../../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../../lib/eventCheckinShared'
 import { MIME_TO_EXT, ALLOWED_MIME_TYPES } from '../../../../../../lib/allowedImageTypes'
+import { captureException } from '../../../../../../lib/sentry'
 
 const BUCKET = 'route-car-photos'
 const EXT_BY_MIME = MIME_TO_EXT
@@ -44,9 +45,13 @@ export async function POST(request, { params }) {
   const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '40MB' }
   // createBucket() silently no-ops once the bucket already exists, so a
   // limit change here would never reach it without falling back to
-  // updateBucket() for the already-exists case.
+  // updateBucket() for the already-exists case. A failure of THAT call must
+  // also not be silently swallowed — see lib/allowedImageTypes.js's SVG
+  // comment (2026-08-24 review) for why a stale/missing bucket-level
+  // allowlist is a real security gap, not just a config nicety.
   await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
+    admin.storage.updateBucket(BUCKET, bucketOpts).catch(err =>
+      captureException(err, { context: 'checkin-car-photo-bucket-config', bucket: BUCKET })))
 
   const path = `${eventId}-${email.replace(/[^a-z0-9]/gi, '_')}-${Date.now()}.${ext}`
   const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path)
