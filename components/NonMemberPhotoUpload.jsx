@@ -1,6 +1,6 @@
 'use client'
 import { useState, useRef } from 'react'
-import { uploadToSupabaseStorage } from '../lib/uploadToSupabaseStorage'
+import { uploadToR2 } from '../lib/uploadToR2'
 import { convertHeicIfNeeded, isHeicFile } from '../lib/convertHeicIfNeeded'
 import { convertTiffIfNeeded, isTiffFile } from '../lib/convertTiffIfNeeded'
 import { compressImageClient } from '../lib/compressImageClient'
@@ -47,8 +47,8 @@ export default function NonMemberPhotoUpload({ token, sessionId, folderId, folde
         const urls = await urlRes.json().catch(() => ({}))
         if (!urlRes.ok) throw new Error(urls.error || 'upload failed — please try again')
         await Promise.all([
-          uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.originalPath, token: urls.originalToken, file }),
-          uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.displayPath, token: urls.displayToken, file: display }),
+          uploadToR2({ uploadUrl: urls.originalUploadUrl, file }),
+          uploadToR2({ uploadUrl: urls.displayUploadUrl, file: display }),
         ])
         const res = await fetch(`/api/gallery/${token}/submit-photo`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

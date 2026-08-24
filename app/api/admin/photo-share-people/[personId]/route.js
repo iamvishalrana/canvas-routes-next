@@ -4,6 +4,7 @@ import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { captureException } from '../../../../../lib/sentry'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { cleanupOrphanedPhotos } from '../../../../../lib/photoShareDedup'
+import { removeObjects } from '../../../../../lib/r2'
 
 const BUCKET = 'photo-shares'
 
@@ -89,7 +90,7 @@ export async function DELETE(request, { params }) {
 
   const pendingPaths = [...new Set((pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
   if (pendingPaths.length) {
-    await supabase.storage.from(BUCKET).remove(pendingPaths).catch(err =>
+    await removeObjects({ bucket: BUCKET, paths: pendingPaths }).catch(err =>
       captureException(err, { context: 'admin-photo-share-person-delete-pending-storage', personId }))
   }
 

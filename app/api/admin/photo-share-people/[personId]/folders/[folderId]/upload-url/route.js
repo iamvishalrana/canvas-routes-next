@@ -1,18 +1,20 @@
 import { createAdminClient } from '../../../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../../../lib/supabase/authCheck'
-import { MIME_TO_EXT, ALLOWED_MIME_TYPES } from '../../../../../../../../lib/allowedImageTypes'
+import { MIME_TO_EXT } from '../../../../../../../../lib/allowedImageTypes'
 import { findExistingSharedPhoto } from '../../../../../../../../lib/photoShareDedup'
+import { createSignedUploadUrl } from '../../../../../../../../lib/r2'
 
 const BUCKET = 'photo-shares'
 
-// Issues one-time signed upload URLs for both the original and a pre-
+// Issues one-time presigned upload URLs for both the original and a pre-
 // compressed display copy, same dual-upload pattern as gallery-photos —
 // Supabase's on-the-fly image transform endpoint proved unreliable for
-// large camera originals.
+// large camera originals. Migrated to R2 (see lib/r2.js) — presigned PUT
+// URLs replace Supabase's signed-upload-token pair.
 //
 // If contentHash matches a photo already uploaded under a folder with this
 // exact title (a group shot shared across several people's folders, most
-// likely), no signed URLs are issued at all — the browser skips the upload
+// likely), no upload URLs are issued at all — the browser skips the upload
 // entirely and just links the existing photo in. See lib/photoShareDedup.js.
 export async function POST(request, { params }) {
   const adminUser = await requireAdmin()
@@ -32,23 +34,20 @@ export async function POST(request, { params }) {
   const existing = await findExistingSharedPhoto(admin, { contentHash, folderTitle: folder.title })
   if (existing) return Response.json({ duplicate: true, photoId: existing.id })
 
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '100MB' }
-  await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
-
   const base = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
   const originalPath = `${personId}/${folderId}/originals/${base}.${ext}`
   const displayPath = `${personId}/${folderId}/display/${base}.${dispExt}`
 
-  const [origResult, dispResult] = await Promise.all([
-    admin.storage.from(BUCKET).createSignedUploadUrl(originalPath),
-    admin.storage.from(BUCKET).createSignedUploadUrl(displayPath),
-  ])
-  if (origResult.error) return Response.json({ error: origResult.error.message }, { status: 500 })
-  if (dispResult.error) return Response.json({ error: dispResult.error.message }, { status: 500 })
-
-  return Response.json({
-    originalPath, originalToken: origResult.data.token,
-    displayPath, displayToken: dispResult.data.token,
-  })
+  try {
+    const [orig, disp] = await Promise.all([
+      createSignedUploadUrl({ bucket: BUCKET, path: originalPath, contentType: fileType }),
+      createSignedUploadUrl({ bucket: BUCKET, path: displayPath, contentType: dispFileType }),
+    ])
+    return Response.json({
+      originalPath, originalUploadUrl: orig.uploadUrl,
+      displayPath, displayUploadUrl: disp.uploadUrl,
+    })
+  } catch (err) {
+    return Response.json({ error: err.message || 'Failed to prepare upload.' }, { status: 500 })
+  }
 }

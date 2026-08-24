@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../lib/sentry'
 import { cleanupOrphanedPhotos } from '../../../../lib/photoShareDedup'
+import { removeObjects } from '../../../../lib/r2'
 
 const BUCKET = 'photo-shares'
 
@@ -38,9 +39,10 @@ async function cleanupExpiredShares() {
     const { data: pendingSubmissions } = await supabase.from('gallery_photo_submissions').select('storage_path, original_path').eq('photo_share_folder_id', folder.id)
     const pendingPaths = [...new Set((pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
     if (pendingPaths.length) {
-      const { error: removeErr } = await supabase.storage.from(BUCKET).remove(pendingPaths)
-      if (removeErr) {
-        captureException(new Error(removeErr.message), { context: 'photo-shares-cleanup-pending-storage', folderId: folder.id })
+      try {
+        await removeObjects({ bucket: BUCKET, paths: pendingPaths })
+      } catch (err) {
+        captureException(err, { context: 'photo-shares-cleanup-pending-storage', folderId: folder.id })
         continue // leave the DB row for next run rather than losing the file reference
       }
     }

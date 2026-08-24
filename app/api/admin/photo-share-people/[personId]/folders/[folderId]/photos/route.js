@@ -3,6 +3,7 @@ import { requireAdmin } from '../../../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../../../lib/sentry'
 import { ALLOWED_EXTS } from '../../../../../../../../lib/allowedImageTypes'
 import { createSharedPhotoAndLink, linkExistingPhoto } from '../../../../../../../../lib/photoShareDedup'
+import { objectExists, getPublicUrl } from '../../../../../../../../lib/r2'
 
 const BUCKET = 'photo-shares'
 
@@ -40,9 +41,9 @@ export async function POST(request, { params }) {
       if (!re.test(originalPath || '') || !re.test(displayPath || '')) {
         return Response.json({ error: 'Invalid storage path.' }, { status: 400 })
       }
-      const [{ data: origExists }, { data: dispExists }] = await Promise.all([
-        supabase.storage.from(BUCKET).exists(originalPath),
-        supabase.storage.from(BUCKET).exists(displayPath),
+      const [origExists, dispExists] = await Promise.all([
+        objectExists({ bucket: BUCKET, path: originalPath }),
+        objectExists({ bucket: BUCKET, path: displayPath }),
       ])
       if (!origExists || !dispExists) return Response.json({ error: 'Upload incomplete — please retry.' }, { status: 400 })
 
@@ -57,7 +58,7 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Photo uploaded but could not be saved. Please try again.' }, { status: 500 })
   }
 
-  const { data: { publicUrl: url } } = supabase.storage.from(BUCKET).getPublicUrl(photoRow.storage_path)
-  const { data: { publicUrl: originalUrl } } = supabase.storage.from(BUCKET).getPublicUrl(photoRow.original_path)
+  const url = getPublicUrl({ bucket: BUCKET, path: photoRow.storage_path })
+  const originalUrl = getPublicUrl({ bucket: BUCKET, path: photoRow.original_path })
   return Response.json({ id: linkRow.id, photo_id: photoRow.id, folder_id: folderId, caption: linkRow.caption, created_at: linkRow.created_at, url, originalUrl, sharedWith: [] })
 }

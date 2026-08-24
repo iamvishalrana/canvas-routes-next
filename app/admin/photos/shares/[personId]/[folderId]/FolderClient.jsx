@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err } from '../../../../_components/shared'
 import { useConfirm } from '../../../../_components/ConfirmProvider'
 import AdminPhotoLightbox from '../../../../_components/AdminPhotoLightbox'
-import { uploadToSupabaseStorage } from '../../../../../../lib/uploadToSupabaseStorage'
+import { uploadToR2 } from '../../../../../../lib/uploadToR2'
 import { onImgError } from '../../../../../../lib/imgFallback'
 import { compressImageClient } from '../../../../../../lib/compressImageClient'
 import { convertHeicIfNeeded, isHeicFile } from '../../../../../../lib/convertHeicIfNeeded'
@@ -139,8 +139,8 @@ export default function FolderClient() {
         } else {
           const pairStarted = performance.now()
           await Promise.all([
-            uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.originalPath, token: urls.originalToken, file }),
-            uploadToSupabaseStorage({ bucket: 'photo-shares', path: urls.displayPath, token: urls.displayToken, file: display }),
+            uploadToR2({ uploadUrl: urls.originalUploadUrl, file }),
+            uploadToR2({ uploadUrl: urls.displayUploadUrl, file: display }),
           ])
           const pairMs = performance.now() - pairStarted
           setUpload(u => u ? { ...u, bytes: u.bytes + file.size + display.size, ms: u.ms + pairMs } : u)

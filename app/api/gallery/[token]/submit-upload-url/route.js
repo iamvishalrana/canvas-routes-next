@@ -2,7 +2,8 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { readSession } from '../../../../../lib/otp'
-import { ALLOWED_EXTS, ALLOWED_MIME_TYPES } from '../../../../../lib/allowedImageTypes'
+import { ALLOWED_EXTS, EXT_TO_MIME } from '../../../../../lib/allowedImageTypes'
+import { createSignedUploadUrl } from '../../../../../lib/r2'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const BUCKET = 'photo-shares'
@@ -31,23 +32,20 @@ export async function POST(request, { params }) {
   if (!folder) return Response.json({ error: 'Folder not found.' }, { status: 404 })
   if (new Date(folder.expires_at) <= new Date()) return Response.json({ error: 'This folder has expired.' }, { status: 400 })
 
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '100MB' }
-  await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(() => {}))
-
   const base = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
   const originalPath = `submissions/${person.id}/${folder.id}/originals/${base}.${origExt}`
   const displayPath = `submissions/${person.id}/${folder.id}/display/${base}.${dispExt}`
 
-  const [origResult, dispResult] = await Promise.all([
-    admin.storage.from(BUCKET).createSignedUploadUrl(originalPath),
-    admin.storage.from(BUCKET).createSignedUploadUrl(displayPath),
-  ])
-  if (origResult.error) return Response.json({ error: origResult.error.message }, { status: 500 })
-  if (dispResult.error) return Response.json({ error: dispResult.error.message }, { status: 500 })
-
-  return Response.json({
-    originalPath, originalToken: origResult.data.token,
-    displayPath, displayToken: dispResult.data.token,
-  })
+  try {
+    const [orig, disp] = await Promise.all([
+      createSignedUploadUrl({ bucket: BUCKET, path: originalPath, contentType: EXT_TO_MIME[origExt] }),
+      createSignedUploadUrl({ bucket: BUCKET, path: displayPath, contentType: EXT_TO_MIME[dispExt] }),
+    ])
+    return Response.json({
+      originalPath, originalUploadUrl: orig.uploadUrl,
+      displayPath, displayUploadUrl: disp.uploadUrl,
+    })
+  } catch (err) {
+    return Response.json({ error: err.message || 'Failed to prepare upload.' }, { status: 500 })
+  }
 }

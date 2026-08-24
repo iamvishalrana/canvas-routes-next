@@ -1,4 +1,5 @@
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { getPublicUrl } from '../../../lib/r2'
 
 export async function generateMetadata({ params }) {
   const { token } = await params
@@ -13,8 +14,7 @@ export async function generateMetadata({ params }) {
       ? await admin.from('photo_share_folder_items').select('photo:photo_share_photos(storage_path)').in('folder_id', folderIds).order('created_at', { ascending: true }).limit(1).maybeSingle()
       : { data: null }
     if (firstLink?.photo) {
-      const { data: { publicUrl } } = admin.storage.from('photo-shares').getPublicUrl(firstLink.photo.storage_path)
-      bg = publicUrl
+      bg = getPublicUrl({ bucket: 'photo-shares', path: firstLink.photo.storage_path })
     }
   }
 

@@ -4,6 +4,7 @@ import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { readSession } from '../../../../../lib/otp'
 import { captureException } from '../../../../../lib/sentry'
 import { ALLOWED_EXTS } from '../../../../../lib/allowedImageTypes'
+import { objectExists, getPublicUrl } from '../../../../../lib/r2'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const BUCKET = 'photo-shares'
@@ -42,9 +43,9 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Invalid storage path.' }, { status: 400 })
   }
 
-  const [{ data: origExists }, { data: dispExists }] = await Promise.all([
-    admin.storage.from(BUCKET).exists(originalPath),
-    admin.storage.from(BUCKET).exists(displayPath),
+  const [origExists, dispExists] = await Promise.all([
+    objectExists({ bucket: BUCKET, path: originalPath }),
+    objectExists({ bucket: BUCKET, path: displayPath }),
   ])
   if (!origExists || !dispExists) return Response.json({ error: 'Upload incomplete — please retry.' }, { status: 400 })
 
@@ -57,8 +58,8 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Too many photos awaiting review — wait for some to be published before submitting more.' }, { status: 429 })
   }
 
-  const { data: { publicUrl: originalUrl } } = admin.storage.from(BUCKET).getPublicUrl(originalPath)
-  const { data: { publicUrl: displayUrl } } = admin.storage.from(BUCKET).getPublicUrl(displayPath)
+  const originalUrl = getPublicUrl({ bucket: BUCKET, path: originalPath })
+  const displayUrl = getPublicUrl({ bucket: BUCKET, path: displayPath })
 
   const { data: row, error } = await admin.from('gallery_photo_submissions').insert({
     source: 'non_member',

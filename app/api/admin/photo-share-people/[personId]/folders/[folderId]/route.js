@@ -3,6 +3,7 @@ import { requireAdmin } from '../../../../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../../../../lib/adminAudit.js'
 import { captureException } from '../../../../../../../lib/sentry'
 import { cleanupOrphanedPhotos } from '../../../../../../../lib/photoShareDedup'
+import { getPublicUrl, removeObjects } from '../../../../../../../lib/r2'
 
 const BUCKET = 'photo-shares'
 
@@ -57,8 +58,8 @@ export async function GET(request, { params }) {
   const photosOut = (links || []).flatMap(link => {
     const photo = photoById.get(link.photo_id)
     if (!photo) return [] // canonical row missing (shouldn't happen) — drop rather than 500 the whole folder
-    const { data: { publicUrl: url } } = supabase.storage.from(BUCKET).getPublicUrl(photo.storage_path)
-    const { data: { publicUrl: originalUrl } } = supabase.storage.from(BUCKET).getPublicUrl(photo.original_path || photo.storage_path)
+    const url = getPublicUrl({ bucket: BUCKET, path: photo.storage_path })
+    const originalUrl = getPublicUrl({ bucket: BUCKET, path: photo.original_path || photo.storage_path })
     return [{
       id: link.id, photo_id: photo.id, folder_id: folderId, caption: link.caption, created_at: link.created_at,
       url, originalUrl, sharedWith: sharedWithByPhoto.get(photo.id) || [],
@@ -136,7 +137,7 @@ export async function DELETE(request, { params }) {
 
   const pendingPaths = [...new Set((pendingSubmissions || []).flatMap(i => [i.storage_path, i.original_path]).filter(Boolean))]
   if (pendingPaths.length) {
-    await supabase.storage.from(BUCKET).remove(pendingPaths).catch(err =>
+    await removeObjects({ bucket: BUCKET, paths: pendingPaths }).catch(err =>
       captureException(err, { context: 'admin-photo-share-folder-delete-pending-storage', folderId }))
   }
 

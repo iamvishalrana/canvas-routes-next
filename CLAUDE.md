@@ -560,10 +560,13 @@ Required for full functionality:
 | `RESEND_API_KEY` | Transactional email |
 | `RESEND_WEBHOOK_SECRET` | Verifies Resend's delivery/open/click/bounce webhook (`app/api/webhooks/resend/route.js`, Svix-signed) — absent = endpoint returns 503, no events captured |
 | `ADMIN_EMAILS` | Comma-separated list of admin email addresses |
-| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | Upstash Redis (rate limiting) |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis (rate limiting) — renamed from the old `KV_REST_API_*` pair when `@vercel/kv` was replaced (commit `eaf8d2b9`); absent = falls back to in-memory per-instance rate limiting |
 | `ANTHROPIC_API_KEY` | AI email draft generation in admin |
 | `META_CAPI_ACCESS_TOKEN` | Meta Conversions API server-side event sends (`lib/metaConversionsApi.js`) — absent = silent no-op |
 | `META_CAPI_TEST_EVENT_CODE` | Optional — routes CAPI events to Events Manager's Test Events tool instead of live; unset for production |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` | Cloudflare R2 (`lib/r2.js`) — object storage, replacing Supabase Storage bucket-by-bucket (only `photo-shares` migrated so far). Absent = `r2` export is `null`; every caller must guard against that |
+| `R2_BUCKET_NAME` | Optional — defaults to `canvas-routes-media`. One R2 bucket holds every migrated Supabase bucket as a path prefix (`photo-shares/...`, etc.) — all were already `public: true` with unguessable random-UUID paths, so consolidating loses no access-control guarantee |
+| `R2_PUBLIC_URL` | Public base URL for reading R2 objects back — a custom domain attached to the bucket in the R2 dashboard (e.g. `https://media.canvasroutes.com`), NOT the R2 API endpoint. Absent = `getPublicUrl()` returns `null` |
 
 All services degrade gracefully when their key is absent — check the relevant `lib/` singleton before assuming a feature works locally.
 
