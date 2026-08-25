@@ -175,6 +175,7 @@ export async function POST(request) {
         children_ages: childrenAges || '',
         original_amount: String(MEMBER_PRICE_CENTS),
         lang: lang === 'fr' ? 'fr' : 'en',
+        message: (more || '').slice(0, 450), // Stripe metadata values cap at 500 chars — same key as the non-member route's rescue path reads
         ...(_health_check ? {
           source: 'health_check',
           health_check_note: '⚠️ AUTOMATED PLAYWRIGHT HEALTH CHECK — NOT A REAL PAYMENT — SAFE TO CANCEL',

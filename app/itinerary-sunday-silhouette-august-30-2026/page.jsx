@@ -27,7 +27,7 @@ const STOPS = [
   { label: 'Rawdon', note: { en: 'Into Lanaudière — the first real stretch of backroads', fr: 'Direction Lanaudière — le premier vrai tronçon de routes secondaires' }, href: 'https://www.google.com/maps/search/?api=1&query=Rawdon,+QC', lat: 46.0470, lng: -73.7181 },
   { label: 'Saint-Côme', note: { en: 'Deeper into cottage country, quiet roads the whole way', fr: 'Plus profondément dans les chalets, des routes tranquilles tout du long' }, href: 'https://www.google.com/maps/search/?api=1&query=Saint-Côme,+QC', lat: 46.2710370, lng: -73.7714770 },
   { label: 'Café Marius', note: { en: 'Coffee stop — covered by Canvas Routes', fr: 'Arrêt café — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Café+Marius+Rue+Principale+Saint-Donat-de-Montcalm+QC', lat: 46.3107848, lng: -74.2103737 },
-  { label: 'Premium Brunch Restaurant', note: { en: 'Breakfast in Saint-Sauveur — covered by Canvas Routes', fr: 'Petit-déjeuner à Saint-Sauveur — couvert par Canvas Routes' }, tag: { en: 'Breakfast', fr: 'Petit-déjeuner' }, end: true, href: 'https://www.google.com/maps/search/?api=1&query=Petinos+75+Avenue+de+la+Gare+Saint-Sauveur+QC', lat: 45.8908004, lng: -74.1535634 },
+  { label: 'Petinos Saint-Sauveur', note: { en: 'Brunch in Saint-Sauveur — covered by Canvas Routes', fr: 'Brunch à Saint-Sauveur — couvert par Canvas Routes' }, tag: { en: 'Brunch', fr: 'Brunch' }, end: true, href: 'https://www.google.com/maps/search/?api=1&query=Petinos+75+Avenue+de+la+Gare+Saint-Sauveur+QC', lat: 45.8908004, lng: -74.1535634 },
 ]
 
 const MAP_STOPS = STOPS.filter(s => s.lat != null && s.lng != null)
@@ -59,7 +59,7 @@ const DRIVE_BULLETS = [
   { emoji: '🛣️', text: { en: "We meet at 7:30 AM at Starbucks in Laval — departure is sharp, so don't be late. From there the convoy heads north into Lanaudière through Rawdon, then deeper into cottage country through Saint-Côme — backroads the whole way.", fr: "Rendez-vous à 7 h 30 au Starbucks à Laval — départ précis, alors ne soyez pas en retard. De là, le convoi file vers le nord en Lanaudière par Rawdon, puis plus profondément dans les chalets par Saint-Côme — des routes secondaires tout du long." } },
   { emoji: '☕', text: { en: 'A coffee stop at Café Marius in Saint-Donat-de-Montcalm, covered by Canvas Routes, breaks up the drive right in the middle of the loop.', fr: 'Un arrêt café chez Café Marius à Saint-Donat-de-Montcalm, couvert par Canvas Routes, casse la route en plein milieu de la boucle.' } },
   { emoji: '🏁', text: { en: 'From Saint-Donat, the convoy heads west into the Laurentians toward Saint-Sauveur — the last real stretch of backroads before things open up again near home.', fr: "De Saint-Donat, le convoi file vers l'ouest dans les Laurentides en direction de Saint-Sauveur — le dernier vrai tronçon de routes secondaires avant que ça s'ouvre de nouveau près de la maison." } },
-  { emoji: '🥐', text: { en: 'Breakfast at a premium brunch restaurant in Saint-Sauveur closes the morning, covered by Canvas Routes.', fr: 'Le petit-déjeuner dans un restaurant brunch haut de gamme à Saint-Sauveur clôture la matinée, couvert par Canvas Routes.' } },
+  { emoji: '🥐', text: { en: 'Brunch at Petinos Saint-Sauveur closes the morning, covered by Canvas Routes.', fr: 'Le brunch chez Petinos Saint-Sauveur clôture la matinée, couvert par Canvas Routes.' } },
   { emoji: '🕛', text: { en: "Back on the road by around noon — a short, genuinely great morning drive, not a full-day production.", fr: "De retour sur la route vers midi — une courte et vraiment belle balade matinale, pas une production d'une journée complète." } },
 ]
 
@@ -89,7 +89,7 @@ const UI = {
     mapLabel: 'Map',
     openRoute: 'Open Route in Google Maps →',
     modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
-    heroTags: ['Laurentian Backroads', '~220km Drive', 'Coffee + Breakfast'],
+    heroTags: ['Laurentian Backroads', '~220km Drive', 'Coffee + Brunch'],
     countdownUnits: ['Days', 'Hrs', 'Min', 'Sec'],
   },
   fr: {
@@ -106,7 +106,7 @@ const UI = {
     mapLabel: 'Carte',
     openRoute: "Ouvrir l'itinéraire dans Google Maps →",
     modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
-    heroTags: ['Routes secondaires laurentiennes', '~220 km de route', 'Café + petit-déjeuner'],
+    heroTags: ['Routes secondaires laurentiennes', '~220 km de route', 'Café + brunch'],
     countdownUnits: ['Jours', 'Hres', 'Min', 'Sec'],
   },
 }
@@ -610,7 +610,7 @@ export default function SundaySilhouetteItineraryPage() {
             Sunday · August 30, 2026
           </div>
           <div className="gate-tags" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.75rem' }}>
-            {['Laurentian Backroads', '~220km Drive', 'Coffee + Breakfast'].map(tag => (
+            {['Laurentian Backroads', '~220km Drive', 'Coffee + Brunch'].map(tag => (
               <span key={tag} style={{ fontSize: '8px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(245,241,236,0.5)', border: '0.5px solid rgba(197,168,130,0.25)', padding: '3px 9px' }}>{tag}</span>
             ))}
           </div>
@@ -766,7 +766,7 @@ export default function SundaySilhouetteItineraryPage() {
               key={l}
               onClick={() => setLang(l)}
               className={lang === l ? 'lang-toggle-btn' : undefined}
-              style={{ padding: '0.45rem 0.75rem', background: lang === l ? '#c5a882' : 'none', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(197,168,130,0.55)', fontWeight: lang === l ? '700' : '400', fontFamily: 'sans-serif', transition: 'all 0.15s ease' }}
+              style={{ padding: '0.45rem 0.75rem', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: lang === l ? '#c5a882' : 'none', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(197,168,130,0.55)', fontWeight: lang === l ? '700' : '400', fontFamily: 'sans-serif', transition: 'all 0.15s ease', WebkitTapHighlightColor: 'transparent' }}
             >
               {l.toUpperCase()}
             </button>
@@ -848,7 +848,7 @@ export default function SundaySilhouetteItineraryPage() {
           <button
             onClick={() => setRulesOpen(o => !o)}
             aria-expanded={rulesOpen}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: '44px', background: 'none', border: 'none', padding: '0.5rem 0', margin: '-0.5rem 0', cursor: 'pointer', textAlign: 'left', WebkitTapHighlightColor: 'transparent' }}
           >
             <h2 style={{ ...SECTION_LABEL, margin: 0 }}>{t.convoyRulesLabel}</h2>
             <span aria-hidden="true" style={{ fontSize: '11px', color: '#bbb', letterSpacing: '0.06em' }}>{rulesOpen ? t.rulesClose : t.rulesRead}</span>

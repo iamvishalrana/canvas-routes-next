@@ -7,21 +7,21 @@ const HERO_IMAGE = 'https://www.canvasroutes.com/laurentian-cars-morning-mirrore
 
 export const metadata = {
   title: 'Sunday Silhouette — 2026',
-  description: 'A quick loop through the Laurentians — coffee at Café Marius in Saint-Donat, breakfast at a premium brunch restaurant in Saint-Sauveur, back before noon. Out at 7:30 AM from Laval. $99 members / $125.',
+  description: 'A quick loop through the Laurentians — coffee at Café Marius in Saint-Donat, brunch at Petinos Saint-Sauveur, back around noon. Out at 7:30 AM from Laval. $99 members / $125.',
   keywords: 'Laurentians route Montreal, Canvas Routes route, scenic morning drive Quebec, Saint-Donat drive, Saint-Sauveur drive, convoy drive Quebec, car route Montreal, Lanaudière backroads',
   alternates: { canonical: 'https://canvasroutes.com/sunday-silhouette-2026' },
   openGraph: {
     type: 'website',
     siteName: 'Canvas Routes',
     title: 'Sunday Silhouette — 2026 | Canvas Routes',
-    description: 'A quick loop through the Laurentians — coffee at Café Marius, breakfast at a premium brunch restaurant, back before noon. $99 members / $125.',
+    description: 'A quick loop through the Laurentians — coffee at Café Marius, brunch at Petinos Saint-Sauveur, back around noon. $99 members / $125.',
     url: 'https://canvasroutes.com/sunday-silhouette-2026',
     images: [{ url: HERO_IMAGE, width: 1535, height: 1024, alt: 'Sunday Silhouette — Canvas Routes Route' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Sunday Silhouette — 2026 | Canvas Routes',
-    description: 'A quick loop through the Laurentians — coffee at Café Marius, breakfast at a premium brunch restaurant, back before noon. $99 members / $125.',
+    description: 'A quick loop through the Laurentians — coffee at Café Marius, brunch at Petinos Saint-Sauveur, back around noon. $99 members / $125.',
     images: [HERO_IMAGE],
   },
 }
@@ -34,7 +34,7 @@ const eventSchema = {
   endDate: '2026-08-30T12:00:00-04:00',
   eventStatus: 'https://schema.org/EventScheduled',
   eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
-  description: 'A quick escape through the Laurentians, back before lunch — coffee at Café Marius in Saint-Donat, breakfast at a premium brunch restaurant in Saint-Sauveur.',
+  description: 'A quick escape through the Laurentians, back around noon — coffee at Café Marius in Saint-Donat, brunch at Petinos Saint-Sauveur.',
   image: HERO_IMAGE,
   url: 'https://canvasroutes.com/sunday-silhouette-2026',
   location: {

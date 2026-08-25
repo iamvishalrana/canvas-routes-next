@@ -436,6 +436,11 @@ export async function POST(request) {
           ...(pi.metadata?.source   ? { source:   pi.metadata.source }   : {}),
           ...(pi.metadata?.referred_by ? { referred_by: pi.metadata.referred_by } : {}),
           ...(pi.metadata?.car_paint   ? { car_paint:   pi.metadata.car_paint }   : {}),
+          // Every register route writes lang to PI metadata, but this rescue
+          // never read it back — a rescued row silently kept whatever lang
+          // (or null) the pre-existing applications row already had, sending
+          // a French registrant's rescued confirmation email in English.
+          ...(pi.metadata?.lang     ? { lang:     pi.metadata.lang }     : {}),
           // Register routes store the "tell us more" field under metadata key
           // `message` (see hello-to-montebello-register / wtet-register), not
           // `more` — this used to read the wrong key and silently never restore it.

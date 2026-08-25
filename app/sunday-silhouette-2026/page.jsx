@@ -314,6 +314,12 @@ export default function SundaySilhouettePage() {
   const [alreadyRegistered, setAlreadyRegistered] = useState(false)
   const wasMemberRef = useRef(false) // tracks if the payment step was entered as a member
   const honeypotRef = useRef(null)
+  // Synchronous re-entrancy guard for handleSubmit — mirrors payingRef in
+  // PaymentForm.handlePay. status==='loading' alone isn't enough: React state
+  // updates aren't synchronous, so a rapid double-tap on mobile can call
+  // handleSubmit twice before the first setStatus('loading') re-renders,
+  // creating two PaymentIntents for one registration.
+  const submittingRef = useRef(false)
 
   useEffect(() => {
     function tick() {
@@ -421,7 +427,11 @@ export default function SundaySilhouettePage() {
             ? m.car_model.replace(new RegExp(`^${(m.car_make || '').trim()}\\s*`, 'i'), '').trim()
             : f.carModel,
         }))
-        fetch('/api/sunday-silhouette-2026-member-register')
+        // Returned (not fire-and-forget) so the outer .finally() below waits
+        // for it — without this, memberCheckDone flips true (enabling the
+        // submit button) before alreadyRegistered has a chance to be set,
+        // letting an already-paid member briefly submit a duplicate registration.
+        return fetch('/api/sunday-silhouette-2026-member-register')
           .then(r => r.ok ? r.json() : null)
           .then(d => { if (d?.alreadyRegistered) setAlreadyRegistered(true) })
           .catch(() => {})
@@ -495,7 +505,16 @@ export default function SundaySilhouettePage() {
   }
 
   async function handleSubmit() {
-    if (status === 'loading') return
+    if (status === 'loading' || submittingRef.current) return
+    submittingRef.current = true
+    try {
+      await handleSubmitInner()
+    } finally {
+      submittingRef.current = false
+    }
+  }
+
+  async function handleSubmitInner() {
     if (form.isMember === 'yes' && !memberProfile) return
     const errs = validate()
     if (Object.keys(errs).length > 0) {
@@ -650,7 +669,7 @@ export default function SundaySilhouettePage() {
           .ss-countdown-num  { font-size: 1.6rem !important; }
           .ss-stat { flex: 0 0 50% !important; }
           .ss-member-grid { grid-template-columns: 1fr !important; }
-          .join-form-row { flex-direction: column !important; }
+          .join-form-row { grid-template-columns: 1fr !important; }
           .ss-dob-grid { grid-template-columns: 1fr 1fr !important; }
           .ss-dob-year { grid-column: 1 / -1 !important; }
           .ss-order-summary { flex-direction: column !important; gap: 0.75rem !important; }
@@ -679,7 +698,7 @@ export default function SundaySilhouettePage() {
             {et.heroDateBadge}
           </div>
           <div style={{width:'40px',height:'0.5px',background:'rgba(197,168,130,0.5)',margin:'0 auto 2.5rem',animation:'ss-fade-in 0.5s ease both',animationDelay:'700ms'}} />
-          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.55)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'ss-fade-up 0.7s ease both',animationDelay:'800ms'}}>
+          <p style={{fontSize:'15px',color:'rgba(245,241,236,0.8)',textShadow:'0 1px 12px rgba(0,0,0,0.6)',maxWidth:'460px',margin:'0 auto 3rem',lineHeight:'1.9',letterSpacing:'0.01em',animation:'ss-fade-up 0.7s ease both',animationDelay:'800ms'}}>
             {et.heroBody}
           </p>
 
