@@ -61,7 +61,13 @@ function resolvePopupCard(mode, route, event, t) {
     }
   }
   if (mode === 'event' && event) {
-    const open = !!(event.public_registration_enabled && event.registration_url)
+    // Registration being "open" only ever depended on public_registration_enabled
+    // elsewhere in the app (e.g. /meet/[id]'s own gate) — requiring
+    // registration_url too meant an admin who forgot to fill in that field
+    // got a silently-wrong "Learn more" card pointing at /#events instead of
+    // the actual registration page. /meet/<id> always exists once the event
+    // does, so it's a safe default destination when the field is blank.
+    const open = !!event.public_registration_enabled
     return {
       ariaLabel: t.popupEventAriaLabel,
       eyebrow: open ? t.popupEventEyebrowOpen : t.popupEventEyebrow,
@@ -70,7 +76,7 @@ function resolvePopupCard(mode, route, event, t) {
       body: open ? t.popupEventBodyOpen : t.popupEventBody,
       monthLine: event.date_display,
       ctaLabel: open ? t.popupEventCtaOpen : t.popupEventCta,
-      ctaHref: open ? event.registration_url : '/#events',
+      ctaHref: open ? (event.registration_url || `/meet/${event.id}`) : '/#events',
       photo: event.photo_url || null,
     }
   }
@@ -106,20 +112,20 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
         </div>
       )}
       <div className="routes-popup-card-body" style={{ padding: 'clamp(1.75rem,5vw,2.75rem)' }}>
-        <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem' }}>
+        <div className="routes-popup-card-eyebrow" style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '1.1rem' }}>
           {card.eyebrow}
         </div>
-        <h2 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem,4vw,2.4rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, margin: '0 0 0.6rem' }}>
+        <h2 className="routes-popup-card-heading" style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem,4vw,2.4rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, margin: '0 0 0.6rem' }}>
           {card.heading !== null ? card.heading : <>{t.popupTitle}<br />{t.popupTitleLine2}</>}
         </h2>
-        <div style={{ fontSize: '13px', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', marginBottom: '1.25rem' }}>
+        <div className="routes-popup-card-sub" style={{ fontSize: '13px', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', marginBottom: '1.25rem' }}>
           {card.sub}
         </div>
         <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.4)', marginBottom: '1.25rem' }} />
         <p className="routes-popup-card-text" style={{ fontSize: '13px', color: 'rgba(245,241,236,0.65)', lineHeight: '1.8', fontFamily: 'var(--font-inter),sans-serif', margin: '0 0 1rem' }}>
           {card.body}
         </p>
-        <div style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 2, margin: '0 0 1.5rem' }}>
+        <div className="routes-popup-card-month" style={{ fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(197,168,130,0.55)', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 2, margin: '0 0 1.5rem' }}>
           {card.monthLine}
         </div>
         <a
@@ -622,11 +628,20 @@ export default function Home() {
             /* Two stacked cards on a phone screen can run long — trim the
                photo and padding so both cards plus the shared CTA/dismiss
                fit with less scrolling, without touching the single-card
-               layout (which never gets the has-second class). */
+               layout (which never gets the has-second class). These need
+               !important: every value below is also set inline on the same
+               element, and an inline style attribute always beats an
+               external rule regardless of selector specificity — without
+               !important this whole block was silently a no-op. */
             @media (max-width: 640px) {
-              .routes-popup-cards.has-second .routes-popup-photo { height: clamp(80px, 12vh, 120px); }
-              .routes-popup-cards.has-second .routes-popup-card-body { padding: 1.5rem 1.5rem 1.75rem; }
-              .routes-popup-cards.has-second .routes-popup-card-text { -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+              .routes-popup-cards.has-second .routes-popup-photo { height: clamp(60px, 9vh, 90px) !important; }
+              .routes-popup-cards.has-second .routes-popup-card-body { padding: 1.1rem 1.25rem 1.35rem !important; }
+              .routes-popup-cards.has-second .routes-popup-card-eyebrow { margin-bottom: 0.6rem !important; }
+              .routes-popup-cards.has-second .routes-popup-card-heading { font-size: 1.35rem !important; margin-bottom: 0.35rem !important; }
+              .routes-popup-cards.has-second .routes-popup-card-sub { margin-bottom: 0.75rem !important; font-size: 11px !important; }
+              .routes-popup-cards.has-second .routes-popup-card-text { -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.6rem !important; }
+              .routes-popup-cards.has-second .routes-popup-card-month { margin-bottom: 0.9rem !important; line-height: 1.6 !important; }
+              .routes-popup-cards.has-second .routes-popup-cta { padding: 0.75rem 1.5rem !important; }
             }
           `}</style>
           <div
