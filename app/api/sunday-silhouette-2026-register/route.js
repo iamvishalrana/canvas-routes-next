@@ -7,6 +7,7 @@ import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
 import { getRegistrationStatus } from '../../../lib/routeRegistrationStatus.js'
+import { isRouteAtCapacity } from '../../../lib/checkRouteCapacity.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Sunday Silhouette — 2026'
@@ -35,13 +36,16 @@ export async function POST(request) {
   // client-side gate, so it's a fallback, not the primary UX.
   try {
     const supabase = createAdminClient()
-    const { data: route } = await supabase.from('upcoming_routes').select('registration_open, launched').eq('slug', 'sunday-silhouette-2026').maybeSingle()
+    const { data: route } = await supabase.from('upcoming_routes').select('registration_open, launched, max_cars').eq('slug', 'sunday-silhouette-2026').maybeSingle()
     // No row found — fail open, same as before, rather than blocking on a
     // missing/unexpected DB state.
     if (route && route.registration_open === false) {
       const status = getRegistrationStatus({ registrationOpen: false, launched: route.launched === true, eventDate: EVENT_DATE })
       const error = status === 'not_yet_open' ? "Registration hasn't opened yet." : 'Registration is currently closed.'
       return Response.json({ error }, { status: 403 })
+    }
+    if (route?.max_cars && await isRouteAtCapacity(supabase, { eventName: EVENT_NAME, maxCars: route.max_cars })) {
+      return Response.json({ error: 'This route is full. Contact us to be added to the waitlist.' }, { status: 403 })
     }
   } catch { /* allow through if upcoming_routes unavailable */ }
 

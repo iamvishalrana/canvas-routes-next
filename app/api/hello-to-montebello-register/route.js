@@ -7,6 +7,7 @@ import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
 import { getFbCookiesFromRequest } from '../../../lib/metaConversionsApi.js'
+import { isRouteAtCapacity } from '../../../lib/checkRouteCapacity.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -36,9 +37,12 @@ export async function POST(request) {
   // it moved into Routes admin), so the gate reads from there.
   try {
     const supabase = createAdminClient()
-    const { data: route } = await supabase.from('upcoming_routes').select('registration_open').eq('slug', 'hello-to-montebello').maybeSingle()
+    const { data: route } = await supabase.from('upcoming_routes').select('registration_open, max_cars').eq('slug', 'hello-to-montebello').maybeSingle()
     if (route && route.registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
+    }
+    if (route?.max_cars && await isRouteAtCapacity(supabase, { eventName: EVENT_NAME, maxCars: route.max_cars })) {
+      return Response.json({ error: 'This route is full. Contact us to be added to the waitlist.' }, { status: 403 })
     }
   } catch { /* allow through if upcoming_routes unavailable */ }
 

@@ -2,6 +2,7 @@ import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
 import { ensureRouteEventLinked } from '../../../../lib/routeEventLink'
+import { isSameEvent } from '../../../../lib/eventCheckinShared.js'
 
 function slugify(str) {
   return (str || '').trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
@@ -10,9 +11,15 @@ function slugify(str) {
 export async function GET() {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
   const supabase = createAdminClient()
-  const [{ data: routes, error }, { data: interest }] = await Promise.all([
+  const [{ data: routes, error }, { data: interest }, { data: apps }] = await Promise.all([
     supabase.from('upcoming_routes').select('*').order('sort_order', { ascending: true }),
     supabase.from('route_interest').select('id, route_id, name, email, phone, car, preferences, membership_optin, is_member, created_at').order('created_at', { ascending: false }),
+    // Confirmed (paid) registration counts, per route — computed once for
+    // every route here rather than per-route, since registrations[] is the
+    // only per-event-accurate signal (applications.stripe_payment_type/status
+    // are single flat columns shared across every flow a person ever
+    // registers for, see CLAUDE.md rule 22 and lib/checkRouteCapacity.js).
+    supabase.from('applications').select('registrations').not('registrations', 'is', null),
   ])
   if (error) {
     captureException(new Error(error.message), { context: 'admin-roadtrips-list' })
@@ -20,7 +27,13 @@ export async function GET() {
   }
   const byRoute = {}
   for (const r of interest || []) { (byRoute[r.route_id] ||= []).push(r) }
-  const result = (routes || []).map(r => ({ ...r, interest: byRoute[r.id] || [], interested_count: (byRoute[r.id] || []).length }))
+  const paidRegs = (apps || []).flatMap(a => (a.registrations || []).filter(r => r.paid === true))
+  const result = (routes || []).map(r => ({
+    ...r,
+    interest: byRoute[r.id] || [],
+    interested_count: (byRoute[r.id] || []).length,
+    registered_count: paidRegs.filter(reg => isSameEvent(reg.event, r.name)).length,
+  }))
   return Response.json(result)
 }
 

@@ -8,6 +8,7 @@ import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { computeTax } from '../../../lib/tax.js'
 import { getFbCookiesFromRequest } from '../../../lib/metaConversionsApi.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
+import { isRouteAtCapacity } from '../../../lib/checkRouteCapacity.js'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -61,9 +62,12 @@ export async function POST(request) {
   // into Routes admin), so the gate reads from there.
   try {
     const adminCheck = createAdminClient()
-    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open').eq('slug', 'hello-to-montebello').maybeSingle()
+    const { data: route } = await adminCheck.from('upcoming_routes').select('member_registration_open, max_cars').eq('slug', 'hello-to-montebello').maybeSingle()
     if (route && route.member_registration_open === false) {
       return Response.json({ error: 'Registration is currently closed.' }, { status: 403 })
+    }
+    if (route?.max_cars && await isRouteAtCapacity(adminCheck, { eventName: EVENT_NAME, maxCars: route.max_cars })) {
+      return Response.json({ error: 'This route is full. Contact us to be added to the waitlist.' }, { status: 403 })
     }
   } catch { /* allow through if upcoming_routes unavailable */ }
 

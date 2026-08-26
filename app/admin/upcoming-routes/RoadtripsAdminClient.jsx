@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react'
+import Link from 'next/link'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu, ToggleSwitch, CopyBtn } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import RouteEventConfigClient from '../_components/RouteEventConfigClient'
@@ -224,6 +225,36 @@ export default function RoadtripsAdminClient() {
       .catch(() => setLoading(false))
   }, [])
   useEffect(() => { load() }, [load])
+
+  // Active promo-code counts per route slug — a separate client-side fetch
+  // (rather than folding into the Stripe-backed promo-codes API itself)
+  // reuses that existing endpoint as-is instead of adding Stripe-call
+  // latency to every Routes page load. 'road_trip_any' codes apply to every
+  // route, so they count toward each one alongside slug-specific codes.
+  const [promoCounts, setPromoCounts] = useState({})
+  useEffect(() => {
+    fetch('/api/admin/promo-codes')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (!Array.isArray(data)) return
+        const now = Date.now()
+        const isLive = c => c.active && (!c.expires_at || c.expires_at * 1000 > now) && (!c.max_redemptions || (c.times_redeemed ?? 0) < c.max_redemptions)
+        const counts = {}
+        for (const c of data) {
+          if (!isLive(c)) continue
+          const applies = (c.metadata?.applies_to || '').split(',').map(s => s.trim()).filter(Boolean)
+          const anyRoute = applies.includes('road_trip_any')
+          for (const a of applies) {
+            if (a === 'road_trip_any') continue
+            const slug = a.replace(/^road_trip_/, '')
+            counts[slug] = (counts[slug] || 0) + 1
+          }
+          if (anyRoute) counts.__any = (counts.__any || 0) + 1
+        }
+        setPromoCounts(counts)
+      })
+      .catch(() => {})
+  }, [])
 
   // Detail popup: lock the background from scrolling and close on Escape — on
   // the iOS home-screen app an unlocked body scrolls behind the modal.
@@ -471,6 +502,30 @@ export default function RoadtripsAdminClient() {
       } else { alert(data.error || 'Launch failed.') }
     } catch { alert('Network error.') }
     finally { setLaunching(false) }
+  }
+
+  // Recovery path for when the interest-list fetch failed during the
+  // original launch (interestListError above), or an admin just wants to
+  // nudge stragglers who missed the first launch email.
+  async function resendLaunchEmail(id) {
+    const route = routes.find(r => r.id === id)
+    if (!(await confirm({
+      title: 'Resend the launch email?',
+      message: 'This re-emails everyone on the interest list the same launch message.',
+      details: route ? <><strong>{route.name}</strong>{route.interested_count ? <> · {route.interested_count} interested driver{route.interested_count !== 1 ? 's' : ''}</> : null}</> : null,
+      confirmLabel: 'Yes, resend',
+    }))) return
+    setBusyId(id)
+    try {
+      const res = await fetch(`/api/admin/upcoming-routes/${id}/launch`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resend: true }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) alert(`Resending to ${data.recipientCount || 0} interested driver(s).`)
+      else alert(data.error || 'Resend failed.')
+    } catch { alert('Network error.') }
+    finally { setBusyId(null) }
   }
 
   async function sendBroadcast(id) {
@@ -761,12 +816,20 @@ export default function RoadtripsAdminClient() {
                         <div style={{ fontSize: '10px', color: '#bbb' }}>cars rolled out</div>
                       </>
                     ) : r.launched ? (
-                      // The target/interest count only means anything pre-launch
-                      // (it's the "how many interested before we launch this"
-                      // threshold) — once launched, real registrant counts live
-                      // in Check-in & Awards, not here, so there's nothing
-                      // meaningful left to show against the old target.
-                      <div style={{ fontSize: '10px', color: '#bbb' }}>See Check-in &amp; Awards for registrants</div>
+                      // Confirmed (paid) registrations against the car cap, if one
+                      // is set — the pre-launch interest/target count stops
+                      // meaning anything once real registrations start.
+                      (() => {
+                        const atCapacity = !!r.max_cars && r.registered_count >= r.max_cars
+                        return (
+                          <>
+                            <div style={{ fontSize: '15px', color: atCapacity ? '#93333E' : '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>
+                              {r.registered_count}{r.max_cars ? ` / ${r.max_cars}` : ''}
+                            </div>
+                            <div style={{ fontSize: '10px', color: atCapacity ? '#93333E' : '#bbb' }}>{atCapacity ? 'FULL' : 'registered & paid'}</div>
+                          </>
+                        )
+                      })()
                     ) : (
                       <>
                         <div style={{ fontSize: '15px', color: '#1a1a1a', fontVariantNumeric: 'tabular-nums' }}>{r.interested_count} / {r.target_count}</div>
@@ -793,6 +856,19 @@ export default function RoadtripsAdminClient() {
                       {showEventPanel[r.id] ? 'Hide Check-in & Awards' : 'Check-in & Awards'}
                     </GhostBtn>
                   )}
+                  {r.launched && (
+                    <Link href={`/admin/payments?search=${encodeURIComponent(`road_trip_${r.slug}`)}`} className="admin-btn"
+                      style={{ display: 'inline-flex', alignItems: 'center', padding: '0.35rem 0.8rem', background: 'transparent', color: '#555', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Payments
+                    </Link>
+                  )}
+                  {!!((promoCounts[r.slug] || 0) + (promoCounts.__any || 0)) && (
+                    <Link href="/admin/promo-codes" className="admin-btn"
+                      title="Active promo codes that apply to this route"
+                      style={{ display: 'inline-flex', alignItems: 'center', padding: '0.35rem 0.8rem', background: 'rgba(197,168,130,0.12)', color: '#8A6535', border: '0.5px solid rgba(197,168,130,0.5)', borderRadius: '8px', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      {(promoCounts[r.slug] || 0) + (promoCounts.__any || 0)} Promo Code{((promoCounts[r.slug] || 0) + (promoCounts.__any || 0)) !== 1 ? 's' : ''}
+                    </Link>
+                  )}
                   {!r.launched && !r.is_past && <PrimaryBtn small onClick={() => { setLaunchFor(r.id); setLaunchMsg('') }}>Launch</PrimaryBtn>}
                   <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     {deleteConfirm === r.id && (
@@ -809,6 +885,7 @@ export default function RoadtripsAdminClient() {
                       { label: r.is_active ? 'Hide From Site' : 'Show On Site', onClick: () => toggleActive(r), disabled: busyId === r.id },
                       { label: 'Email Interested', onClick: () => { setEmailFor(emailFor === r.id ? null : r.id); setEmailSubject(''); setEmailMsg('') }, disabled: r.interested_count === 0 },
                       { label: 'Export CSV', onClick: () => exportRouteCSV(r), disabled: r.interested_count === 0 },
+                      r.launched ? { label: 'Resend Launch Email', onClick: () => resendLaunchEmail(r.id), disabled: r.interested_count === 0 || busyId === r.id } : null,
                       { label: 'Delete Route', onClick: () => setDeleteConfirm(r.id), danger: true },
                     ]} />
                   </div>
