@@ -167,7 +167,13 @@ export default function MeetRegisterForm({ event }) {
       </nav>
 
       {/* Hero */}
-      <div style={{ background:'#0F1E14', paddingTop:'72px' }}>
+      <div style={{
+        background: '#0F1E14', paddingTop:'72px', position:'relative',
+        ...(event.photo_url ? {
+          backgroundImage: `linear-gradient(180deg, rgba(10,20,12,0.55) 0%, rgba(15,30,20,0.92) 100%), url('${event.photo_url}')`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
+        } : {}),
+      }}>
         <div style={{ borderTop:'0.5px solid rgba(197,168,130,0.15)', padding:'3.5rem 2rem 2rem' }}>
           <div style={{ maxWidth:'520px', margin:'0 auto', textAlign:'center' }}>
             <div style={{ fontSize:'10px', letterSpacing:'0.28em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'1rem' }}>
