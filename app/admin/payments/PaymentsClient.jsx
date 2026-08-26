@@ -1,6 +1,5 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, GhostBtn, DangerBtn, CopyBtn, DateRangeMenu } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
@@ -243,7 +242,6 @@ function PiLink({ id, manual }) {
 
 export default function PaymentsClient({ initialRecords = [] }) {
   const confirm = useConfirm()
-  const searchParams = useSearchParams()
   const [records, setRecords]         = useState(initialRecords)
   const [loading, setLoading]         = useState(false)
   const [loadError, setLoadError]     = useState(false)
@@ -266,10 +264,7 @@ export default function PaymentsClient({ initialRecords = [] }) {
   const [sort, setSort]               = useState('date_desc')
   const [dateFrom, setDateFrom]       = useState('')
   const [dateTo, setDateTo]           = useState('')
-  // ?search= lets other admin pages (e.g. the Routes tab's "Payments" quick
-  // link) land here pre-filtered to one route's payment type — same pattern
-  // as ?email= on Broadcasts (see EmailLink in _components/shared.jsx).
-  const [search, setSearch]           = useState(() => searchParams.get('search') || '')
+  const [search, setSearch]           = useState('')
   const [isMobile, setIsMobile]       = useState(false)
   const [showFailed, setShowFailed]   = useState(false)
   const [refunding, setRefunding]     = useState(null)
