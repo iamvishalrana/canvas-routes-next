@@ -290,7 +290,7 @@ export default function RoadtripsAdminClient() {
     try {
       const res = await fetch('/api/admin/upcoming-routes', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, activity_options: splitActs(form.activity_options), target_count: parseInt(form.target_count, 10) || 12, sort_order: parseInt(form.sort_order, 10) || routes.length + 1, cars_rolled_out: form.cars_rolled_out === '' ? null : parseInt(form.cars_rolled_out, 10) }),
+        body: JSON.stringify({ ...form, activity_options: splitActs(form.activity_options), target_count: parseInt(form.target_count, 10) || 12, sort_order: form.sort_order === '' ? routes.length + 1 : parseInt(form.sort_order, 10), cars_rolled_out: form.cars_rolled_out === '' ? null : parseInt(form.cars_rolled_out, 10) }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setFormErr(data.error || 'Failed to add.'); return }
@@ -397,7 +397,8 @@ export default function RoadtripsAdminClient() {
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-    } catch {} finally { setBusyId(null) }
+      else alert(data.error || 'Failed to update.')
+    } catch { alert('Network error.') } finally { setBusyId(null) }
   }
 
   // Gates the public hello-to-montebello-register form (and the equivalent
@@ -413,7 +414,8 @@ export default function RoadtripsAdminClient() {
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-    } catch {} finally { setBusyId(null) }
+      else alert(data.error || 'Failed to update.')
+    } catch { alert('Network error.') } finally { setBusyId(null) }
   }
 
   // Gates the member-only hello-to-montebello-member-register form —
@@ -429,7 +431,8 @@ export default function RoadtripsAdminClient() {
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-    } catch {} finally { setBusyId(null) }
+      else alert(data.error || 'Failed to update.')
+    } catch { alert('Network error.') } finally { setBusyId(null) }
   }
 
   async function del(id) {
@@ -437,7 +440,8 @@ export default function RoadtripsAdminClient() {
     try {
       const res = await fetch(`/api/admin/upcoming-routes/${id}`, { method: 'DELETE' })
       if (res.ok) { setRoutes(prev => prev.filter(r => r.id !== id)); setDeleteConfirm(null) }
-    } catch {} finally { setBusyId(null) }
+      else { const data = await res.json().catch(() => ({})); alert(data.error || 'Failed to delete.') }
+    } catch { alert('Network error.') } finally { setBusyId(null) }
   }
 
   async function launch(id) {
@@ -458,7 +462,12 @@ export default function RoadtripsAdminClient() {
       if (res.ok) {
         setRoutes(prev => prev.map(r => r.id === id ? { ...r, launched: true, launched_at: data.launched_at } : r))
         setLaunchFor(null); setLaunchMsg('')
-        alert(`Launched — ${data.emailed || 0} interested driver(s) emailed.`)
+        // Sending now happens after the response (see launch/route.js) so
+        // this is a recipient count, not a confirmed-sent count — the emails
+        // go out momentarily, any batch failures are reported to Sentry.
+        alert(data.interestListError
+          ? "Launched — couldn't load the interested-driver list, so no launch emails were sent. Check Sentry."
+          : `Launched — emailing ${data.recipientCount || 0} interested driver(s).`)
       } else { alert(data.error || 'Launch failed.') }
     } catch { alert('Network error.') }
     finally { setLaunching(false) }
@@ -481,7 +490,7 @@ export default function RoadtripsAdminClient() {
         body: JSON.stringify({ subject: emailSubject, message: emailMsg }),
       })
       const data = await res.json().catch(() => ({}))
-      if (res.ok) { setEmailFor(null); setEmailSubject(''); setEmailMsg(''); alert(`Sent to ${data.emailed || 0} interested driver(s).`) }
+      if (res.ok) { setEmailFor(null); setEmailSubject(''); setEmailMsg(''); alert(`Sending to ${data.recipientCount || 0} interested driver(s).`) }
       else alert(data.error || 'Failed to send.')
     } catch { alert('Network error.') }
     finally { setEmailing(false) }

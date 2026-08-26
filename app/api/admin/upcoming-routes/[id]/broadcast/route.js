@@ -1,3 +1,4 @@
+import { after } from 'next/server'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { captureException, captureMessage } from '../../../../../../lib/sentry'
@@ -48,27 +49,31 @@ export async function POST(request, { params }) {
     html: buildRouteBroadcastHtml({ firstName: (recipient.name || '').split(' ')[0] || '', routeName: route.name, message }),
   })
 
-  let sent = 0, failed = 0
-  for (let i = 0; i < recipients.length; i += RESEND_BATCH_SIZE) {
-    const batch = recipients.slice(i, i + RESEND_BATCH_SIZE)
-    try {
-      const res = await fetch('https://api.resend.com/emails/batch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify(batch.map(emailFor)),
-      })
-      if (res.ok) sent += batch.length
-      else failed += batch.length
-    } catch (err) {
-      captureException(err, { context: 'route-broadcast-email', routeId: id })
-      failed += batch.length
+  // Up to MAX_RECIPIENTS/RESEND_BATCH_SIZE (20) sequential Resend calls —
+  // awaiting that before responding risks a client timeout (CLAUDE.md rule
+  // 8). after() responds once the recipient list is confirmed valid; the
+  // admin UI shows a recipient count, not a live sent/failed tally.
+  const finalRecipients = recipients
+  after(async () => {
+    for (let i = 0; i < finalRecipients.length; i += RESEND_BATCH_SIZE) {
+      const batch = finalRecipients.slice(i, i + RESEND_BATCH_SIZE)
+      try {
+        const res = await fetch('https://api.resend.com/emails/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify(batch.map(emailFor)),
+        })
+        if (!res.ok) captureMessage('Route broadcast email batch failed', { status: res.status, routeId: id, batchSize: batch.length })
+      } catch (err) {
+        captureException(err, { context: 'route-broadcast-email', routeId: id })
+      }
     }
-  }
+  })
 
   await logAdminAction(supabase, adminUser?.email, {
     action: 'route.broadcast', entityType: 'upcoming_route', entityId: id, entityName: route.name,
-    metadata: { sent, failed },
+    metadata: { recipientCount: finalRecipients.length },
   })
 
-  return Response.json({ success: true, sent, failed, emailed: sent })
+  return Response.json({ success: true, recipientCount: finalRecipients.length })
 }
