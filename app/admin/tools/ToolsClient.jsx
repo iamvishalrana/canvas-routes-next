@@ -15,6 +15,23 @@ export default function ToolsClient() {
   const [newToken, setNewToken] = useState('')
   const [settingToken, setSettingToken] = useState(false)
   const [setTokenResult, setSetTokenResult] = useState(null)
+  const [r2Migrating, setR2Migrating] = useState(false)
+  const [r2Result, setR2Result] = useState(null)
+
+  async function migratePhotoSharesR2() {
+    setR2Migrating(true)
+    setR2Result(null)
+    try {
+      const res = await fetch('/api/admin/tools/migrate-photo-shares-r2', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setR2Result({ error: data.error || 'Migration failed.' }); return }
+      setR2Result(data)
+    } catch {
+      setR2Result({ error: 'Network error.' })
+    } finally {
+      setR2Migrating(false)
+    }
+  }
 
   useEffect(() => {
     fetchRuns()
@@ -232,6 +249,42 @@ export default function ToolsClient() {
             {hcStatus === 'loading' ? 'Triggering…' : hcStatus === 'ok' ? 'Triggered ✓' : hcStatus === 'error' ? 'Failed ✗' : 'Run Now'}
           </button>
         </div>
+      </div>
+
+      {/* Photo Shares → R2 migration */}
+      <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: tool.heading, marginBottom: '0.35rem' }}>Migrate Photo Shares to R2</div>
+            <div style={{ fontSize: '12px', color: tool.sub, lineHeight: '1.6', maxWidth: '420px' }}>
+              Copies every existing shared-photo file from Supabase Storage into Cloudflare R2, preserving the same path so nothing breaks. Safe to click more than once — already-copied files are skipped.
+            </div>
+          </div>
+          <button onClick={migratePhotoSharesR2} disabled={r2Migrating}
+            style={{
+              flexShrink: 0, padding: '0.6rem 1.25rem',
+              background: r2Result && !r2Result.error ? 'rgba(59,107,47,0.08)' : r2Result?.error ? 'rgba(147,51,62,0.06)' : 'transparent',
+              border: `0.5px solid ${r2Result && !r2Result.error ? 'rgba(59,107,47,0.4)' : r2Result?.error ? 'rgba(147,51,62,0.4)' : 'rgba(0,0,0,0.2)'}`,
+              fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: r2Result && !r2Result.error ? '#3B6B2F' : r2Result?.error ? '#93333E' : '#1a1a1a',
+              cursor: r2Migrating ? 'wait' : 'pointer',
+              fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
+            }}>
+            {r2Migrating ? 'Migrating…' : 'Run Migration'}
+          </button>
+        </div>
+        {r2Result && (
+          <div style={{ marginTop: '0.75rem', fontSize: '12px', lineHeight: 1.6, color: r2Result.error ? '#93333E' : '#3B6B2F' }}>
+            {r2Result.error
+              ? `✕ ${r2Result.error}`
+              : `✓ ${r2Result.copied} copied, ${r2Result.skipped} already on R2, ${r2Result.failed} failed (of ${r2Result.total} total).`}
+            {r2Result.failures?.length > 0 && (
+              <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#93333E' }}>
+                {r2Result.failures.map((f, i) => <div key={i}>{f.path}: {f.error}</div>)}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
     </div>
