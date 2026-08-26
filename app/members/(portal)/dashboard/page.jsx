@@ -55,12 +55,12 @@ export default async function DashboardPage() {
     // Fetch extra then sort pinned-first in JS — ordering by the pinned column
     // in SQL would break the whole query until the migration runs
     supabase.from('announcements').select('*').eq('published', true).order('created_at', { ascending: false }).limit(12),
-    admin.from('events').select('*').order('date', { ascending: true }),
+    admin.from('events').select('*').eq('visible_to_members', true).order('date', { ascending: true }),
     user.email
       ? admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', normalizeEmail(user.email)).maybeSingle()
       : Promise.resolve({ data: null }),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
-    admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type, launched, photo_url, registration_url').eq('is_active', true).eq('is_past', false).order('sort_order', { ascending: true }),
+    admin.from('upcoming_routes').select('id, slug, name, destination, month_label, target_count, trip_type, launched, photo_url, registration_url').eq('is_active', true).eq('visible_to_members', true).eq('is_past', false).order('sort_order', { ascending: true }),
     admin.from('route_interest').select('route_id, email'),
   ])
 

@@ -5,7 +5,7 @@ import MeetRegisterForm from './MeetRegisterForm'
 async function getEvent(id) {
   const admin = createAdminClient()
   const { data } = await admin.from('events')
-    .select('id, name, date, date_display, location, description, registration_visibility, public_registration_enabled, registration_enabled, registration_opens_at, registration_closes_at, photo_url')
+    .select('id, name, date, date_display, location, description, public_registration_enabled, registration_opens_at, registration_closes_at, photo_url')
     .eq('id', id).maybeSingle()
   return data
 }
@@ -28,6 +28,6 @@ export async function generateMetadata({ params }) {
 export default async function MeetPage({ params }) {
   const { id } = await params
   const ev = await getEvent(id)
-  if (!ev || ev.registration_visibility !== 'public') notFound()
+  if (!ev) notFound()
   return <MeetRegisterForm event={ev} />
 }

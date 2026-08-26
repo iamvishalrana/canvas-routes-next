@@ -435,6 +435,36 @@ export default function RoadtripsAdminClient() {
     } catch { alert('Network error.') } finally { setBusyId(null) }
   }
 
+  // Visibility toggles — independent of is_active (the existing "Hide From
+  // Site" master switch, which still wins over both) and independent of the
+  // registration toggles above: a route can be listed but not registerable
+  // yet ("coming soon"), or registerable via a direct link while unlisted.
+  async function toggleVisibleToMembers(r) {
+    setBusyId(r.id)
+    try {
+      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visible_to_members: !(r.visible_to_members !== false) }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
+      else alert(data.error || 'Failed to update.')
+    } catch { alert('Network error.') } finally { setBusyId(null) }
+  }
+
+  async function toggleVisibleToPublic(r) {
+    setBusyId(r.id)
+    try {
+      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visible_to_public: !(r.visible_to_public !== false) }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
+      else alert(data.error || 'Failed to update.')
+    } catch { alert('Network error.') } finally { setBusyId(null) }
+  }
+
   async function del(id) {
     setBusyId(id)
     try {
@@ -847,15 +877,46 @@ export default function RoadtripsAdminClient() {
                   </div>
                 </div>
 
-                {/* Registration toggles — same pattern as Admin > Events, own
-                    row so they're always visible at a glance, not buried.
+                {/* Visibility toggles — independent of is_active (the "Hide
+                    From Site" kebab action, which still wins over both) and
+                    of the registration toggles below: a route can be listed
+                    but not yet registerable, or registerable via a direct
+                    link while unlisted from the main grids. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                  <span style={{ fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>Visible</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <ToggleSwitch
+                      checked={r.visible_to_members !== false}
+                      onChange={() => toggleVisibleToMembers(r)}
+                      disabled={busyId === r.id}
+                      label="Visible to members"
+                    />
+                    <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: r.visible_to_members !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Members
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <ToggleSwitch
+                      checked={r.visible_to_public !== false}
+                      onChange={() => toggleVisibleToPublic(r)}
+                      disabled={busyId === r.id}
+                      label="Visible to public"
+                    />
+                    <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: r.visible_to_public !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Public
+                    </span>
+                  </div>
+                </div>
+
+                {/* Registration toggles — same pattern as Admin > Events.
                     Gated on registration_url (a real registration page
                     exists to control), not `launched` — a route can have its
                     page built and want registration opened/closed pre-launch
                     (e.g. for testing, or a soft/unannounced open) before the
                     formal Launch action ever fires. */}
                 {r.registration_url && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.1rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                    <span style={{ fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter),sans-serif' }}>Registration</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <ToggleSwitch
                         checked={r.member_registration_open !== false}

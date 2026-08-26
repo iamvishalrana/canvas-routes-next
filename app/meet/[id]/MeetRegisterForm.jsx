@@ -38,7 +38,7 @@ const base = {
 // grid and EventRegisterButton already use for events with
 // registration_opens_at/registration_closes_at.
 function registrationStatus(ev) {
-  if (ev.registration_enabled === false || ev.public_registration_enabled === false) return 'closed'
+  if (ev.public_registration_enabled === false) return 'closed'
   const now = new Date()
   const opens = ev.registration_opens_at ? new Date(ev.registration_opens_at) : null
   const closes = ev.registration_closes_at ? new Date(ev.registration_closes_at) : null

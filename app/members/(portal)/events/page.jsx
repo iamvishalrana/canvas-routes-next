@@ -29,7 +29,7 @@ export default async function EventsPage() {
 
   const admin = createAdminClient()
   const [{ data: events }, { data: registrations }, { data: member }, { data: application }] = await Promise.all([
-    admin.from('events').select('*').order('date', { ascending: true }).limit(50),
+    admin.from('events').select('*').eq('visible_to_members', true).order('date', { ascending: true }).limit(50),
     admin.from('event_registrations').select('event_id, stripe_payment_status').eq('member_id', user.id),
     admin.from('members').select('tier, name, language').eq('id', user.id).maybeSingle(),
     admin.from('applications').select('registrations, stripe_payment_status, stripe_payment_type').eq('email', user.email.toLowerCase()).maybeSingle(),

@@ -9,7 +9,7 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
-  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'trip_length', 'checkin_enabled', 'checkin_sections', 'checkin_max_passengers', 'checkin_lunch_options', 'checkin_lunch_intro', 'checkin_waiver_text', 'checkin_waiver_text_fr', 'checkin_lunch_cutoff', 'checkin_lunch_extras', 'awards_enabled', 'awards_categories', 'awards_ineligible_names', 'awards_slug']
+  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'visible_to_members', 'visible_to_public', 'trip_length', 'checkin_enabled', 'checkin_sections', 'checkin_max_passengers', 'checkin_lunch_options', 'checkin_lunch_intro', 'checkin_waiver_text', 'checkin_waiver_text_fr', 'checkin_lunch_cutoff', 'checkin_lunch_extras', 'awards_enabled', 'awards_categories', 'awards_ineligible_names', 'awards_slug']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if ('member_price' in update && update.member_price != null && update.member_price < 0)
@@ -23,6 +23,8 @@ export async function PATCH(request, { params }) {
   if ('priority_window_end' in update) update.priority_window_end = update.priority_window_end || null
   if ('registration_enabled' in update) update.registration_enabled = update.registration_enabled == null ? null : Boolean(update.registration_enabled)
   if ('public_registration_enabled' in update) update.public_registration_enabled = update.public_registration_enabled == null ? null : Boolean(update.public_registration_enabled)
+  if ('visible_to_members' in update) update.visible_to_members = Boolean(update.visible_to_members)
+  if ('visible_to_public' in update) update.visible_to_public = Boolean(update.visible_to_public)
   if ('registration_visibility' in update && !['members', 'public'].includes(update.registration_visibility)) update.registration_visibility = 'members'
   if ('trip_length' in update && !['Same Day', 'Overnight', 'Multiple Nights'].includes(update.trip_length)) update.trip_length = null
   if ('checkin_enabled' in update) update.checkin_enabled = Boolean(update.checkin_enabled)

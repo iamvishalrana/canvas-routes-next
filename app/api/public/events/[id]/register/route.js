@@ -10,14 +10,18 @@ import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
 // Generic no-auth registration route for any 'Meet'-type event with
-// registration_visibility: 'public' — the reusable path for low-friction
-// casual meets (Cars & Coffee, etc.), so future meets need only a new
-// `events` row + this route, not a bespoke page/route clone like the paid
-// road-trip flows (WTET/Calabogie/CMT) require. Mirrors app/api/ccd-register
-// (the one-off it generalizes) and app/api/member/events/[id]/free-register
-// (the member-portal equivalent) — writes to applications.registrations[]
-// instead of event_registrations since that table's member_id column is
-// NOT NULL and can't hold a non-member row.
+// public_registration_enabled — the reusable path for low-friction casual
+// meets (Cars & Coffee, etc.), so future meets need only a new `events` row
+// + this route, not a bespoke page/route clone like the paid road-trip flows
+// (WTET/Calabogie/CMT) require. Whether the event is *listed* anywhere
+// (visible_to_public) is a separate, independent toggle — an event can be
+// registration-open here while unlisted, reachable only via a direct shared
+// link (matches the "invite-only" precedent on app/cars-coffee-dad-jokes).
+// Mirrors app/api/ccd-register (the one-off it generalizes) and
+// app/api/member/events/[id]/free-register (the member-portal equivalent) —
+// writes to applications.registrations[] instead of event_registrations
+// since that table's member_id column is NOT NULL and can't hold a
+// non-member row.
 export async function POST(request, { params }) {
   const ip = getClientIp(request)
   if (ip && await checkRateLimit(ip, 10, 60)) {
@@ -43,10 +47,10 @@ export async function POST(request, { params }) {
 
   const admin = createAdminClient()
   const { data: ev } = await admin.from('events')
-    .select('id, name, date, date_display, location, registration_visibility, public_registration_enabled, registration_enabled, registration_opens_at, registration_closes_at, capacity')
+    .select('id, name, date, date_display, location, public_registration_enabled, registration_opens_at, registration_closes_at, capacity')
     .eq('id', eventId).maybeSingle()
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
-  if (ev.registration_visibility !== 'public' || ev.public_registration_enabled === false || ev.registration_enabled === false) {
+  if (ev.public_registration_enabled === false) {
     return Response.json({ error: 'Registration is not open for this event.' }, { status: 400 })
   }
   const now = new Date()

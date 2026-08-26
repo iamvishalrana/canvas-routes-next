@@ -30,7 +30,7 @@ const CHECKS = {
     'trip_type', 'price_per_car', 'price_range', 'itinerary',
     'activity_options', 'dest_lat', 'dest_lng', 'launched',
     'is_active', 'is_past', 'cars_rolled_out', 'photo_url', 'recap_href',
-    'threshold_notified_at',
+    'threshold_notified_at', 'visible_to_members', 'visible_to_public',
   ],
   // Columns written/read by /api/upcoming-routes/interest — the routes page
   // aggregates interested counts from this table on every load.

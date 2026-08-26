@@ -258,7 +258,7 @@ function InfoTip({ field }) {
   )
 }
 
-const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Route', trip_length: '', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '', registration_visibility: 'members' }
+const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Route', trip_length: '', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -289,6 +289,8 @@ export default function EventsClient() {
   const [regToggleError, setRegToggleError] = useState({})
   const [regToggling, setRegToggling] = useState({})
   const [publicRegToggling, setPublicRegToggling] = useState({})
+  const [visMembersToggling, setVisMembersToggling] = useState({})
+  const [visPublicToggling, setVisPublicToggling] = useState({})
 
   // Reorder
   const [moving, setMoving] = useState(false)
@@ -425,7 +427,6 @@ export default function EventsClient() {
       priority_window_end: item.priority_window_end || '',
       registration_enabled: item.registration_enabled,
       public_registration_enabled: item.public_registration_enabled,
-      registration_visibility: item.registration_visibility || 'members',
       checkin_enabled: item.checkin_enabled || false,
       checkin_sections: item.checkin_sections || [],
       checkin_max_passengers: item.checkin_max_passengers || 2,
@@ -555,6 +556,42 @@ export default function EventsClient() {
       }
     } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
     finally { setPublicRegToggling(p => ({ ...p, [id]: false })) }
+  }
+
+  async function setVisibleToMembers(id, value) {
+    setRegToggleError(p => ({ ...p, [id]: null }))
+    setVisMembersToggling(p => ({ ...p, [id]: true }))
+    try {
+      const res = await fetch(`/api/admin/events/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visible_to_members: value }),
+      })
+      if (res.ok) {
+        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, visible_to_members: value } : ev))
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update visibility.' }))
+      }
+    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
+    finally { setVisMembersToggling(p => ({ ...p, [id]: false })) }
+  }
+
+  async function setVisibleToPublic(id, value) {
+    setRegToggleError(p => ({ ...p, [id]: null }))
+    setVisPublicToggling(p => ({ ...p, [id]: true }))
+    try {
+      const res = await fetch(`/api/admin/events/${id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visible_to_public: value }),
+      })
+      if (res.ok) {
+        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, visible_to_public: value } : ev))
+      } else {
+        const d = await res.json().catch(() => ({}))
+        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update visibility.' }))
+      }
+    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
+    finally { setVisPublicToggling(p => ({ ...p, [id]: false })) }
   }
 
   async function del(id) {
@@ -919,28 +956,12 @@ export default function EventsClient() {
           <div style={{ marginBottom: '0.75rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={form.location} onChange={e => setForm(p => ({ ...p, location: e.target.value }))} placeholder="Montreal → Mont-Tremblant" /></div>
           <div style={{ marginBottom: '0.75rem' }}><L>Description<InfoTip field="description" /></L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} /></div>
           <div style={{ marginBottom: '0.75rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
-            <L>Registration Visibility</L>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              {[
-                { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
-                { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
-              ].map(({ val, label, desc }) => {
-                const sel = form.registration_visibility === val
-                return (
-                  <button key={val} type="button"
-                    onClick={() => setForm(p => ({ ...p, registration_visibility: val }))}
-                    style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
-                    <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
-                    <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-          <div style={{ marginBottom: '0.75rem' }}>
-            <L>{form.registration_visibility === 'public' ? 'Public Registration URL' : 'Member Registration URL'}<InfoTip field="registration_url" /></L>
+            <L>Registration URL<InfoTip field="registration_url" /></L>
             <input style={inp} value={form.registration_url} onChange={e => setForm(p => ({ ...p, registration_url: e.target.value }))}
-              placeholder={form.registration_visibility === 'public' ? 'https://canvasroutes.com/wtet' : '/members/events/wtet'} />
+              placeholder="/members/events/wtet, /meet/<event id>, or https://canvasroutes.com/wtet" />
+            <div style={{ fontSize: '10px', color: '#aaa', marginTop: '0.3rem' }}>
+              Use <code>/meet/&lt;event id&gt;</code> for the generic public registration page, <code>/members/events/&lt;id&gt;</code> for a members-only page, or an external URL for a bespoke event page. Who can actually see and register for this event is controlled by the Visible/Registration toggles below, after it&apos;s created.
+            </div>
           </div>
           <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Member Registration</div>
@@ -1044,28 +1065,56 @@ export default function EventsClient() {
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                         </button>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <ToggleSwitch
-                            checked={!!item.registration_enabled}
-                            onChange={v => setRegEnabled(item.id, v)}
-                            disabled={regToggling[item.id]}
-                            label="Member registration"
-                          />
-                          <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
-                            Members
-                          </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1.1rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter)' }}>Visible</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <ToggleSwitch
+                              checked={item.visible_to_members !== false}
+                              onChange={v => setVisibleToMembers(item.id, v)}
+                              disabled={visMembersToggling[item.id]}
+                              label="Visible to members"
+                            />
+                            <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.visible_to_members !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                              Members
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <ToggleSwitch
+                              checked={item.visible_to_public !== false}
+                              onChange={v => setVisibleToPublic(item.id, v)}
+                              disabled={visPublicToggling[item.id]}
+                              label="Visible to public"
+                            />
+                            <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.visible_to_public !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                              Public
+                            </span>
+                          </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <ToggleSwitch
-                            checked={item.public_registration_enabled !== false}
-                            onChange={v => setPublicRegEnabled(item.id, v)}
-                            disabled={publicRegToggling[item.id]}
-                            label="Public registration"
-                          />
-                          <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
-                            Public
-                          </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter)' }}>Registration</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <ToggleSwitch
+                              checked={!!item.registration_enabled}
+                              onChange={v => setRegEnabled(item.id, v)}
+                              disabled={regToggling[item.id]}
+                              label="Member registration"
+                            />
+                            <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                              Members
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <ToggleSwitch
+                              checked={item.public_registration_enabled !== false}
+                              onChange={v => setPublicRegEnabled(item.id, v)}
+                              disabled={publicRegToggling[item.id]}
+                              label="Public registration"
+                            />
+                            <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                              Public
+                            </span>
+                          </div>
                         </div>
                       </div>
                       {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
@@ -1082,28 +1131,56 @@ export default function EventsClient() {
 
                 {/* Registration toggles — own row on mobile so they don't wrap awkwardly next to the kebab */}
                 {isMobile && (
-                  <div style={{ padding: '0 1.5rem 1rem', display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <ToggleSwitch
-                        checked={!!item.registration_enabled}
-                        onChange={v => setRegEnabled(item.id, v)}
-                        disabled={regToggling[item.id]}
-                        label="Member registration"
-                      />
-                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
-                        Members
-                      </span>
+                  <div style={{ padding: '0 1.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter)', width: '100%' }}>Visible</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ToggleSwitch
+                          checked={item.visible_to_members !== false}
+                          onChange={v => setVisibleToMembers(item.id, v)}
+                          disabled={visMembersToggling[item.id]}
+                          label="Visible to members"
+                        />
+                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.visible_to_members !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                          Members
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ToggleSwitch
+                          checked={item.visible_to_public !== false}
+                          onChange={v => setVisibleToPublic(item.id, v)}
+                          disabled={visPublicToggling[item.id]}
+                          label="Visible to public"
+                        />
+                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.visible_to_public !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                          Public
+                        </span>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <ToggleSwitch
-                        checked={item.public_registration_enabled !== false}
-                        onChange={v => setPublicRegEnabled(item.id, v)}
-                        disabled={publicRegToggling[item.id]}
-                        label="Public registration"
-                      />
-                      <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
-                        Public
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '8px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#ccc', fontFamily: 'var(--font-inter)', width: '100%' }}>Registration</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ToggleSwitch
+                          checked={!!item.registration_enabled}
+                          onChange={v => setRegEnabled(item.id, v)}
+                          disabled={regToggling[item.id]}
+                          label="Member registration"
+                        />
+                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.registration_enabled ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                          Members
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <ToggleSwitch
+                          checked={item.public_registration_enabled !== false}
+                          onChange={v => setPublicRegEnabled(item.id, v)}
+                          disabled={publicRegToggling[item.id]}
+                          label="Public registration"
+                        />
+                        <span style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: item.public_registration_enabled !== false ? '#3B6B2F' : '#bbb', fontFamily: 'var(--font-inter)' }}>
+                          Public
+                        </span>
+                      </div>
                     </div>
                     {regToggleError[item.id] && <Err msg={regToggleError[item.id]} />}
                   </div>
@@ -1556,28 +1633,12 @@ export default function EventsClient() {
                         <div style={{ marginBottom: '0.6rem' }}><L>Location<InfoTip field="location" /></L><input style={inp} value={editForm.location || ''} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} /></div>
                         <div style={{ marginBottom: '0.6rem' }}><L>Description<InfoTip field="description" /></L><textarea style={{ ...inp, height: '80px', resize: 'vertical' }} value={editForm.description || ''} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} /></div>
                         <div style={{ marginBottom: '0.6rem', paddingTop: '0.6rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
-                          <L>Registration Visibility</L>
-                          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.5rem' }}>
-                            {[
-                              { val: 'members', label: 'Members only', desc: 'Visible in the portal only' },
-                              { val: 'public',  label: 'Members + Public', desc: 'Also open on the public page' },
-                            ].map(({ val, label, desc }) => {
-                              const sel = editForm.registration_visibility === val
-                              return (
-                                <button key={val} type="button"
-                                  onClick={() => setEditForm(p => ({ ...p, registration_visibility: val }))}
-                                  style={{ padding: '0.65rem 1rem', border: `1px solid ${sel ? '#0F1E14' : 'rgba(0,0,0,0.14)'}`, background: sel ? 'rgba(15,30,20,0.05)' : '#fff', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left', transition: 'all 0.15s' }}>
-                                  <div style={{ fontSize: '12px', fontWeight: '500', color: sel ? '#0F1E14' : '#555', marginBottom: '2px' }}>{label}</div>
-                                  <div style={{ fontSize: '10px', color: '#aaa' }}>{desc}</div>
-                                </button>
-                              )
-                            })}
-                          </div>
-                        </div>
-                        <div style={{ marginBottom: '0.6rem' }}>
-                          <L>{editForm.registration_visibility === 'public' ? 'Public Registration URL' : 'Member Registration URL'}<InfoTip field="registration_url" /></L>
+                          <L>Registration URL<InfoTip field="registration_url" /></L>
                           <input style={inp} value={editForm.registration_url || ''} onChange={e => setEditForm(p => ({ ...p, registration_url: e.target.value }))}
-                            placeholder={editForm.registration_visibility === 'public' ? 'https://canvasroutes.com/wtet' : '/members/events/wtet'} />
+                            placeholder="/members/events/wtet, /meet/<event id>, or https://canvasroutes.com/wtet" />
+                          <div style={{ fontSize: '10px', color: '#aaa', marginTop: '0.3rem' }}>
+                            Use <code>/meet/&lt;event id&gt;</code> for the generic public registration page, <code>/members/events/&lt;id&gt;</code> for a members-only page, or an external URL for a bespoke event page. Who can actually see and register for this event is controlled by the Visible/Registration toggles on the event card.
+                          </div>
                         </div>
                         <div style={{ paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.75rem' }}>
                           <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Member Registration</div>

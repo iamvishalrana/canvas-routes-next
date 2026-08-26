@@ -37,9 +37,11 @@ export async function POST(request) {
   // member portal locks the email field to match, but this is what actually
   // closes the loophole for direct API calls / a tampered request).
   let isMember = false
+  let authenticated = false
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
+    authenticated = !!user
     isMember = !!(user?.email && normalizeEmail(user.email) === email)
   } catch {}
 
@@ -72,9 +74,10 @@ export async function POST(request) {
 
   const { data: route, error: routeErr } = await supabase
     .from('upcoming_routes')
-    .select('id, name, slug, destination, month_label, duration_label, distance_label, trip_type, target_count, launched, threshold_notified_at')
+    .select('id, name, slug, destination, month_label, duration_label, distance_label, trip_type, target_count, launched, threshold_notified_at, visible_to_members, visible_to_public')
     .eq('slug', slug)
     .eq('is_active', true)
+    .eq(authenticated ? 'visible_to_members' : 'visible_to_public', true)
     .maybeSingle()
   if (routeErr) {
     captureException(new Error(routeErr.message), { context: 'roadtrip-interest-lookup' })
