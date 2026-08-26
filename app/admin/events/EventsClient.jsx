@@ -1027,6 +1027,10 @@ export default function EventsClient() {
                     </div>
                     <div style={{ fontSize: '11px', color: '#c5a882', fontWeight: '500', marginBottom: '0.2rem' }}>{item.date_display || item.date}</div>
                     {item.location && <div style={{ fontSize: '12px', color: '#888' }}>{item.location}</div>}
+                    <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      Public link: canvasroutes.com/meet/{item.id}
+                      <CopyBtn value={`https://canvasroutes.com/meet/${item.id}`} />
+                    </div>
 
                     {/* Application stats */}
                     {(item.total_applications > 0 || item.confirmed_count > 0) && (

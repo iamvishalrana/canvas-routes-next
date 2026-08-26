@@ -41,9 +41,12 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Full name is required.' }, { status: 400 })
   if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return Response.json({ error: 'A valid email address is required.' }, { status: 400 })
+  if (!year?.trim()) return Response.json({ error: 'Car year is required.' }, { status: 400 })
+  if (!carMake?.trim()) return Response.json({ error: 'Car make is required.' }, { status: 400 })
+  if (!carModel?.trim()) return Response.json({ error: 'Car model is required.' }, { status: 400 })
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })
-  if (carModel && carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
+  if (carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: ev } = await admin.from('events')

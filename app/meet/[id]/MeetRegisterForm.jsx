@@ -101,12 +101,15 @@ export default function MeetRegisterForm({ event }) {
     const newErrors = {}
     if (!form.name.trim() || form.name.trim().length < 2) newErrors.name = true
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = true
+    if (!form.year) newErrors.year = true
+    if (!form.carMake) newErrors.carMake = true
+    if (!form.carModel.trim()) newErrors.carModel = true
     if (phoneShown && !form.phone.trim()) newErrors.phone = true
     if (!isMember && !form.source) newErrors.source = true
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors)
-      const first = ['name','email','phone','source'].find(f => newErrors[f])
+      const first = ['name','email','year','carMake','carModel','phone','source'].find(f => newErrors[f])
       if (first) document.getElementById(`meet-${first}`)?.scrollIntoView({ behavior:'smooth', block:'center' })
       return
     }
@@ -305,13 +308,13 @@ export default function MeetRegisterForm({ event }) {
 
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1.6fr', gap:'0.75rem' }}>
                   <div>
-                    <label htmlFor="meet-year" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Year <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span></label>
+                    <label htmlFor="meet-year" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.year ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Year <span style={{ color:'#d06070' }}>*</span></label>
                     <div style={{ position:'relative' }}>
                       <select
                         id="meet-year"
                         value={form.year} onChange={e => update('year', e.target.value)}
                         onFocus={() => setFocused('year')} onBlur={() => setFocused(null)}
-                        style={{ ...base, ...inp(focused==='year', !!form.year, false), paddingRight:'2rem', cursor:'pointer' }}
+                        style={{ ...base, ...inp(focused==='year', !!form.year, errors.year), paddingRight:'2rem', cursor:'pointer' }}
                       >
                         <option value="">Year</option>
                         {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -320,13 +323,13 @@ export default function MeetRegisterForm({ event }) {
                     </div>
                   </div>
                   <div>
-                    <label htmlFor="meet-carMake" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Make <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span></label>
+                    <label htmlFor="meet-carMake" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.carMake ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Make <span style={{ color:'#d06070' }}>*</span></label>
                     <div style={{ position:'relative' }}>
                       <select
                         id="meet-carMake"
                         value={form.carMake} onChange={e => update('carMake', e.target.value)}
                         onFocus={() => setFocused('carMake')} onBlur={() => setFocused(null)}
-                        style={{ ...base, ...inp(focused==='carMake', !!form.carMake, false), paddingRight:'2rem', cursor:'pointer' }}
+                        style={{ ...base, ...inp(focused==='carMake', !!form.carMake, errors.carMake), paddingRight:'2rem', cursor:'pointer' }}
                       >
                         <option value="">Make</option>
                         {CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}
@@ -337,12 +340,12 @@ export default function MeetRegisterForm({ event }) {
                 </div>
 
                 <div>
-                  <label htmlFor="meet-carModel" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Model <span style={{ color:'#bbb', textTransform:'none', letterSpacing:0 }}>(optional)</span></label>
+                  <label htmlFor="meet-carModel" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.carModel ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>Model <span style={{ color:'#d06070' }}>*</span></label>
                   <input
                     id="meet-carModel" type="text"
                     value={form.carModel} onChange={e => update('carModel', e.target.value)}
                     onFocus={() => setFocused('carModel')} onBlur={() => setFocused(null)}
-                    style={{ ...base, ...inp(focused==='carModel', !!form.carModel, false) }}
+                    style={{ ...base, ...inp(focused==='carModel', !!form.carModel, errors.carModel) }}
                     placeholder="e.g. M3 Competition"
                   />
                 </div>
