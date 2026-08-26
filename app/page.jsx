@@ -61,7 +61,13 @@ function resolvePopupCard(mode, route, event, t) {
     }
   }
   if (mode === 'event' && event) {
-    const open = !!(event.public_registration_enabled && event.registration_url)
+    // Registration being "open" only ever depended on public_registration_enabled
+    // elsewhere in the app (e.g. /meet/[id]'s own gate) — requiring
+    // registration_url too meant an admin who forgot to fill in that field
+    // got a silently-wrong "Learn more" card pointing at /#events instead of
+    // the actual registration page. /meet/<id> always exists once the event
+    // does, so it's a safe default destination when the field is blank.
+    const open = !!event.public_registration_enabled
     return {
       ariaLabel: t.popupEventAriaLabel,
       eyebrow: open ? t.popupEventEyebrowOpen : t.popupEventEyebrow,
@@ -70,7 +76,7 @@ function resolvePopupCard(mode, route, event, t) {
       body: open ? t.popupEventBodyOpen : t.popupEventBody,
       monthLine: event.date_display,
       ctaLabel: open ? t.popupEventCtaOpen : t.popupEventCta,
-      ctaHref: open ? event.registration_url : '/#events',
+      ctaHref: open ? (event.registration_url || `/meet/${event.id}`) : '/#events',
       photo: event.photo_url || null,
     }
   }

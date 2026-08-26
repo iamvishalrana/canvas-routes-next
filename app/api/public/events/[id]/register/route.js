@@ -4,19 +4,45 @@ import { deviceType } from '../../../../../../lib/deviceType'
 import { captureException } from '../../../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { listEventRegistrants } from '../../../../../../lib/eventCheckinShared.js'
-import { buildEventConfirmHtml } from '../../../../../../lib/eventConfirmEmail.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
+import { emailShell, p, infoCard } from '../../../../../../lib/emailLayout.js'
 
 const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
 // Every value below comes straight from an unauthenticated public submitter —
-// must be escaped before landing in the admin notify email's raw HTML rows.
-// Mirrors the h() helper in app/api/ccd-register/route.js (the one-off this
-// route generalizes), which already does this for the same field set.
+// must be escaped before landing in raw HTML (the admin notify email's rows,
+// and this registrant's own confirmation-received email). Mirrors the h()
+// helper in app/api/ccd-register/route.js (the one-off this route
+// generalizes), which already does this for the same field set.
 function h(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+// Sent immediately on submission — every meet through this route is reviewed
+// by an admin (Accept/Decline in the event's Registrants panel) before the
+// registrant gets an actual confirmation, so this must never say "you're
+// confirmed"/"you're registered" the way buildEventConfirmHtml (used by the
+// instant member-portal flows) does.
+function buildPendingReviewHtml({ firstName, eventName, dateDisplay, location }) {
+  const body = `
+    ${p(`We&rsquo;ve received your registration for <strong style="color:#161616;font-weight:600;">${eventName}</strong>. Every registration is personally reviewed &mdash; we&rsquo;ll follow up by email with your confirmation before the event.`)}
+    ${infoCard([
+      dateDisplay && ['Date', dateDisplay],
+      location && ['Location', location],
+      ['Entry', 'Free'],
+    ])}
+    ${p(`Questions? Reply directly to this email &mdash; it comes straight to me.`, { mb: '6px' })}
+    ${p(`&mdash; Jerry`, { tone: 'muted', mb: '0' })}
+  `
+  return emailShell({
+    title: 'Registration received — Canvas Routes',
+    preheader: `We've received your registration for ${eventName} — we'll follow up with confirmation before the event.`,
+    eyebrow: 'Canvas Routes · Registration Received',
+    heading: `Thanks, ${firstName}.`,
+    body,
+  })
 }
 
 // Generic no-auth registration route for any 'Meet'-type event with
@@ -117,6 +143,11 @@ export async function POST(request, { params }) {
       event: ev.name,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
+      // Every submission through this route is admin-reviewed (Accept/Decline
+      // in the event's Registrants panel) rather than instantly confirmed —
+      // preserve an already-decided outcome across a re-submission (e.g. the
+      // registrant fixing a typo) instead of bumping it back to pending.
+      review_status: existingReg?.review_status || 'pending',
       details: {
         car_year: year?.trim() || null, car_make: carMake?.trim() || null, car_model: fullCarModel || null,
         phone: phone || null, instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
@@ -167,9 +198,9 @@ export async function POST(request, { params }) {
           from: 'Canvas Routes <jerry@canvasroutes.com>',
           to: normalEmail,
           reply_to: 'jerry@canvasroutes.com',
-          subject: `You're registered — ${ev.name}`,
-          html: buildEventConfirmHtml({ firstName: h(firstName), eventName: ev.name, dateDisplay, location: ev.location || null, isFree: true, amountPaid: 0, eventId: ev.id, date: ev.date || null }),
-          text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
+          subject: `Registration received — ${ev.name}`,
+          html: buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null }),
+          text: `Hey ${firstName},\n\nWe've received your registration for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Every registration is personally reviewed — we'll follow up by email with your confirmation before the event.\n\nJerry\nCanvas Routes`,
         }),
       }).catch(err => captureException(err, { context: 'public-event-register-confirm-email', eventId })),
       fetch('https://api.resend.com/emails', {

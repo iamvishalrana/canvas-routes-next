@@ -225,10 +225,10 @@ export default function MeetRegisterForm({ event }) {
             <div style={{ textAlign:'center', padding:'3rem 2rem', background:'#fff', border:'0.5px solid rgba(0,0,0,0.08)' }}>
               <div style={{ width:'1px', height:'40px', background:'#c5a882', margin:'0 auto 1.5rem' }} />
               <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'2.2rem', fontWeight:'300', color:'#1a1a1a', marginBottom:'0.75rem' }}>
-                You&apos;re registered.
+                We&apos;ve got your registration.
               </div>
               <p style={{ fontSize:'13px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', maxWidth:'360px', margin:'0 auto 1rem' }}>
-                We&apos;ve got your details. Check your inbox for a confirmation — see you at {event.name}.
+                We&apos;ll review your details and email you a confirmation before {event.name}.
               </p>
               <p style={{ fontSize:'12px', color:'#aaa', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'320px', margin:'0 auto 2rem' }}>
                 If you don&apos;t see it, check your junk folder and mark it as not spam.
