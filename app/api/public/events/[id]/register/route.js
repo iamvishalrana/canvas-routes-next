@@ -9,6 +9,16 @@ import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 
 const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
+// Every value below comes straight from an unauthenticated public submitter —
+// must be escaped before landing in the admin notify email's raw HTML rows.
+// Mirrors the h() helper in app/api/ccd-register/route.js (the one-off this
+// route generalizes), which already does this for the same field set.
+function h(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
 // Generic no-auth registration route for any 'Meet'-type event with
 // public_registration_enabled — the reusable path for low-friction casual
 // meets (Cars & Coffee, etc.), so future meets need only a new `events` row
@@ -81,7 +91,12 @@ export async function POST(request, { params }) {
   if (ev.capacity) {
     try {
       const registrants = await listEventRegistrants(admin, ev.id, ev.name)
-      if (registrants.length >= ev.capacity) {
+      // Exclude the submitter's own existing registration — otherwise
+      // someone who already has a confirmed spot gets rejected as "full"
+      // when they revisit the link to correct their details after the
+      // event fills up.
+      const otherRegistrants = registrants.filter(r => r.email !== normalEmail)
+      if (otherRegistrants.length >= ev.capacity) {
         return Response.json({ error: 'This event is full. Contact us to be added to the waitlist.' }, { status: 400 })
       }
     } catch (e) {
@@ -153,7 +168,7 @@ export async function POST(request, { params }) {
           to: normalEmail,
           reply_to: 'jerry@canvasroutes.com',
           subject: `You're registered — ${ev.name}`,
-          html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree: true, amountPaid: 0, eventId: ev.id, date: ev.date || null }),
+          html: buildEventConfirmHtml({ firstName: h(firstName), eventName: ev.name, dateDisplay, location: ev.location || null, isFree: true, amountPaid: 0, eventId: ev.id, date: ev.date || null }),
           text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
         }),
       }).catch(err => captureException(err, { context: 'public-event-register-confirm-email', eventId })),
@@ -165,14 +180,14 @@ export async function POST(request, { params }) {
           to: 'info@canvasroutes.com',
           subject: `Event Registration — ${ev.name} — ${name.trim()}`,
           html: buildAdminNotifyHtml('New public event registration', [
-            ['Event', `<strong>${ev.name}</strong>`],
-            ['Name', `<strong>${name.trim()}</strong>`],
-            ['Email', `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
-            ['Car', fullCarModel || '—'],
-            ['Phone', phone || '—'],
-            ['Instagram', instagram ? `@${instagram.replace(/^@+/, '')}` : '—'],
-            ['About', more || '—'],
-            ['Source', verifiedMember ? 'Canvas Routes Member' : (source || '—')],
+            ['Event', `<strong>${h(ev.name)}</strong>`],
+            ['Name', `<strong>${h(name.trim())}</strong>`],
+            ['Email', `<a href="mailto:${h(normalEmail)}" style="color:#1a1a1a;">${h(normalEmail)}</a>`],
+            ['Car', h(fullCarModel) || '—'],
+            ['Phone', h(phone) || '—'],
+            ['Instagram', instagram ? `@${h(instagram.replace(/^@+/, ''))}` : '—'],
+            ['About', h(more) || '—'],
+            ['Source', verifiedMember ? 'Canvas Routes Member' : (h(source) || '—')],
           ]),
         }),
       }).catch(err => captureException(err, { context: 'public-event-register-admin-email', eventId })),
