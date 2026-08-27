@@ -8,6 +8,7 @@ import {
   inp, sel, L, SelectWrap, PrimaryBtn, GhostBtn, DangerBtn, Err, ToggleSwitch, ConfirmDialog, KebabMenu, CopyBtn,
 } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
+import { ROAD_TRIP_TYPE_TO_NAME } from '../../../lib/eventMeta'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
@@ -874,8 +875,13 @@ export default function EventsClient() {
           if (!matchedReg) return false
           // Admin-manually-added registrants bypass the payment filter — they have no Stripe hold
           if (matchedReg.source === 'admin_manual') return true
-          // For paid road trips, only show contacts whose Stripe payment is authorized or captured
-          if (isPaidRoadTrip && c.stripe_payment_type?.startsWith('road_trip_')) {
+          // stripe_payment_type/status are flat columns shared across every
+          // flow a contact has ever paid for — a 'road_trip_' prefix alone
+          // only proves it's SOME road trip, not necessarily this one (e.g.
+          // a WTET payment bleeding into an unrelated road trip's list).
+          // Resolve the type to its actual event name and require it match.
+          const paidEventName = ROAD_TRIP_TYPE_TO_NAME[c.stripe_payment_type] || null
+          if (isPaidRoadTrip && paidEventName && evBase(normalizeEventName(paidEventName)) === evBase(eventName)) {
             return ['authorized', 'paid'].includes(c.stripe_payment_status)
           }
           return true
@@ -888,16 +894,31 @@ export default function EventsClient() {
           // that reflect whichever event this contact registered for MOST
           // RECENTLY, not necessarily this one.
           const { make, model } = parseCarMakeModel(reg?.details?.car_model ?? c.car_model)
-          // For paid road trip contacts, use the real Stripe payment status and amount
-          const isRoadTripPayment = c.stripe_payment_type?.startsWith('road_trip_')
-          const isTrackedPayment = isRoadTripPayment || c.stripe_payment_type?.startsWith('external_')
-          const paymentStatus = isTrackedPayment ? (c.stripe_payment_status || 'registered') : null
+          // stripe_payment_type/stripe_amount_paid are flat columns shared
+          // across every flow a contact ever paid for (CLAUDE.md payment
+          // rule 22) — only trust them here once the type is resolved to an
+          // event name that matches the event currently being viewed.
+          const paidEventName = ROAD_TRIP_TYPE_TO_NAME[c.stripe_payment_type] || null
+          const isRoadTripPayment = !!paidEventName && evBase(normalizeEventName(paidEventName)) === evBase(eventName)
+          // Admin-manual cash/e-transfer/comped payments are recorded on the
+          // per-event registrations[] entry itself (payment_method) — never
+          // on the shared flat columns, which the manual-add route
+          // deliberately leaves untouched when a real road-trip payment
+          // already occupies them. Reading payment_method here is the only
+          // way to reflect a manual payment recorded for THIS event.
+          const manualMethod = reg?.source === 'admin_manual' ? reg.payment_method : null
+          const isManualPaid = manualMethod === 'cash' || manualMethod === 'etransfer'
+          const isManualFree = manualMethod === 'comped'
+          const paymentStatus = isRoadTripPayment ? (c.stripe_payment_status || 'registered')
+            : isManualPaid ? 'paid'
+            : isManualFree ? 'free'
+            : null
           return {
             name: c.name || '—',
             email: c.email || '—',
             type: c.is_invited ? 'Member' : 'Public',
             status: paymentStatus ?? (isConfirmed ? 'confirmed' : 'registered'),
-            amount: isRoadTripPayment ? (c.stripe_amount_paid || null) : null,  // external payments have no stored amount
+            amount: isRoadTripPayment ? (c.stripe_amount_paid || null) : isManualPaid ? (eventPrice || null) : null,
             registeredAt: reg?.registered_at || null,
             rsvpAnswers: rsvpToken?.answers || null,
             confirmedAt: rsvpToken?.confirmed_at || null,
@@ -1507,8 +1528,8 @@ export default function EventsClient() {
                                             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap', alignItems: 'center' }}>
                                               <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
                                               {(r.status || liveReviewStatus) && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: statusColor }}>{statusLabel}</span>}
-                                              {r.amount > 0 && <span style={{ fontSize: '10px', color: '#555' }}>${(r.amount / 100).toFixed(2)}</span>}
-                                              {!r.amount && r.status === 'free' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>Free</span>}
+                                              {item.member_price && r.amount > 0 && <span style={{ fontSize: '10px', color: '#555' }}>${(r.amount / 100).toFixed(2)}</span>}
+                                              {item.member_price && !r.amount && r.status === 'free' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>Free</span>}
                                             </div>
                                           </div>
                                           <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -1546,7 +1567,7 @@ export default function EventsClient() {
                                         <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '2px' }}>{r.email || '—'}<CopyBtn value={r.email} /></div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: statusColor }}>{statusLabel}</div>
-                                        <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
+                                        <div style={{ fontSize: '11px', color: '#555' }}>{item.member_price && r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : item.member_price && r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                           {canReview && (
                                             <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>

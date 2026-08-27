@@ -3,6 +3,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import EventsGrid from '../../../../components/EventsGrid'
 import { membersEventsT } from '../../../../lib/i18n/membersEvents'
+import { ROAD_TRIP_TYPE_TO_NAME } from '../../../../lib/eventMeta'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Meets & Events | Canvas Routes' } }
@@ -42,11 +43,6 @@ export default async function EventsPage() {
   for (const r of (registrations || [])) regMap[r.event_id] = r.stripe_payment_status
 
   // WTET registrations live in applications (not event_registrations) — map payment type to event name
-  const ROAD_TRIP_TYPE_TO_NAME = {
-    'road_trip_wtet': 'Whips to Eastern Townships — July 5, 2026',
-    'road_trip_hello-to-montebello': 'Hello to Montebello — 2026',
-    'road_trip_sunday-silhouette-2026': 'Sunday Silhouette — 2026',
-  }
   const paidRoadTripEventName = (['paid', 'authorized'].includes(application?.stripe_payment_status) && application?.stripe_payment_type)
     ? (ROAD_TRIP_TYPE_TO_NAME[application.stripe_payment_type] || null)
     : null
