@@ -62,7 +62,20 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
   const [serverError, setServerError] = useState(null)
   const [shareCopied, setShareCopied] = useState(false)
   const [isMember, setIsMember] = useState(false)
+  const [memberEmail, setMemberEmail] = useState('')
+  const [confirmed, setConfirmed] = useState(false)
   const honeypotRef = useRef(null)
+
+  // isMember only means "the logged-in session belongs to a member" — it
+  // says nothing about whether the (freely editable) email field still
+  // matches that member's actual email. Every place that decides whether
+  // this submission will actually skip review must check both, or a member
+  // who edits the prefilled email (fixing a typo, registering under a
+  // different address) sees member-only UI — no required "how did you hear
+  // about us" field, "confirmed instantly" messaging — that the server then
+  // disagrees with, since it re-verifies membership against whatever email
+  // was actually submitted.
+  const matchesMemberEmail = isMember && form.email.trim().toLowerCase() === memberEmail.toLowerCase()
 
   // Members skip the "request a spot" friction entirely — prefill from
   // their profile so all they have to do is glance it over and submit.
@@ -79,6 +92,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
         const m = data?.member
         if (!m) return
         setIsMember(true)
+        setMemberEmail((data.user?.email || '').toLowerCase())
 
         const primaryCar = m.cars?.[0]
         const carYear = String(primaryCar?.year || m.car_year || '')
@@ -129,7 +143,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
       case 'carMake':  hasError = !form.carMake; break
       case 'carModel': hasError = !form.carModel.trim(); break
       case 'phone':    hasError = phoneShown && !form.phone.trim(); break
-      case 'source':   hasError = !isMember && !form.source; break
+      case 'source':   hasError = !matchesMemberEmail && !form.source; break
       default: return
     }
     setErrors(p => ({ ...p, [field]: hasError }))
@@ -166,7 +180,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
     if (!form.carMake) newErrors.carMake = true
     if (!form.carModel.trim()) newErrors.carModel = true
     if (phoneShown && !form.phone.trim()) newErrors.phone = true
-    if (!isMember && !form.source) newErrors.source = true
+    if (!matchesMemberEmail && !form.source) newErrors.source = true
 
     if (Object.keys(newErrors).length) {
       setErrors(newErrors)
@@ -191,12 +205,16 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
           instagram: form.instagram.trim().replace(/^@+/,'') || '',
           more: form.more.trim() || '',
           source: form.source,
-          isMember,
           _hp: honeypotRef.current?.value || '',
         }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setServerError(data.error || 'Something went wrong. Please try again.'); setFormStatus(null); return }
+      // The server independently re-verifies membership against the actual
+      // submitted email (see the register route) — trust its answer for the
+      // success screen instead of the client's own isMember guess, which can
+      // be stale if the prefilled email was edited before submitting.
+      setConfirmed(!!data.confirmed)
       setFormStatus('success')
     } catch {
       setServerError('Network error. Please check your connection and try again.')
@@ -369,10 +387,10 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
             <div style={{ textAlign:'center', padding:'3rem 2rem', background:'#fff', border:'0.5px solid rgba(0,0,0,0.08)' }}>
               <div style={{ width:'1px', height:'40px', background:'#c5a882', margin:'0 auto 1.5rem' }} />
               <div style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'2.2rem', fontWeight:'300', color:'#1a1a1a', marginBottom:'0.75rem' }}>
-                {isMember ? 'You’re confirmed.' : 'We’ve got your registration.'}
+                {confirmed ? 'You’re confirmed.' : 'We’ve got your registration.'}
               </div>
               <p style={{ fontSize:'13px', color:'#666', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', maxWidth:'360px', margin:'0 auto 1rem' }}>
-                {isMember
+                {confirmed
                   ? <>Your spot at {event.name} is confirmed. See you there.</>
                   : <>We&apos;ll review your details and email you a confirmation before {event.name}.</>}
               </p>
@@ -583,7 +601,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
                   />
                 </div>
 
-                {!isMember && (
+                {!matchesMemberEmail && (
                 <div>
                   <label htmlFor="meet-source" style={{ display:'block', fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color: errors.source ? '#93333E' : '#999', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.4rem' }}>How did you hear about us? <span style={{ color:'#d06070' }}>*</span></label>
                   <div style={{ position:'relative' }}>
@@ -611,12 +629,12 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
                     disabled={formStatus === 'loading'}
                     style={{ width:'100%', padding:'1.1rem', background:'#0F1E14', color:'#F5F1EC', border:'none', fontSize:'10px', letterSpacing:'0.26em', textTransform:'uppercase', cursor: formStatus === 'loading' ? 'not-allowed' : 'pointer', opacity: formStatus === 'loading' ? 0.7 : 1, fontFamily:'var(--font-inter), sans-serif', transition:'opacity 0.15s' }}
                   >
-                    {formStatus === 'loading' ? 'Submitting…' : isMember ? 'Confirm My Spot' : 'Request My Spot'}
+                    {formStatus === 'loading' ? 'Submitting…' : matchesMemberEmail ? 'Confirm My Spot' : 'Request My Spot'}
                   </button>
                 </div>
 
                 <p style={{ textAlign:'center', fontSize:'11px', color:'#bbb', fontFamily:'var(--font-inter), sans-serif', lineHeight:1.6, margin:0 }}>
-                  {isMember
+                  {matchesMemberEmail
                     ? "As a member, your spot is confirmed instantly — no review needed."
                     : <>Submitting is not a guarantee of attendance — we&apos;ll confirm by email.</>}
                 </p>

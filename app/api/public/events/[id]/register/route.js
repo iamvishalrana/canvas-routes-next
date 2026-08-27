@@ -3,6 +3,7 @@ import { checkRateLimit, getClientIp } from '../../../../../../lib/rateLimit.js'
 import { deviceType } from '../../../../../../lib/deviceType'
 import { captureException } from '../../../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
+import { createClient } from '../../../../../../lib/supabase/server'
 import { listEventRegistrants, isSameEvent } from '../../../../../../lib/eventCheckinShared.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 import { buildPendingReviewHtml, buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
@@ -45,7 +46,7 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { name, email, year, carMake, carModel, phone, instagram, more, source, isMember, _hp } = body
+  const { name, email, year, carMake, carModel, phone, instagram, more, source, _hp } = body
   if (_hp) return Response.json({ success: true })
 
   if (!name?.trim() || name.trim().length < 2)
@@ -58,6 +59,9 @@ export async function POST(request, { params }) {
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })
   if (carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
+  if (phone && phone.length > 30) return Response.json({ error: 'Phone number too long.' }, { status: 400 })
+  if (instagram && instagram.length > 50) return Response.json({ error: 'Instagram handle too long.' }, { status: 400 })
+  if (more && more.length > 300) return Response.json({ error: 'Message too long.' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: ev } = await admin.from('events')
@@ -77,15 +81,25 @@ export async function POST(request, { params }) {
 
   const normalEmail = email.toLowerCase().trim()
 
-  // Verify member status server-side — never trust isMember from the client
-  // body alone. Members skip the "how did you hear about us" requirement.
+  // Verify member status entirely server-side, from the request's own
+  // session cookie — never from a client-supplied isMember flag. This route
+  // has no auth requirement (anyone can register), so a client-supplied
+  // boolean is trivially spoofable: an unauthenticated caller could once
+  // claim isMember:true with any real member's email in the body and get
+  // instantly accepted (bypassing review and capacity) under that person's
+  // identity, plus overwrite their applications row with arbitrary data.
+  // Requiring the AUTHENTICATED session's own email to match the submitted
+  // email closes that — only someone actually logged in as that member can
+  // ever get the member fast-path, regardless of what the request body says.
   let verifiedMember = false
-  if (isMember === true) {
-    try {
-      const { data: member } = await admin.from('members').select('id').eq('email', normalEmail).maybeSingle()
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user?.email && user.email.toLowerCase().trim() === normalEmail) {
+      const { data: member } = await admin.from('members').select('id').eq('id', user.id).maybeSingle()
       verifiedMember = !!member
-    } catch { /* fall through — treat as non-member */ }
-  }
+    }
+  } catch { /* fall through — treat as non-member */ }
   if (!verifiedMember && (!source || !VALID_SOURCES.includes(source)))
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
 
@@ -207,5 +221,5 @@ export async function POST(request, { params }) {
     ]))
   }
 
-  return Response.json({ success: true })
+  return Response.json({ success: true, confirmed: verifiedMember })
 }
