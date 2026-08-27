@@ -348,6 +348,185 @@ test('wtet checkin API rejects missing passengers', async ({ request }) => {
   }
 })
 
+// ─── Paid Route Registrations (Calabogie Boogie, Circuit Mont-Tremblant,
+//     Hello to Montebello, Sunday Silhouette) ─────────────────────────────────
+// Same template as WTET above — each creates a real Stripe PI tagged as a
+// health check (capture_method: manual, never charged). Filter in Stripe by
+// metadata.source = health_check to cancel periodically. These 4 had zero
+// coverage until the events.slug short-link incident (2026-08-27) showed
+// silent breakage isn't caught any other way for pages like this.
+
+test('calabogie boogie page loads', async ({ page }) => {
+  await page.goto('/cbtd-2026')
+  await expect(page.getByRole('heading', { name: /The Calabogie Boogie/i })).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('#form')).toBeVisible()
+})
+
+test('calabogie boogie register API validation works', async ({ request }) => {
+  const res = await request.post('/api/calabogie-boogie-2026-register', { data: {} })
+  expect([400, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Full name is required.')
+  }
+})
+
+test('calabogie boogie register API creates payment intent (full integration)', async ({ request }) => {
+  const res = await request.post('/api/calabogie-boogie-2026-register', {
+    data: {
+      name: 'Playwright Health Check', email: 'health-check@playwright.canvasroutes.com',
+      vehicleChoice: 'rental', rentalCar: 'GR86', source: 'Other', isMember: false, _health_check: true,
+    },
+  })
+  expect([200, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 200) {
+    const body = await res.json()
+    expect(body.clientSecret).toMatch(/^pi_.*_secret_/)
+  }
+})
+
+test('calabogie boogie member register API requires auth', async ({ request }) => {
+  const res = await request.post('/api/calabogie-boogie-2026-member-register', { data: {} })
+  expect([401, 429]).toContain(res.status())
+})
+
+test('circuit mont-tremblant page loads', async ({ page }) => {
+  await page.goto('/cmt-2026')
+  await expect(page.getByRole('heading', { name: /Circuit Mont-Tremblant/i })).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('#form')).toBeVisible()
+})
+
+test('circuit mont-tremblant register API validation works', async ({ request }) => {
+  const res = await request.post('/api/circuit-mont-tremblant-2026-register', { data: {} })
+  expect([400, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Full name is required.')
+  }
+})
+
+test('circuit mont-tremblant register API creates payment intent (full integration)', async ({ request }) => {
+  const res = await request.post('/api/circuit-mont-tremblant-2026-register', {
+    data: {
+      name: 'Playwright Health Check', email: 'health-check@playwright.canvasroutes.com',
+      vehicleChoice: 'rental', rentalCar: 'GR86', source: 'Other', isMember: false, _health_check: true,
+    },
+  })
+  expect([200, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 200) {
+    const body = await res.json()
+    expect(body.clientSecret).toMatch(/^pi_.*_secret_/)
+  }
+})
+
+test('circuit mont-tremblant member register API requires auth', async ({ request }) => {
+  const res = await request.post('/api/circuit-mont-tremblant-2026-member-register', { data: {} })
+  expect([401, 429]).toContain(res.status())
+})
+
+test('hello to montebello page loads', async ({ page }) => {
+  await page.goto('/hello-to-montebello')
+  await expect(page.getByRole('heading', { name: /Hello to Montebello/i })).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('#form')).toBeVisible()
+})
+
+test('hello to montebello register API validation works', async ({ request }) => {
+  const res = await request.post('/api/hello-to-montebello-register', { data: {} })
+  expect([400, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Full name is required.')
+  }
+})
+
+test('hello to montebello register API creates payment intent (full integration)', async ({ request }) => {
+  const res = await request.post('/api/hello-to-montebello-register', {
+    data: {
+      name: 'Playwright Health Check', email: 'health-check@playwright.canvasroutes.com',
+      year: '2020', carMake: 'Health', carModel: 'Check',
+      passengers: '1', hasChildren: 'no', source: 'Other', isMember: false, _health_check: true,
+    },
+  })
+  expect([200, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 200) {
+    const body = await res.json()
+    expect(body.clientSecret).toMatch(/^pi_.*_secret_/)
+  }
+})
+
+test('hello to montebello member register API requires auth', async ({ request }) => {
+  const res = await request.post('/api/hello-to-montebello-member-register', { data: {} })
+  expect([401, 429]).toContain(res.status())
+})
+
+test('sunday silhouette page loads', async ({ page }) => {
+  await page.goto('/sunday-silhouette-2026')
+  await expect(page.getByRole('heading', { name: /Sunday Silhouette/i })).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('#form')).toBeVisible()
+})
+
+test('sunday silhouette register API validation works', async ({ request }) => {
+  const res = await request.post('/api/sunday-silhouette-2026-register', { data: {} })
+  expect([400, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Full name is required.')
+  }
+})
+
+test('sunday silhouette register API creates payment intent (full integration)', async ({ request }) => {
+  const res = await request.post('/api/sunday-silhouette-2026-register', {
+    data: {
+      name: 'Playwright Health Check', email: 'health-check@playwright.canvasroutes.com',
+      year: '2020', carMake: 'Health', carModel: 'Check',
+      passengers: '1', hasChildren: 'no', source: 'Other', isMember: false, _health_check: true,
+    },
+  })
+  expect([200, 403, 429, 503]).toContain(res.status())
+  if (res.status() === 200) {
+    const body = await res.json()
+    expect(body.clientSecret).toMatch(/^pi_.*_secret_/)
+  }
+})
+
+test('sunday silhouette member register API requires auth', async ({ request }) => {
+  const res = await request.post('/api/sunday-silhouette-2026-member-register', { data: {} })
+  expect([401, 429]).toContain(res.status())
+})
+
+// ─── Cars, Coffee & Dad Jokes ─────────────────────────────────────────────────
+
+test('cars coffee & dad jokes page loads with a working form', async ({ page }) => {
+  await page.goto('/cars-coffee-dad-jokes')
+  await expect(page.locator('#ccd-name')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('#ccd-email')).toBeVisible()
+})
+
+test('ccd register API validation works', async ({ request }) => {
+  const res = await request.post('/api/ccd-register', { data: {} })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Full name is required.')
+  }
+})
+
+// ─── Route Interest (waitlist) Form ───────────────────────────────────────────
+
+test('routes page loads with the interest form reachable', async ({ page }) => {
+  await page.goto('/routes')
+  await expect(page.getByRole('heading', { name: /routes/i }).first()).toBeVisible({ timeout: 15000 })
+})
+
+test('route interest API validation works', async ({ request }) => {
+  const res = await request.post('/api/upcoming-routes/interest', { data: {} })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Missing route.')
+  }
+})
+
 // ─── Stripe Payment Intent (Membership) ──────────────────────────────────────
 
 test('create-payment-intent API validation works', async ({ request }) => {
@@ -395,7 +574,37 @@ test('portal profile redirects to login when unauthenticated', async ({ page }) 
   await expect(page.locator('input[type="password"]')).toBeVisible()
 })
 
+test('portal event registration page redirects to login when unauthenticated', async ({ page }) => {
+  // Any id works — middleware gates the whole /members/* prefix before the
+  // page itself ever looks at the id, so this also covers EventRegisterButton
+  // / EventFreeRegister (the actual per-event registration form components).
+  await page.goto('/members/events/00000000-0000-0000-0000-000000000000')
+  await expect(page).toHaveURL(/\/members\/login/, { timeout: 15000 })
+  await expect(page.locator('input[type="email"]')).toBeVisible()
+  await expect(page.locator('input[type="password"]')).toBeVisible()
+})
+
+test('portal photos page redirects to login when unauthenticated', async ({ page }) => {
+  await page.goto('/members/photos')
+  await expect(page).toHaveURL(/\/members\/login/, { timeout: 15000 })
+})
+
+test('portal card page redirects to login when unauthenticated', async ({ page }) => {
+  await page.goto('/members/card')
+  await expect(page).toHaveURL(/\/members\/login/, { timeout: 15000 })
+})
+
 // ─── Forgot Password / Reset ─────────────────────────────────────────────────
+
+test('reset password page loads (no token: shows expired state, not a crash)', async ({ page }) => {
+  // No ?token= — same as an old/reused reset link. The page's own logic
+  // shows "Link expired" instead of the password form in this case, so this
+  // confirms the page renders a real state either way, not a blank/broken one.
+  await page.goto('/members/reset-password')
+  const form = page.locator('input[type="password"]').first()
+  const expired = page.locator('text=Link expired')
+  await expect(form.or(expired)).toBeVisible({ timeout: 15000 })
+})
 
 test('forgot password API validation works', async ({ request }) => {
   // Empty body — confirms parsing and validation runs
