@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import SiteNav from '../../../components/SiteNav'
 import SiteFooter from '../../../components/SiteFooter'
 import TermsPrivacyNote from '../../../components/TermsPrivacyNote'
 import { EVENT_TIME_OVERRIDES } from '../../../lib/eventMeta'
@@ -62,10 +63,47 @@ export default function MeetRegisterForm({ event }) {
   const [isMember, setIsMember] = useState(false)
   const honeypotRef = useRef(null)
 
+  // Members skip the "request a spot" friction entirely — prefill from
+  // their profile so all they have to do is glance it over and submit.
+  // Only ever fills fields the member left untouched (functional setForm
+  // update keeps whatever they may have already typed in the brief window
+  // before this fetch resolves), and never fills a value that wouldn't be
+  // valid in its own field (e.g. a car make that isn't in CAR_MAKES) —
+  // leaving it blank for them to pick beats silently mismatching the
+  // select's displayed value against form state.
   useEffect(() => {
     fetch('/api/member/me')
       .then(r => r.ok ? r.json() : null)
-      .then(data => { if (data?.member) setIsMember(true) })
+      .then(data => {
+        const m = data?.member
+        if (!m) return
+        setIsMember(true)
+
+        const primaryCar = m.cars?.[0]
+        const carYear = String(primaryCar?.year || m.car_year || '')
+        const carMakeRaw = primaryCar?.make || m.car_make || ''
+        const carModelRaw = primaryCar?.model || m.car_model || ''
+        const carModel = carModelRaw ? carModelRaw.replace(/(^|\s)\S/g, c => c.toUpperCase()) : ''
+
+        let cc = '+1', nationalNumber = ''
+        if (m.phone?.trim()) {
+          const [first, ...rest] = m.phone.trim().split(' ')
+          if (rest.length && COUNTRY_CODES.includes(first)) { cc = first; nationalNumber = rest.join(' ') }
+          else nationalNumber = m.phone.trim()
+        }
+
+        setForm(p => ({
+          ...p,
+          name: p.name || m.name?.trim() || '',
+          email: p.email || data.user?.email || '',
+          year: p.year || (YEARS.includes(carYear) ? carYear : ''),
+          carMake: p.carMake || (CAR_MAKES.includes(carMakeRaw) ? carMakeRaw : ''),
+          carModel: p.carModel || carModel,
+          phone: p.phone || nationalNumber,
+          instagram: p.instagram || (m.instagram ? m.instagram.replace(/^@+/, '') : ''),
+        }))
+        if (nationalNumber) { setCountryCode(cc); setPhoneShown(true) }
+      })
       .catch(() => {})
   }, [])
 
@@ -193,16 +231,11 @@ export default function MeetRegisterForm({ event }) {
         input, select, textarea { font-size: 16px !important; }
       `}</style>
 
-      {/* Nav */}
-      <nav style={{ position:'fixed', top:0, left:0, right:0, zIndex:100, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.9rem 2rem', background:'#0F1E14', borderBottom:'0.5px solid rgba(197,168,130,0.12)' }}>
-        <Link href="/">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/white-outline.png" alt="Canvas Routes" style={{ height:'72px', width:'auto', display:'block' }} />
-        </Link>
-        <Link href="/" style={{ fontSize:'10px', letterSpacing:'0.18em', textTransform:'uppercase', color:'rgba(245,241,236,0.55)', textDecoration:'none', fontFamily:'var(--font-inter), sans-serif' }}>
-          ← Back to site
-        </Link>
-      </nav>
+      {/* Nav — same shared site header as every other page (membership,
+          Sunday Silhouette), not a bespoke bar. The hero's own padding-top
+          already assumes this nav's height (copied from the Sunday
+          Silhouette hero, which also uses SiteNav). */}
+      <SiteNav />
 
       {/* Hero — same template as app/sunday-silhouette-2026/page.jsx: dark
           full-bleed photo, gold hairlines, staggered fade-in, gold date
