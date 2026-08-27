@@ -181,7 +181,7 @@ export async function POST(request, { params }) {
             ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null })
             : buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null }),
           text: verifiedMember
-            ? `Hey ${firstName},\n\nYour spot at ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''} is confirmed. See you there.\n\nJerry\nCanvas Routes`
+            ? `Hey ${firstName},\n\nYour spot at ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''} is confirmed. See you there.\n\nKnow any car friends who'd love this too? Tell them to register and mention your name — a referral from someone we already know is an easy yes.\n\nJerry\nCanvas Routes`
             : `Hey ${firstName},\n\nWe've received your registration for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Every registration is personally reviewed — we'll follow up by email with your confirmation before the event.\n\nJerry\nCanvas Routes`,
         }),
       }).catch(err => captureException(err, { context: 'public-event-register-confirm-email', eventId })),

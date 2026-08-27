@@ -4,6 +4,7 @@ import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { captureException } from '../../../../../../lib/sentry'
 import { buildInviteHtml } from '../../../../../../lib/inviteEmail'
 import { buildRoadTripConfirmHtml } from '../../../../../../lib/roadTripConfirmEmail.js'
+import { buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
 import { isWtetEventName } from '../../../../../../lib/wtetRegistrationContent.js'
 import { normalizeEventName, attendanceKey } from '../../../../../../lib/eventMeta.js'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail.js'
@@ -41,7 +42,7 @@ export async function POST(request, { params }) {
 
   const { data: ev, error: evErr } = await admin
     .from('events')
-    .select('name, type, date, location, member_price')
+    .select('name, type, date, date_display, location, member_price, public_registration_enabled')
     .eq('id', id)
     .maybeSingle()
   if (evErr) return Response.json({ error: evErr.message }, { status: 500 })
@@ -59,7 +60,12 @@ export async function POST(request, { params }) {
     .eq('email', normalEmail)
     .maybeSingle()
 
-  const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null, source: 'admin_manual', ...(paymentMethod !== 'none' ? { payment_method: paymentMethod } : {}) }
+  // An admin manually adding someone has already vetted them — for events
+  // using the /meet/[id] public review flow (public_registration_enabled),
+  // that's equivalent to clicking Accept, so skip the pending-review state
+  // entirely rather than leaving them stuck with no Accept/Decline buttons
+  // and no review_status at all (see app/api/admin/events/[id]/registrants/review).
+  const newReg = { event: ev.name, registered_at: new Date().toISOString(), attended: null, source: 'admin_manual', ...(paymentMethod !== 'none' ? { payment_method: paymentMethod } : {}), ...(ev.public_registration_enabled ? { review_status: 'accepted' } : {}) }
   // Dedupe by normalized name — renamed/aliased events must not produce duplicates
   const prevRegs = (existing?.registrations || []).filter(r => normalizeEventName(r.event) !== normalizeEventName(ev.name))
 
@@ -117,6 +123,34 @@ export async function POST(request, { params }) {
       amount_paid: isPaid ? (ev.member_price ?? null) : null,
     }, { onConflict: 'event_id,member_id' })
     if (evRegErr) captureException(new Error(evRegErr.message), { context: 'registrant-add-event-registrations-mirror', appId, eventId: id })
+  }
+
+  // Review-flow events (/meet/[id]) have no rsvp_tokens/Confirm-My-Spot step —
+  // send the same Accepted confirmation a public Accept click sends, then skip
+  // the generic invite flow below entirely (it doesn't apply here).
+  if (appId && process.env.RESEND_API_KEY && ev.public_registration_enabled) {
+    const firstName = trimmedName.split(' ')[0]
+    const dateDisplay = ev.date_display || ev.date || null
+    after(() =>
+      fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+        body: JSON.stringify({
+          from: 'Canvas Routes <jerry@canvasroutes.com>',
+          to: normalEmail,
+          reply_to: 'jerry@canvasroutes.com',
+          subject: `You're confirmed — ${ev.name}`,
+          html: buildAcceptedHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null }),
+        }),
+      })
+      .then(res => {
+        if (!res.ok) res.json().catch(() => ({})).then(d =>
+          captureException(new Error(`Resend HTTP ${res.status}: ${d.message || ''}`), { context: 'registrant-add-accepted-email', email: normalEmail, eventId: id })
+        )
+      })
+      .catch(err => captureException(err, { context: 'registrant-add-accepted-email', email: normalEmail, eventId: id }))
+    )
+    return Response.json({ success: true })
   }
 
   // Auto-send the Confirm My Spot invite email
