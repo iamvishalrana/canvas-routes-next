@@ -27,11 +27,20 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
-  // Event short links (e.g. /ccsept5-2026) used to be hardcoded here, which
-  // meant every new one needed a code change + deploy. They're now resolved
-  // dynamically from events.slug in middleware.js instead — see the
-  // eventSlugCache/resolveEventSlug logic there. Nothing belongs in this
-  // rewrites() block for that purpose anymore.
+  // Event short links now resolve dynamically from events.slug in
+  // middleware.js (see eventSlugCache/resolveEventSlug there) instead of
+  // being hardcoded per-event here — but that only works once the
+  // supabase/migrations/20260827_events_slug.sql migration has actually been
+  // run (adds the slug column). This entry is a temporary safety net for
+  // /ccsept5-2026 specifically until that migration runs — remove it once
+  // confirmed the DB-driven version is live (visiting the link after the
+  // migration runs will still work fine either way, this just becomes
+  // redundant, not harmful).
+  async rewrites() {
+    return [
+      { source: '/ccsept5-2026', destination: '/meet/1a020f09-f618-42ed-b646-75c1927da38a' },
+    ]
+  },
 }
 
 export default withSentryConfig(nextConfig, {
