@@ -212,17 +212,19 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
       <style>{`
         @keyframes meet-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes meet-fade-in { from { opacity: 0; } to { opacity: 1; } }
-        /* Continuous Ken Burns zoom on the hero photo — 12s in, 12s out,
+        /* Continuous Ken Burns zoom on the hero photo — 20s in, 20s out,
            looping for as long as the page stays open. ease-in-out on both
            halves so the direction change at the midpoint/loop-back is a
            smooth reversal, never a visible snap. transform (not width/
-           height) so it stays compositor-only — no layout/repaint cost. */
+           height) so it stays compositor-only — no layout/repaint cost.
+           Slowed from an original 12s/12s pass (felt too fast) — 20s/20s
+           with a smaller 9% zoom reads as a slow drift instead. */
         @keyframes meet-hero-zoom {
           0%   { transform: scale(1); }
-          50%  { transform: scale(1.12); }
+          50%  { transform: scale(1.09); }
           100% { transform: scale(1); }
         }
-        .meet-hero-photo-zoom { animation: meet-hero-zoom 24s ease-in-out infinite; will-change: transform; }
+        .meet-hero-photo-zoom { animation: meet-hero-zoom 40s ease-in-out infinite; will-change: transform; }
         @keyframes meet-date-streak {
           0%, 100% { left: -110%; opacity: 0; }
           6%        { opacity: 1; }

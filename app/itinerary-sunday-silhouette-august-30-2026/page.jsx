@@ -23,10 +23,10 @@ const ROUTE_SLUG = 'sunday-silhouette-2026'
 // Rue Principale, Saint-Donat-de-Montcalm; Petinos: 75 Avenue de la Gare,
 // Saint-Sauveur).
 const STOPS = [
-  { label: 'Starbucks — Autoroute 440, Back Parking', note: { en: '7:30 AM · Laval · Departure sharp', fr: '7 h 30 · Laval · Départ précis' }, tag: { en: 'Meetup & Departure', fr: 'Rendez-vous et départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
+  { label: 'Starbucks — Autoroute 440, Back Parking', note: { en: '7:30 AM · Laval · Departure 8:00 AM sharp', fr: '7 h 30 · Laval · Départ à 8 h précises' }, tag: { en: 'Meetup & Departure', fr: 'Rendez-vous et départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
   { label: 'Rawdon', note: { en: 'Into Lanaudière — the first real stretch of backroads', fr: 'Direction Lanaudière — le premier vrai tronçon de routes secondaires' }, href: 'https://www.google.com/maps/search/?api=1&query=Rawdon,+QC', lat: 46.0470, lng: -73.7181 },
   { label: 'Saint-Côme', note: { en: 'Deeper into cottage country, quiet roads the whole way', fr: 'Plus profondément dans les chalets, des routes tranquilles tout du long' }, href: 'https://www.google.com/maps/search/?api=1&query=Saint-Côme,+QC', lat: 46.2710370, lng: -73.7714770 },
-  { label: 'Café Marius', note: { en: 'Coffee stop — covered by Canvas Routes', fr: 'Arrêt café — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Café+Marius+Rue+Principale+Saint-Donat-de-Montcalm+QC', lat: 46.3107848, lng: -74.2103737 },
+  { label: 'Café Marius', note: { en: 'Coffee stop in Saint-Donat-de-Montcalm — covered by Canvas Routes', fr: 'Arrêt café à Saint-Donat-de-Montcalm — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Café+Marius+Rue+Principale+Saint-Donat-de-Montcalm+QC', lat: 46.3107848, lng: -74.2103737 },
   { label: 'Petinos Saint-Sauveur', note: { en: 'Brunch in Saint-Sauveur — covered by Canvas Routes', fr: 'Brunch à Saint-Sauveur — couvert par Canvas Routes' }, tag: { en: 'Brunch', fr: 'Brunch' }, end: true, href: 'https://www.google.com/maps/search/?api=1&query=Petinos+75+Avenue+de+la+Gare+Saint-Sauveur+QC', lat: 45.8908004, lng: -74.1535634 },
 ]
 
@@ -49,14 +49,29 @@ const MANUAL_PARTICIPANTS = [
   { name: 'Jerry', car: '2021 BMW 3 Series', photo: '/car-jerry.jpeg', lead: true, group: null, fact: 'Perfect balance front to back, every option added — this is exactly how this car was meant to be built.' },
 ]
 
-// Editorial car facts, matched onto the live roster by exact name — empty
-// until registrants exist to write facts about (see CAR_FACTS in the Hello
-// to Montebello itinerary page for the pattern once this fills in).
-const CAR_FACTS = {}
+// Editorial car facts, matched onto the live roster by exact name — same
+// pattern as CAR_FACTS in the Hello to Montebello itinerary page. Where a
+// registrant was also with us for WTET or HTM, their fact is reused from
+// that page rather than rewritten — same car, same story. New registrants
+// get a fresh fact in the same voice.
+const CAR_FACTS = {
+  // Reused from WTET (lib/wtetParticipants.js) — same car, no HTM entry to prefer.
+  'Alain Meunier': "The C7 Grand Sport bridges the gap between the base Stingray and Z06 — it gets the Z06's wider body and aerodynamics with the naturally aspirated LT1 V8. The result is a car that handles like a race car but breathes like one too.",
+  'Elie Massuda': 'The 987 Boxster in 2006 trim is the sweet spot — 2.7-litre flat-six, mid-engine balance, and a roof that disappears in 12 seconds. The weight sits right behind you, the steering is direct, and there is nothing between you and the road. Pure.',
+  // Reused from Hello to Montebello (app/itinerary-hello-to-montebello-august-1/page.jsx).
+  'Alexandre Boutin': 'Looks like a calm family wagon, but hides two turbos and a monster V8 underneath. Dead quiet at idle, then it launches like it was shot out of a cannon.',
+  'Jean-Francois Rouette': "A five-cylinder engine tuned to Stage 2, pushing 554 horsepower and hitting 100 km/h in just 3.3 seconds — with a wild, uneven growl that only gets angrier the harder you push it.",
+  'Yvon Maggi': 'One of the fastest 911s ever built at the time — twin turbos, all-wheel drive, and launch control that slams you back into your seat. 0 to 100 km/h in under 3 seconds, gone before you can blink.',
+  // New for Sunday Silhouette.
+  'Danny': 'The S trim adds a bigger, punchier flat-six right behind your seat — direct injection sharpens the throttle and gives it a raspier edge over the base car. Roof down, mid-engine balance, nothing between you and the corner.',
+  'Fortunato Nappi': "The heart of this car was developed with help from Ferrari's engineers — a twin-turbo V6 making 505 hp. When it launched, it set the lap record for a production sedan around the Nürburgring. Italian, loud, and seriously quick.",
+  'Prashant Uttamchandani': 'The first year of this generation, and the year Porsche brought back round headlights after years of a more divisive look. Naturally aspirated flat-six, no turbos, no filters — just a direct, analog connection between your right foot and the road.',
+  'Simon Mckibben': "This generation reinvented what Targa means — instead of a removable roof panel, it's a full sliding glass roof stretching almost to the rear window. Open-air feel with none of the usual rattle of a targa bar. A shape Porsche has never quite repeated since.",
+}
 
 const DRIVE_BULLETS = [
   { emoji: '📸', text: { en: "Arrive on time — it's a quick, low-key morning, so there's no long mingling window before we roll out together.", fr: "Arrivez à l'heure — c'est une matinée rapide et décontractée, il n'y a pas de longue période pour discuter avant le départ." } },
-  { emoji: '🛣️', text: { en: "We meet at 7:30 AM at Starbucks in Laval — departure is sharp, so don't be late. From there the convoy heads north into Lanaudière through Rawdon, then deeper into cottage country through Saint-Côme — backroads the whole way.", fr: "Rendez-vous à 7 h 30 au Starbucks à Laval — départ précis, alors ne soyez pas en retard. De là, le convoi file vers le nord en Lanaudière par Rawdon, puis plus profondément dans les chalets par Saint-Côme — des routes secondaires tout du long." } },
+  { emoji: '🛣️', text: { en: "We meet at 7:30 AM at Starbucks in Laval — departure is 8:00 AM sharp, so don't be late. From there the convoy heads north into Lanaudière through Rawdon, then deeper into cottage country through Saint-Côme — backroads the whole way.", fr: "Rendez-vous à 7 h 30 au Starbucks à Laval — départ à 8 h précises, alors ne soyez pas en retard. De là, le convoi file vers le nord en Lanaudière par Rawdon, puis plus profondément dans les chalets par Saint-Côme — des routes secondaires tout du long." } },
   { emoji: '☕', text: { en: 'A coffee stop at Café Marius in Saint-Donat-de-Montcalm, covered by Canvas Routes, breaks up the drive right in the middle of the loop.', fr: 'Un arrêt café chez Café Marius à Saint-Donat-de-Montcalm, couvert par Canvas Routes, casse la route en plein milieu de la boucle.' } },
   { emoji: '🏁', text: { en: 'From Saint-Donat, the convoy heads west into the Laurentians toward Saint-Sauveur — the last real stretch of backroads before things open up again near home.', fr: "De Saint-Donat, le convoi file vers l'ouest dans les Laurentides en direction de Saint-Sauveur — le dernier vrai tronçon de routes secondaires avant que ça s'ouvre de nouveau près de la maison." } },
   { emoji: '🥐', text: { en: 'Brunch at Petinos Saint-Sauveur closes the morning, covered by Canvas Routes.', fr: 'Le brunch chez Petinos Saint-Sauveur clôture la matinée, couvert par Canvas Routes.' } },
@@ -76,7 +91,7 @@ const CONVOY_RULES = [
 
 const UI = {
   en: {
-    meetupLabel: 'Meetup', meetupLine: 'Meetup — 7:30 AM · Laval, QC', departure: 'Departure 7:30 AM sharp',
+    meetupLabel: 'Meetup', meetupLine: 'Meetup — 7:30 AM · Laval, QC', departure: 'Departure 8:00 AM sharp',
     contactLabel: 'Contact', convoyAppLabel: 'Convoy App',
     convoyAppBody: 'See the whole convoy live on the map and never lose the group — download it now, before August 30.',
     copyNumber: 'Copy number', copied: '✓ Copied',
@@ -93,7 +108,7 @@ const UI = {
     countdownUnits: ['Days', 'Hrs', 'Min', 'Sec'],
   },
   fr: {
-    meetupLabel: 'Rendez-vous', meetupLine: 'Rendez-vous — 7 h 30 · Laval, QC', departure: 'Départ à 7 h 30 précises',
+    meetupLabel: 'Rendez-vous', meetupLine: 'Rendez-vous — 7 h 30 · Laval, QC', departure: 'Départ à 8 h précises',
     contactLabel: 'Contact', convoyAppLabel: 'Appli de convoi',
     convoyAppBody: 'Voyez tout le convoi en direct sur la carte et ne perdez jamais le groupe — téléchargez-la maintenant, avant le 30 août.',
     copyNumber: 'Copier le numéro', copied: '✓ Copié',
@@ -745,9 +760,12 @@ export default function SundaySilhouetteItineraryPage() {
         .car-modal-card.opening { animation: car-modal-card-in 0.24s cubic-bezier(0.2,0.7,0.3,1) both; }
         .car-modal-card.closing { animation: car-modal-card-out 0.18s ease both; }
 
-        @media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
-          @keyframes itin-hero-pan { from { transform: scale(1.18); } to { transform: scale(1); } }
-          .itin-hero-bg { animation: itin-hero-pan 16s ease-out both; will-change: transform; }
+        /* Continuous Ken Burns zoom, matching the Cars & Coffee registration
+           page hero (app/meet/[id]/MeetRegisterForm.jsx) — 20s in, 20s out,
+           looping for as long as the page stays open. */
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes itin-hero-pan { 0% { transform: scale(1); } 50% { transform: scale(1.09); } 100% { transform: scale(1); } }
+          .itin-hero-bg { animation: itin-hero-pan 40s ease-in-out infinite; will-change: transform; }
         }
 
         @keyframes lang-toggle-punch { 0% { transform: scale(0.7); opacity: 0.4; } 60% { transform: scale(1.15); } 100% { transform: scale(1); opacity: 1; } }
