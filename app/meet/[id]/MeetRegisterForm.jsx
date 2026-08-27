@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import SiteFooter from '../../../components/SiteFooter'
 import TermsPrivacyNote from '../../../components/TermsPrivacyNote'
+import { EVENT_TIME_OVERRIDES } from '../../../lib/eventMeta'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -144,10 +145,40 @@ export default function MeetRegisterForm({ event }) {
   }
 
   const dateLine = event.date_display || event.date || null
+  const eventTime = EVENT_TIME_OVERRIDES[event.id] || null
 
   return (
     <>
       <style>{`
+        @keyframes meet-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes meet-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes meet-date-streak {
+          0%, 100% { left: -110%; opacity: 0; }
+          6%        { opacity: 1; }
+          20%       { left: 130%; opacity: 0; }
+          21%, 99%  { left: -110%; opacity: 0; }
+        }
+        .meet-date-badge { position: relative; overflow: hidden; }
+        .meet-date-badge::after {
+          content: ''; position: absolute; top: -20%; left: -110%; width: 55%; height: 140%;
+          background: linear-gradient(105deg, transparent 15%, rgba(255,215,100,0.22) 50%, transparent 85%);
+          transform: skewX(-12deg); animation: meet-date-streak 4.5s ease-in-out 1.6s infinite; pointer-events: none;
+        }
+        @keyframes meet-cta-shimmer {
+          0%   { left: -80%; opacity: 0; }
+          15%  { opacity: 1; }
+          85%  { opacity: 1; }
+          100% { left: 130%; opacity: 0; }
+        }
+        .meet-hero-cta { position: relative; overflow: hidden; }
+        .meet-hero-cta::after {
+          content: ''; position: absolute; top: -10%; left: -80%; width: 40%; height: 120%;
+          background: linear-gradient(105deg, transparent 10%, rgba(255,255,255,0.28) 50%, transparent 90%);
+          transform: skewX(-10deg); animation: meet-cta-shimmer 0.9s cubic-bezier(0.4,0,0.2,1) 1.4s forwards; pointer-events: none;
+        }
+        @media (max-width: 768px) {
+          .meet-hero { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+        }
         @media (max-width: 640px) {
           .meet-submit-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom)); background: #F5F1EC; border-top: 0.5px solid rgba(0,0,0,0.1); z-index: 50; }
           .meet-form-pad { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }
@@ -166,47 +197,52 @@ export default function MeetRegisterForm({ event }) {
         </Link>
       </nav>
 
-      {/* Hero */}
-      <div style={{
-        background: '#0F1E14', paddingTop:'72px', position:'relative',
-        ...(event.photo_url ? {
-          backgroundImage: `linear-gradient(180deg, rgba(10,20,12,0.55) 0%, rgba(15,30,20,0.92) 100%), url('${event.photo_url}')`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-        } : {}),
+      {/* Hero — same template as app/sunday-silhouette-2026/page.jsx: dark
+          full-bleed photo, gold hairlines, staggered fade-in, gold date
+          badge with a periodic shimmer streak. */}
+      <section className="meet-hero" style={{
+        backgroundColor:'#0F1E14', paddingTop:'calc(72px + clamp(70px,10vw,110px))', paddingBottom:'4.5rem',
+        paddingLeft:'2rem', paddingRight:'2rem', textAlign:'center', position:'relative', overflow:'hidden',
+        ...(event.photo_url ? { backgroundImage:`url('${event.photo_url}')`, backgroundSize:'cover', backgroundPosition:'center 50%' } : {}),
       }}>
-        <div style={{ borderTop:'0.5px solid rgba(197,168,130,0.15)', padding:'3.5rem 2rem 2rem' }}>
-          <div style={{ maxWidth:'520px', margin:'0 auto', textAlign:'center' }}>
-            <div style={{ fontSize:'10px', letterSpacing:'0.28em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'1rem' }}>
-              Canvas Routes
+        <div style={{ position:'absolute', inset:0, background:'rgba(10,20,12,0.72)', zIndex:1 }} />
+        <div style={{ position:'absolute', top:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)', zIndex:2 }} />
+        <div style={{ position:'relative', zIndex:2, maxWidth:'520px', margin:'0 auto' }}>
+          <div style={{ fontSize:'11px', letterSpacing:'0.25em', textTransform:'uppercase', color:'rgba(197,168,130,0.6)', marginBottom:'1.2rem', animation:'meet-fade-in 0.7s ease both', animationDelay:'100ms' }}>
+            Canvas Routes
+          </div>
+          <h1 style={{ fontFamily:'var(--font-cormorant),serif', fontSize:'clamp(2.6rem,6.5vw,4.2rem)', fontWeight:'300', color:'#F5F1EC', lineHeight:1.05, letterSpacing:'-0.01em', marginBottom: event.location ? '0.75rem' : '1.2rem', animation:'meet-fade-up 0.8s ease both', animationDelay:'250ms' }}>
+            {event.name}
+          </h1>
+          {event.location && (
+            <div style={{ fontFamily:'var(--font-cormorant),serif', fontSize:'clamp(1.1rem,2.6vw,1.4rem)', fontStyle:'italic', color:'rgba(245,241,236,0.82)', marginBottom:'1.2rem', letterSpacing:'0.01em', textShadow:'0 1px 12px rgba(0,0,0,0.6)', animation:'meet-fade-up 0.7s ease both', animationDelay:'450ms' }}>
+              {event.location}
             </div>
-            <h1 style={{ fontFamily:'var(--font-cormorant), serif', fontSize:'clamp(2.2rem,6vw,3rem)', fontWeight:'300', color:'#F5F1EC', lineHeight:1.1, marginBottom:'1.25rem' }}>
-              {event.name}
-            </h1>
-            {event.description && (
-              <p style={{ fontSize:'14px', color:'rgba(245,241,236,0.65)', lineHeight:1.8, fontFamily:'var(--font-inter), sans-serif', maxWidth:'420px', margin:'0 auto 1.5rem' }}>
-                {event.description}
-              </p>
-            )}
+          )}
+          {dateLine && (
+            <div className="meet-date-badge" style={{ display:'inline-block', padding:'0.5rem 1.4rem', border:'1px solid rgba(197,168,130,0.7)', background:'rgba(197,168,130,0.12)', fontSize:'11px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#F5F1EC', marginBottom:'2.5rem', animation:'meet-fade-in 0.6s ease both', animationDelay:'600ms' }}>
+              {dateLine}{eventTime ? ` · ${eventTime}` : ''}
+            </div>
+          )}
+          <div style={{ width:'40px', height:'0.5px', background:'rgba(197,168,130,0.5)', margin:'0 auto 2.5rem', animation:'meet-fade-in 0.5s ease both', animationDelay:'700ms' }} />
+          {event.description && (
+            <p style={{ fontSize:'15px', color:'rgba(245,241,236,0.8)', textShadow:'0 1px 12px rgba(0,0,0,0.6)', maxWidth:'460px', margin:'0 auto 3rem', lineHeight:1.9, letterSpacing:'0.01em', animation:'meet-fade-up 0.7s ease both', animationDelay:'800ms' }}>
+              {event.description}
+            </p>
+          )}
+          <div style={{ animation:'meet-fade-up 0.65s ease both', animationDelay:'1100ms' }}>
+            <a href="#meet-form" onClick={e => { e.preventDefault(); document.getElementById('meet-form')?.scrollIntoView({ behavior:'smooth' }) }}
+              className="meet-hero-cta"
+              style={{ display:'inline-block', padding:'0.9rem 2.5rem', background:'#F5F1EC', color:'#0F1E14', fontSize:'11px', letterSpacing:'0.2em', textTransform:'uppercase', textDecoration:'none', fontFamily:'var(--font-inter),sans-serif', fontWeight:'600' }}>
+              Request your spot →
+            </a>
           </div>
         </div>
-        <div style={{ borderTop:'0.5px solid rgba(197,168,130,0.15)', padding:'1.5rem 2rem' }}>
-          <div style={{ maxWidth:'520px', margin:'0 auto', display:'flex', flexWrap:'wrap', gap:'1rem', justifyContent:'center' }}>
-            {[
-              dateLine && { label:'Date', value: dateLine },
-              event.location && { label:'Venue', value: event.location },
-              { label:'Cost', value:'Free' },
-            ].filter(Boolean).map(({ label, value }) => (
-              <div key={label} style={{ textAlign:'center', minWidth:'110px' }}>
-                <div style={{ fontSize:'9px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.3rem' }}>{label}</div>
-                <div style={{ fontSize:'13px', color:'#F5F1EC', fontFamily:'var(--font-inter), sans-serif' }}>{value}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)', zIndex:2 }} />
+      </section>
 
       {/* Form */}
-      <div className="meet-form-pad" style={{ background:'#F5F1EC', padding:'5rem 1.5rem 6rem' }}>
+      <div id="meet-form" className="meet-form-pad" style={{ background:'#F5F1EC', padding:'5rem 1.5rem 6rem' }}>
         <div style={{ maxWidth:'520px', margin:'0 auto' }}>
 
           {status !== 'open' ? (

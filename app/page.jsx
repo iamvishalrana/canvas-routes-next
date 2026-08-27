@@ -118,7 +118,7 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
         <h2 className="routes-popup-card-heading" style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: 'clamp(1.75rem,4vw,2.4rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, margin: '0 0 0.6rem' }}>
           {card.heading !== null ? card.heading : <>{t.popupTitle}<br />{t.popupTitleLine2}</>}
         </h2>
-        <div className="routes-popup-card-sub" style={{ fontSize: '13px', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', marginBottom: '1.25rem' }}>
+        <div className="routes-popup-card-sub" style={{ fontSize: '16px', color: 'rgba(197,168,130,0.7)', fontFamily: 'var(--font-cormorant),serif', fontStyle: 'italic', marginBottom: '1.25rem' }}>
           {card.sub}
         </div>
         <div style={{ width: '32px', height: '0.5px', background: 'rgba(197,168,130,0.4)', marginBottom: '1.25rem' }} />
@@ -638,7 +638,7 @@ export default function Home() {
               .routes-popup-cards.has-second .routes-popup-card-body { padding: 1.1rem 1.25rem 1.35rem !important; }
               .routes-popup-cards.has-second .routes-popup-card-eyebrow { margin-bottom: 0.6rem !important; }
               .routes-popup-cards.has-second .routes-popup-card-heading { font-size: 1.35rem !important; margin-bottom: 0.35rem !important; }
-              .routes-popup-cards.has-second .routes-popup-card-sub { margin-bottom: 0.75rem !important; font-size: 11px !important; }
+              .routes-popup-cards.has-second .routes-popup-card-sub { margin-bottom: 0.75rem !important; font-size: 13px !important; }
               .routes-popup-cards.has-second .routes-popup-card-text { -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.6rem !important; }
               .routes-popup-cards.has-second .routes-popup-card-month { margin-bottom: 0.9rem !important; line-height: 1.6 !important; }
               .routes-popup-cards.has-second .routes-popup-cta { padding: 0.75rem 1.5rem !important; }
