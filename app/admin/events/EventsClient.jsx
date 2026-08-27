@@ -380,16 +380,24 @@ export default function EventsClient() {
       const appData = appRes.ok ? await appRes.json().catch(() => []) : []
 
       const appMap = new Map((Array.isArray(appData) ? appData : []).map(ev => [ev.id, ev]))
-      const merged = (Array.isArray(evData) ? evData : []).map(ev => {
-        const a = appMap.get(ev.id) || {}
-        return {
-          confirmed_count:    a.confirmed_count    || 0,
-          invited_count:      a.invited_count      || 0,
-          total_applications: a.total_applications || 0,
-          applications:       a.applications       || [],
-          ...ev,
-        }
-      })
+      // Route-type events are the auto-created `events` row every road trip
+      // gets linked to (ensureRouteEventLinked, lib/routeEventLink.js) purely
+      // to power its Registrants/Check-in/Route Awards tabs under Admin >
+      // Routes (RouteEventConfigClient) — they're not meets, and managing
+      // them here too would just duplicate that page. Same filter the
+      // members-portal events list already applies for the same reason.
+      const merged = (Array.isArray(evData) ? evData : [])
+        .filter(ev => ev.type !== 'Route')
+        .map(ev => {
+          const a = appMap.get(ev.id) || {}
+          return {
+            confirmed_count:    a.confirmed_count    || 0,
+            invited_count:      a.invited_count      || 0,
+            total_applications: a.total_applications || 0,
+            applications:       a.applications       || [],
+            ...ev,
+          }
+        })
       setItems(merged)
     } catch {
       setItems([])
