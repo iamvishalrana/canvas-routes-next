@@ -142,6 +142,11 @@ function CheckinContent() {
   const allDone = data && (!hasTrip || !!data.tripDetails) && (!hasWaiver || !!data.waiver)
     && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
     && (!hasCarPhoto || !!data.carPhoto)
+  // Optional "come from" page (e.g. an itinerary page that redirected here
+  // to finish an incomplete check-in) — only ever a same-site relative path,
+  // never trust it as an arbitrary redirect target from a query param.
+  const rawReturnTo = searchParams.get('returnTo')
+  const returnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : null
 
   return (
     <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
@@ -186,9 +191,14 @@ function CheckinContent() {
               {firstName ? t.hiName(firstName) : t.defaultTitle}
             </h1>
             <div style={{ width: '30px', height: '0.5px', background: '#c5a882', margin: '1.25rem 0' }} />
-            <p style={{ fontSize: '14px', color: allDone ? '#3B6B2F' : '#666', lineHeight: '1.8', margin: 0 }}>
+            <p style={{ fontSize: '14px', color: allDone ? '#3B6B2F' : '#666', lineHeight: '1.8', margin: allDone && returnTo ? '0 0 1rem' : 0 }}>
               {allDone ? t.allDoneMsg : t.incompleteMsg}
             </p>
+            {allDone && returnTo && (
+              <a href={returnTo} style={{ display: 'inline-block', fontSize: '12px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}>
+                {t.returnLabel}
+              </a>
+            )}
           </div>
 
           {!allDone && (

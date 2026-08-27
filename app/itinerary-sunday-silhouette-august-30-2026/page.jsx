@@ -544,14 +544,19 @@ export default function SundaySilhouetteItineraryPage() {
       const hasTrip = sections.includes('trip_details')
       const hasWaiver = sections.includes('waiver')
       const hasLunch = sections.includes('lunch')
+      const hasCarPhoto = sections.includes('car_photo')
       const allDone = (!hasTrip || !!data.tripDetails) && (!hasWaiver || !!data.waiver)
         && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
+        && (!hasCarPhoto || !!data.carPhoto)
 
       if (allDone) {
         try { localStorage.setItem('ss_itinerary_auth', '1') } catch {}
         setAuthed(true)
       } else {
-        window.location.href = `/checkin/${idData.eventId}?email=${encodeURIComponent(entered)}`
+        // Includes the email in the return URL too, so coming back auto-submits
+        // via the urlEmail effect below instead of asking them to type it again.
+        const returnUrl = `${window.location.pathname}?email=${encodeURIComponent(entered)}`
+        window.location.href = `/checkin/${idData.eventId}?email=${encodeURIComponent(entered)}&returnTo=${encodeURIComponent(returnUrl)}`
       }
     } catch (err) {
       captureException(err, { context: 'ss-itinerary-gate-lookup-network' })
