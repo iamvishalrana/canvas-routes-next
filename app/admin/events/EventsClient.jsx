@@ -1102,13 +1102,17 @@ export default function EventsClient() {
 
                   {/* Action buttons */}
                   {isMobile ? (
-                    <KebabMenu items={[
-                      { label: 'Move up', onClick: () => moveEvent(item.id, 'up'), disabled: displayIdx === 0 || isPast || moving },
-                      { label: 'Move down', onClick: () => moveEvent(item.id, 'down'), disabled: displayIdx >= nonPastCount - 1 || isPast || moving },
-                      { label: showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`, onClick: () => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price }) },
-                      { label: isEditing ? 'Close' : 'Edit', onClick: () => isEditing ? setEditing(null) : openEdit(item) },
-                      { label: 'Delete', danger: true, onClick: () => setDeleteEventConfirm(item.id) },
-                    ]} />
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price })}>
+                        {showRegistrants === item.id ? 'Hide' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`}
+                      </GhostBtn>
+                      <KebabMenu items={[
+                        { label: 'Move up', onClick: () => moveEvent(item.id, 'up'), disabled: displayIdx === 0 || isPast || moving },
+                        { label: 'Move down', onClick: () => moveEvent(item.id, 'down'), disabled: displayIdx >= nonPastCount - 1 || isPast || moving },
+                        { label: isEditing ? 'Close' : 'Edit', onClick: () => isEditing ? setEditing(null) : openEdit(item) },
+                        { label: 'Delete', danger: true, onClick: () => setDeleteEventConfirm(item.id) },
+                      ]} />
+                    </div>
                   ) : (
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
                       <div style={{ display: 'flex', gap: '0.2rem' }}>
