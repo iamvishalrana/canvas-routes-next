@@ -1481,8 +1481,13 @@ export default function EventsClient() {
                               const deleteErr = deleteRegErr[indivKey]
                               // Sub-section visibility + which one renders last (for border-bottom sequencing)
                               const hasRsvp = r.rsvpAnswers && Object.values(r.rsvpAnswers).some(v => v != null && v !== '')
-                              const hasOldCheckin = !!r.wtetCheckin
                               const showWtetReg = isWtetRegEvent(item.name)
+                              // applications.wtet_checkin is a single flat column (one per person,
+                              // not one per event) — without the showWtetReg gate, anyone who ever
+                              // completed WTET's own trip-details/dietary/passengers check-in had
+                              // that data shown under every OTHER event's registrant row too, since
+                              // r.wtetCheckin is truthy regardless of which event is being viewed.
+                              const hasOldCheckin = !!r.wtetCheckin && showWtetReg
                               const isLastTableRow = ri === registrantsData[item.id].length - 1
                               const rsvpIsLastBlock = hasRsvp && !hasOldCheckin && !showWtetReg
                               const oldCheckinIsLastBlock = hasOldCheckin && !showWtetReg
