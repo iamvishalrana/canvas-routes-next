@@ -15,42 +15,6 @@ export default function ToolsClient() {
   const [newToken, setNewToken] = useState('')
   const [settingToken, setSettingToken] = useState(false)
   const [setTokenResult, setSetTokenResult] = useState(null)
-  const [receiptsMigrating, setReceiptsMigrating] = useState(false)
-  const [receiptsResult, setReceiptsResult] = useState(null)
-  const [receiptsDeleting, setReceiptsDeleting] = useState(false)
-  const [receiptsDeleteResult, setReceiptsDeleteResult] = useState(null)
-  const [receiptsDeleteConfirm, setReceiptsDeleteConfirm] = useState(false)
-
-  async function migrateReceiptsR2() {
-    setReceiptsMigrating(true)
-    setReceiptsResult(null)
-    try {
-      const res = await fetch('/api/admin/tools/migrate-receipts-r2', { method: 'POST' })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setReceiptsResult({ error: data.error || 'Migration failed.' }); return }
-      setReceiptsResult(data)
-    } catch {
-      setReceiptsResult({ error: 'Network error.' })
-    } finally {
-      setReceiptsMigrating(false)
-    }
-  }
-
-  async function deleteReceiptsSupabaseOriginals() {
-    setReceiptsDeleteConfirm(false)
-    setReceiptsDeleting(true)
-    setReceiptsDeleteResult(null)
-    try {
-      const res = await fetch('/api/admin/tools/delete-receipts-supabase-originals', { method: 'POST' })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setReceiptsDeleteResult({ error: data.error || 'Deletion failed.' }); return }
-      setReceiptsDeleteResult(data)
-    } catch {
-      setReceiptsDeleteResult({ error: 'Network error.' })
-    } finally {
-      setReceiptsDeleting(false)
-    }
-  }
 
   useEffect(() => {
     fetchRuns()
@@ -268,92 +232,6 @@ export default function ToolsClient() {
             {hcStatus === 'loading' ? 'Triggering…' : hcStatus === 'ok' ? 'Triggered ✓' : hcStatus === 'error' ? 'Failed ✗' : 'Run Now'}
           </button>
         </div>
-      </div>
-
-      {/* Receipts → R2 migration */}
-      <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: '500', color: tool.heading, marginBottom: '0.35rem' }}>Migrate Receipts to R2</div>
-            <div style={{ fontSize: '12px', color: tool.sub, lineHeight: '1.6', maxWidth: '420px' }}>
-              Copies every existing receipt file from Supabase Storage into Cloudflare R2, then updates each expense&apos;s saved receipt URL to point at R2. Safe to click more than once — already-migrated files and rows are skipped.
-            </div>
-          </div>
-          <button onClick={migrateReceiptsR2} disabled={receiptsMigrating}
-            style={{
-              flexShrink: 0, padding: '0.6rem 1.25rem',
-              background: receiptsResult && !receiptsResult.error ? 'rgba(59,107,47,0.08)' : receiptsResult?.error ? 'rgba(147,51,62,0.06)' : 'transparent',
-              border: `0.5px solid ${receiptsResult && !receiptsResult.error ? 'rgba(59,107,47,0.4)' : receiptsResult?.error ? 'rgba(147,51,62,0.4)' : 'rgba(0,0,0,0.2)'}`,
-              fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
-              color: receiptsResult && !receiptsResult.error ? '#3B6B2F' : receiptsResult?.error ? '#93333E' : '#1a1a1a',
-              cursor: receiptsMigrating ? 'wait' : 'pointer',
-              fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
-            }}>
-            {receiptsMigrating ? 'Migrating…' : 'Run Migration'}
-          </button>
-        </div>
-        {receiptsResult && (
-          <div style={{ marginTop: '0.75rem', fontSize: '12px', lineHeight: 1.6, color: receiptsResult.error ? '#93333E' : '#3B6B2F' }}>
-            {receiptsResult.error
-              ? `✕ ${receiptsResult.error}`
-              : `✓ ${receiptsResult.copied} copied, ${receiptsResult.alreadyOnR2} already on R2, ${receiptsResult.failed} failed, ${receiptsResult.rowsUpdated} expense row(s) updated (of ${receiptsResult.total} files total).`}
-            {receiptsResult.failures?.length > 0 && (
-              <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#93333E' }}>
-                {receiptsResult.failures.map((f, i) => <div key={i}>{f.path}: {f.error}</div>)}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Delete Supabase originals — destructive, only after migration is verified */}
-      <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
-          <div>
-            <div style={{ fontSize: '13px', fontWeight: '500', color: tool.heading, marginBottom: '0.35rem' }}>Delete Supabase Receipt Originals</div>
-            <div style={{ fontSize: '12px', color: tool.sub, lineHeight: '1.6', maxWidth: '420px' }}>
-              Frees up Supabase storage quota by deleting the originals now that they&apos;re on R2. Every file is re-verified against R2 (fresh download + exact byte-size match) immediately before its Supabase copy is deleted — anything that doesn&apos;t verify is skipped, not deleted. Run the migration above first.
-            </div>
-          </div>
-          {receiptsDeleteConfirm ? (
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
-              <span style={{ fontSize: '11px', color: '#93333E' }}>Delete verified originals?</span>
-              <button onClick={deleteReceiptsSupabaseOriginals}
-                style={{ padding: '0.5rem 1rem', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.4)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                Yes, Delete
-              </button>
-              <button onClick={() => setReceiptsDeleteConfirm(false)}
-                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#1a1a1a', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button onClick={() => setReceiptsDeleteConfirm(true)} disabled={receiptsDeleting}
-              style={{
-                flexShrink: 0, padding: '0.6rem 1.25rem',
-                background: receiptsDeleteResult && !receiptsDeleteResult.error ? 'rgba(59,107,47,0.08)' : receiptsDeleteResult?.error ? 'rgba(147,51,62,0.06)' : 'transparent',
-                border: `0.5px solid ${receiptsDeleteResult && !receiptsDeleteResult.error ? 'rgba(59,107,47,0.4)' : receiptsDeleteResult?.error ? 'rgba(147,51,62,0.4)' : 'rgba(147,51,62,0.3)'}`,
-                fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
-                color: receiptsDeleteResult && !receiptsDeleteResult.error ? '#3B6B2F' : '#93333E',
-                cursor: receiptsDeleting ? 'wait' : 'pointer',
-                fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
-              }}>
-              {receiptsDeleting ? 'Deleting…' : 'Delete Originals'}
-            </button>
-          )}
-        </div>
-        {receiptsDeleteResult && (
-          <div style={{ marginTop: '0.75rem', fontSize: '12px', lineHeight: 1.6, color: receiptsDeleteResult.error ? '#93333E' : '#3B6B2F' }}>
-            {receiptsDeleteResult.error
-              ? `✕ ${receiptsDeleteResult.error}`
-              : `✓ ${receiptsDeleteResult.deleted} deleted, ${receiptsDeleteResult.alreadyGone} already gone, ${receiptsDeleteResult.skippedUnverified} skipped (unverified), ${receiptsDeleteResult.failed} failed (of ${receiptsDeleteResult.total} total).`}
-            {receiptsDeleteResult.skipped?.length > 0 && (
-              <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#93333E' }}>
-                {receiptsDeleteResult.skipped.map((f, i) => <div key={i}>{f.path}: {f.reason}</div>)}
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
     </div>
