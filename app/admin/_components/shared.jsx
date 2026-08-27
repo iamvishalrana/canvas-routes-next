@@ -17,7 +17,11 @@ export const STATUS_COLORS = {
   suspended: { bg: 'rgba(147,51,62,0.1)',   text: '#93333E', border: 'rgba(147,51,62,0.3)'   },
   expired:   { bg: 'rgba(0,0,0,0.05)',      text: '#999',    border: 'rgba(0,0,0,0.15)'      },
 }
-export const EVENT_TYPES = ['Route', 'Cars & Coffee', 'Social', 'Track Day', 'Other']
+// 'Route' isn't offered here — that type is reserved for the `events` row
+// ensureRouteEventLinked() (lib/routeEventLink.js) auto-creates for each
+// road trip, which the Meets & Events admin tab now filters out entirely
+// (EventsClient.jsx) since it's managed under Admin > Routes instead.
+export const EVENT_TYPES = ['Cars & Coffee', 'Social', 'Track Day', 'Other']
 export const TRIP_LENGTH_OPTIONS = ['Same Day', 'Overnight', 'Multiple Nights']
 export const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 export const CANONICAL_EVENTS = [
