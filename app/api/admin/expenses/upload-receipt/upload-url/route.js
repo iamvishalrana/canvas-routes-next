@@ -1,6 +1,5 @@
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
-import { createAdminClient } from '../../../../../../lib/supabase/admin'
-import { captureException } from '../../../../../../lib/sentry'
+import { createSignedUploadUrl } from '../../../../../../lib/r2'
 
 const BUCKET = 'receipts'
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
@@ -34,23 +33,10 @@ export async function POST(request) {
     return Response.json({ error: 'Only images and PDFs are accepted.' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_TYPES, fileSizeLimit: '25MB' }
-  // createBucket() silently no-ops once the bucket already exists, so a
-  // limit change here would never reach it without falling back to
-  // updateBucket() for the already-exists case. A failure of THAT call must
-  // also not be silently swallowed — see lib/allowedImageTypes.js's SVG
-  // comment (2026-08-24 review).
-  await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(err =>
-      captureException(err, { context: 'upload-receipt-bucket-config', bucket: BUCKET })))
-
   const folder = sanitizeFolderPath(folderPath)
   const ext = (fileName || '').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin'
   const path = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`
 
-  const { data, error } = await admin.storage.from(BUCKET).createSignedUploadUrl(path)
-  if (error) return Response.json({ error: error.message }, { status: 500 })
-
-  return Response.json({ path, token: data.token })
+  const { uploadUrl } = await createSignedUploadUrl({ bucket: BUCKET, path, contentType: fileType || 'application/octet-stream' })
+  return Response.json({ path, uploadUrl })
 }

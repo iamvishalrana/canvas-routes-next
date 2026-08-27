@@ -5,7 +5,7 @@ import { inp, sel, L, GhostBtn, DangerBtn, Err, DateRangeMenu } from '../_compon
 import { EXPENSE_CATEGORIES, MEALS_ENTERTAINMENT_CATEGORY, MEALS_ENTERTAINMENT_DEDUCTIBLE_RATE } from '../../../lib/expenseCategories'
 import { EXPENSE_PAYMENT_METHODS, EXPENSE_PAYMENT_LABELS } from '../../../lib/expensePaymentMethods'
 import { EXPENSE_PROVINCES, EXPENSE_PROVINCE_MAP } from '../../../lib/expenseProvinces'
-import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
+import { uploadToR2 } from '../../../lib/uploadToR2'
 import { compressImageClient } from '../../../lib/compressImageClient'
 import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
 
@@ -101,10 +101,10 @@ function SelectChevron() {
 
 const COL = '22px 96px 1fr 1fr 88px 88px 88px 78px'
 
-// Shared by all three upload sites below: browser -> Supabase Storage
-// directly via a signed URL (receipts include scanned PDFs, which run
-// larger than a request body limit should have to accommodate), then a
-// confirm step verifies the file landed and hands back its public URL.
+// Shared by all three upload sites below: browser -> R2 directly via a
+// presigned URL (receipts include scanned PDFs, which run larger than a
+// request body limit should have to accommodate), then a confirm step
+// verifies the file landed and hands back its public URL.
 async function uploadReceipt(file, folderPath) {
   if (file.size > 25 * 1024 * 1024) throw new Error('File must be under 25 MB.')
   const urlRes = await fetch('/api/admin/expenses/upload-receipt/upload-url', {
@@ -113,7 +113,7 @@ async function uploadReceipt(file, folderPath) {
   })
   const urls = await urlRes.json().catch(() => ({}))
   if (!urlRes.ok) throw new Error(urls.error || 'Upload failed.')
-  await uploadToSupabaseStorage({ bucket: 'receipts', path: urls.path, token: urls.token, file })
+  await uploadToR2({ uploadUrl: urls.uploadUrl, file })
   const res = await fetch('/api/admin/expenses/upload-receipt', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ path: urls.path }),
