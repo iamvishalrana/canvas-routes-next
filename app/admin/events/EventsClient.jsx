@@ -1140,7 +1140,13 @@ export default function EventsClient() {
                         {[
                           { label: 'Applied',    value: item.total_applications, color: '#1a1a1a' },
                           item.pending_review_count > 0 && { label: 'Pending review', value: item.pending_review_count, color: '#c5a882' },
-                          { label: 'Invited',    value: item.invited_count,       color: '#8A6535' },
+                          // Invited only means anything for the old rsvp_tokens
+                          // confirm-your-spot flow — /meet/[id] review-flow
+                          // events (public_registration_enabled) go straight
+                          // from Applied to Confirmed via Accept/Decline and
+                          // never create a token, so this would always read 0
+                          // and read as broken rather than "not applicable."
+                          !item.public_registration_enabled && { label: 'Invited', value: item.invited_count, color: '#8A6535' },
                           { label: 'Confirmed',  value: item.confirmed_count,     color: '#3B6B2F' },
                           spotsLeft !== null && { label: 'Spots left', value: Math.max(0, spotsLeft), color: spotsLeft <= 3 ? '#93333E' : '#888' },
                         ].filter(Boolean).map(s => (
