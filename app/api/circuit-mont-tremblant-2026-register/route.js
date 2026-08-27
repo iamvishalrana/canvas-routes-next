@@ -3,6 +3,7 @@ import { deviceType } from '../../../lib/deviceType'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { createClient } from '../../../lib/supabase/server'
 import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
@@ -76,13 +77,22 @@ export async function POST(request) {
     if (y && y > 1900) dob_year = y
   }
 
-  // Verify member status server-side — never trust isMember from the client body alone
+  // Verify member status entirely server-side, from the request's own
+  // session cookie — never from a client-supplied isMember flag. A spoofed
+  // isMember:true with any real member's email used to grant the cheaper
+  // member price with no session check at all (and pollute that member's
+  // applications row). Requiring the AUTHENTICATED session's own email to
+  // match the submitted email closes that — only someone actually logged
+  // in as that member ever gets the member rate.
   let verifiedMember = false
-  if (isMember === true && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
-      const { data: member } = await createAdminClient().from('members')
-        .select('id').eq('email', normalEmail).maybeSingle()
-      verifiedMember = !!member
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email && user.email.toLowerCase().trim() === normalEmail) {
+        const { data: member } = await createAdminClient().from('members').select('id').eq('id', user.id).maybeSingle()
+        verifiedMember = !!member
+      }
     } catch { /* fall back to non-member price */ }
   }
   const amountCents = verifiedMember ? MEMBER_PRICE_CENTS : NONMEMBER_PRICE_CENTS

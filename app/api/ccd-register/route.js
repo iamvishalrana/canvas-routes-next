@@ -2,6 +2,7 @@ import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { deviceType } from '../../../lib/deviceType'
 import { captureException } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { createClient } from '../../../lib/supabase/server'
 import { emailShell, p, button, infoCard, accentCard, eyebrow, COLOR } from '../../../lib/emailLayout.js'
 
 const EVENT_NAME = 'Cars, Coffee & Dad Jokes — June 20, 2026'
@@ -87,15 +88,22 @@ export async function POST(request) {
 
   const normalEmail = email.toLowerCase().trim()
 
-  // Verify member status server-side — never trust isMember from the client
-  // body alone. Members already know about Canvas Routes, so the "how did
-  // you hear about us" question (and its requirement) is skipped for them.
+  // Verify member status entirely server-side, from the request's own
+  // session cookie — never from a client-supplied isMember flag. This route
+  // has no auth requirement, so a spoofed isMember:true with any real
+  // member's email used to skip the review-flow requirement and overwrite
+  // that member's applications row with arbitrary data. Requiring the
+  // AUTHENTICATED session's own email to match the submitted email closes
+  // that — only someone actually logged in as that member gets treated as one.
   let verifiedMember = false
-  if (isMember === true && process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) {
     try {
-      const { data: member } = await createAdminClient().from('members')
-        .select('id').eq('email', normalEmail).maybeSingle()
-      verifiedMember = !!member
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.email && user.email.toLowerCase().trim() === normalEmail) {
+        const { data: member } = await createAdminClient().from('members').select('id').eq('id', user.id).maybeSingle()
+        verifiedMember = !!member
+      }
     } catch { /* fall through — treat as non-member */ }
   }
 
