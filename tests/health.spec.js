@@ -195,6 +195,36 @@ test('production DB schema matches code expectations', async ({ request }) => {
   expect(body.ok).toBe(true)
 })
 
+// ─── Event Short Links ───────────────────────────────────────────────────────
+
+// Regression coverage for a real incident (2026-08-27): removing the
+// hardcoded next.config.mjs rewrite for this link broke it silently — no
+// Sentry error (a 404 for a route that no longer resolves isn't an
+// exception, it's the app working exactly as configured) and no other test
+// caught it (nothing in this file exercised /meet/[id] or any short link
+// before now). These two tests would have failed within hours of that
+// deploy instead of only being noticed when someone tried to use the link.
+test('event short link resolves to the registration page', async ({ page }) => {
+  await page.goto('/ccsept5-2026')
+  await expect(page.getByRole('heading', { name: /request your spot/i })).toBeVisible({ timeout: 15000 })
+})
+
+test('meet/[id] registration page loads with a working form', async ({ page }) => {
+  await page.goto('/meet/1a020f09-f618-42ed-b646-75c1927da38a')
+  await expect(page.locator('#meet-name')).toBeVisible({ timeout: 15000 })
+  await expect(page.locator('#meet-email')).toBeVisible()
+})
+
+test('public event register API validation works', async ({ request }) => {
+  // Empty body — confirms the route is reachable and validates before any DB write
+  const res = await request.post('/api/public/events/1a020f09-f618-42ed-b646-75c1927da38a/register', { data: {} })
+  expect([400, 429]).toContain(res.status())
+  if (res.status() === 400) {
+    const body = await res.json()
+    expect(body.error).toBe('Full name is required.')
+  }
+})
+
 // ─── Partners ────────────────────────────────────────────────────────────────
 
 test('partners page loads', async ({ page }) => {

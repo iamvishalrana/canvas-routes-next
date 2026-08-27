@@ -27,15 +27,15 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
-  // Event short links now resolve dynamically from events.slug in
-  // middleware.js (see eventSlugCache/resolveEventSlug there) instead of
-  // being hardcoded per-event here — but that only works once the
-  // supabase/migrations/20260827_events_slug.sql migration has actually been
-  // run (adds the slug column). This entry is a temporary safety net for
-  // /ccsept5-2026 specifically until that migration runs — remove it once
-  // confirmed the DB-driven version is live (visiting the link after the
-  // migration runs will still work fine either way, this just becomes
-  // redundant, not harmful).
+  // Every FUTURE event short link resolves dynamically from events.slug in
+  // middleware.js (see eventSlugCache/resolveEventSlug there) — no code
+  // change needed per event anymore. This one entry is kept intentionally as
+  // a permanent, DB-independent safety net for this specific already-shared
+  // link (confirmed migrated to events.slug too — supabase/migrations/
+  // 20260827_events_slug.sql), after removing it once already broke it in
+  // production for the window before that migration had actually been run.
+  // The two mechanisms don't conflict; this is deliberate redundancy, not
+  // leftover cleanup — don't remove it "for cleanliness."
   async rewrites() {
     return [
       { source: '/ccsept5-2026', destination: '/meet/1a020f09-f618-42ed-b646-75c1927da38a' },
