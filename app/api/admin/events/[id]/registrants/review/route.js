@@ -2,7 +2,7 @@ import { requireAdmin } from '../../../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../../lib/sentry'
 import { isSameEvent } from '../../../../../../../lib/eventCheckinShared.js'
-import { emailShell, p, infoCard } from '../../../../../../../lib/emailLayout.js'
+import { buildAcceptedHtml, buildDeclinedHtml } from '../../../../../../../lib/eventReviewEmails.js'
 
 // Every value here can trace back to something a public registrant typed on
 // their own form submission (name) — escape before landing in raw HTML,
@@ -11,41 +11,6 @@ function h(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-}
-
-function buildAcceptedHtml({ firstName, eventName, dateDisplay, location }) {
-  const body = `
-    ${p(`Your spot at <strong style="color:#161616;font-weight:600;">${eventName}</strong> is confirmed. See you there.`)}
-    ${infoCard([
-      dateDisplay && ['Date', dateDisplay],
-      location && ['Location', location],
-      ['Entry', 'Free'],
-    ])}
-    ${p(`Questions? Reply directly to this email &mdash; it comes straight to me.`, { mb: '6px' })}
-    ${p(`&mdash; Jerry`, { tone: 'muted', mb: '0' })}
-  `
-  return emailShell({
-    title: 'You’re confirmed — Canvas Routes',
-    preheader: `Your spot at ${eventName} is confirmed.`,
-    eyebrow: 'Canvas Routes · Registration Confirmed',
-    heading: `You&rsquo;re in, ${firstName}.`,
-    body,
-  })
-}
-
-function buildDeclinedHtml({ firstName, eventName }) {
-  const body = `
-    ${p(`Thanks for your interest in <strong style="color:#161616;font-weight:600;">${eventName}</strong>. Every registration is personally reviewed, and we&rsquo;re not able to confirm your spot for this one.`)}
-    ${p(`We&rsquo;d love to see you at a future meet &mdash; keep an eye on our Instagram or apply for membership for early access to what&rsquo;s next.`, { mb: '6px' })}
-    ${p(`&mdash; Jerry`, { tone: 'muted', mb: '0' })}
-  `
-  return emailShell({
-    title: 'Update on your registration — Canvas Routes',
-    preheader: `An update on your registration for ${eventName}.`,
-    eyebrow: 'Canvas Routes · Registration Update',
-    heading: `Hey ${firstName}.`,
-    body,
-  })
 }
 
 // Admin decision on a public event registration submitted through

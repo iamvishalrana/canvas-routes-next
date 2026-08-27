@@ -5,7 +5,7 @@ import { captureException } from '../../../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { listEventRegistrants } from '../../../../../../lib/eventCheckinShared.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
-import { emailShell, p, infoCard } from '../../../../../../lib/emailLayout.js'
+import { buildPendingReviewHtml, buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
 
 const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
@@ -18,31 +18,6 @@ function h(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-}
-
-// Sent immediately on submission — every meet through this route is reviewed
-// by an admin (Accept/Decline in the event's Registrants panel) before the
-// registrant gets an actual confirmation, so this must never say "you're
-// confirmed"/"you're registered" the way buildEventConfirmHtml (used by the
-// instant member-portal flows) does.
-function buildPendingReviewHtml({ firstName, eventName, dateDisplay, location }) {
-  const body = `
-    ${p(`We&rsquo;ve received your registration for <strong style="color:#161616;font-weight:600;">${eventName}</strong>. Every registration is personally reviewed &mdash; we&rsquo;ll follow up by email with your confirmation before the event.`)}
-    ${infoCard([
-      dateDisplay && ['Date', dateDisplay],
-      location && ['Location', location],
-      ['Entry', 'Free'],
-    ])}
-    ${p(`Questions? Reply directly to this email &mdash; it comes straight to me.`, { mb: '6px' })}
-    ${p(`&mdash; Jerry`, { tone: 'muted', mb: '0' })}
-  `
-  return emailShell({
-    title: 'Registration received — Canvas Routes',
-    preheader: `We've received your registration for ${eventName} — we'll follow up with confirmation before the event.`,
-    eyebrow: 'Canvas Routes · Registration Received',
-    heading: `Thanks, ${firstName}.`,
-    body,
-  })
 }
 
 // Generic no-auth registration route for any 'Meet'-type event with
@@ -114,7 +89,9 @@ export async function POST(request, { params }) {
   if (!verifiedMember && (!source || !VALID_SOURCES.includes(source)))
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
 
-  if (ev.capacity) {
+  // Verified members always get in — capacity only gates public/non-member
+  // submissions, which is also why it must run after verifiedMember is known.
+  if (ev.capacity && !verifiedMember) {
     try {
       const registrants = await listEventRegistrants(admin, ev.id, ev.name)
       // Exclude the submitter's own existing registration — otherwise
@@ -143,11 +120,12 @@ export async function POST(request, { params }) {
       event: ev.name,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
-      // Every submission through this route is admin-reviewed (Accept/Decline
-      // in the event's Registrants panel) rather than instantly confirmed —
-      // preserve an already-decided outcome across a re-submission (e.g. the
-      // registrant fixing a typo) instead of bumping it back to pending.
-      review_status: existingReg?.review_status || 'pending',
+      // Public submissions are admin-reviewed (Accept/Decline in the event's
+      // Registrants panel) — preserve an already-decided outcome across a
+      // re-submission (e.g. fixing a typo) instead of bumping it back to
+      // pending. Verified members skip review entirely and are always
+      // accepted, regardless of any prior state or event capacity.
+      review_status: verifiedMember ? 'accepted' : (existingReg?.review_status || 'pending'),
       details: {
         car_year: year?.trim() || null, car_make: carMake?.trim() || null, car_model: fullCarModel || null,
         phone: phone || null, instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
@@ -198,9 +176,13 @@ export async function POST(request, { params }) {
           from: 'Canvas Routes <jerry@canvasroutes.com>',
           to: normalEmail,
           reply_to: 'jerry@canvasroutes.com',
-          subject: `Registration received — ${ev.name}`,
-          html: buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null }),
-          text: `Hey ${firstName},\n\nWe've received your registration for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Every registration is personally reviewed — we'll follow up by email with your confirmation before the event.\n\nJerry\nCanvas Routes`,
+          subject: verifiedMember ? `You're confirmed — ${ev.name}` : `Registration received — ${ev.name}`,
+          html: verifiedMember
+            ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null })
+            : buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null }),
+          text: verifiedMember
+            ? `Hey ${firstName},\n\nYour spot at ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''} is confirmed. See you there.\n\nJerry\nCanvas Routes`
+            : `Hey ${firstName},\n\nWe've received your registration for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Every registration is personally reviewed — we'll follow up by email with your confirmation before the event.\n\nJerry\nCanvas Routes`,
         }),
       }).catch(err => captureException(err, { context: 'public-event-register-confirm-email', eventId })),
       fetch('https://api.resend.com/emails', {
