@@ -41,6 +41,10 @@ const CHECKS = {
   announcements: [
     'id', 'title', 'content', 'published', 'audience', 'pinned', 'created_at',
   ],
+  // middleware.js resolves event short links from events.slug on every
+  // matching request — if this column goes missing, every one of those
+  // requests would error, not just a single write path.
+  events: ['id', 'slug'],
 }
 
 export const dynamic = 'force-dynamic'

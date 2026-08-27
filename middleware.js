@@ -1,8 +1,56 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import { isAdminUser } from './lib/adminAccess.js'
+import { createAdminClient } from './lib/supabase/admin.js'
+import { isReservedSlug } from './lib/reservedSlugs.js'
+
+// In-memory cache of events.slug -> id, so a bare short-link path (e.g.
+// /ccsept5-2026) doesn't cost a DB round trip on every request — refreshed
+// at most once every 60s. This is a pure perf optimization: a cold/expired
+// cache just means the next lookup re-fetches, correctness never depends on
+// it, and each middleware instance keeps its own copy (fine at this scale).
+let eventSlugCache = null // { map: Map<string,string>, expiresAt: number }
+
+async function resolveEventSlug(slug) {
+  const now = Date.now()
+  if (!eventSlugCache || now > eventSlugCache.expiresAt) {
+    try {
+      const admin = createAdminClient()
+      const { data, error } = await admin.from('events').select('id, slug').not('slug', 'is', null)
+      if (error) return null // e.g. migration not run yet — retry next request, don't cache a false "no slugs" result
+      const map = new Map((data || []).map(e => [e.slug, e.id]))
+      eventSlugCache = { map, expiresAt: now + 60_000 }
+    } catch {
+      // DB unreachable — don't cache a failure, and don't block the
+      // request. The path just falls through to Next's normal routing
+      // (404 for a real short link is a much smaller problem than every
+      // request failing because this lookup errored).
+      return null
+    }
+  }
+  return eventSlugCache.map.get(slug) || null
+}
 
 export async function middleware(request) {
+  const { pathname } = request.nextUrl
+
+  // '/:slug' in the matcher below now also invokes middleware for every
+  // bare single-segment public page (e.g. /wtet, /faq) that never used to
+  // reach it at all — those must short-circuit here with a plain next(),
+  // not fall through into the Supabase auth/session block further down.
+  // That block does a real getUser() network call, which would otherwise
+  // run on every visit to every public single-segment page for no reason
+  // (bare /admin and /members are excluded from this fast path since they
+  // legitimately need that block's redirect-if-unauthenticated behavior).
+  if (/^\/[^/]+$/.test(pathname) && !pathname.includes('.') && pathname !== '/admin' && pathname !== '/members') {
+    const slug = pathname.slice(1)
+    if (!isReservedSlug(slug)) {
+      const eventId = await resolveEventSlug(slug)
+      if (eventId) return NextResponse.rewrite(new URL(`/meet/${eventId}`, request.url))
+    }
+    return NextResponse.next()
+  }
+
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     const p = request.nextUrl.pathname
     if (p.startsWith('/admin') && p !== '/admin/login') {
@@ -34,7 +82,6 @@ export async function middleware(request) {
   )
 
   const { data: { user } } = await supabase.auth.getUser()
-  const { pathname } = request.nextUrl
 
   const isLogin = pathname === '/members/login'
   const isAdminLogin = pathname === '/admin/login'
@@ -92,5 +139,12 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/members/:path*', '/admin/:path*', '/api/admin/:path*', '/api/member/:path*'],
+  // '/:slug' additionally matches every bare single-segment path (e.g.
+  // /ccsept5-2026, but not /routes/into-the-laurentians) so event short
+  // links can resolve without a deploy. It also matches bare /admin and
+  // /members — those two are excluded by exact-pathname checks inside the
+  // function so they still fall through to the existing logic below
+  // unchanged; every other single-segment path short-circuits before ever
+  // reaching that logic.
+  matcher: ['/members/:path*', '/admin/:path*', '/api/admin/:path*', '/api/member/:path*', '/:slug'],
 }

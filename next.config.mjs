@@ -27,14 +27,11 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
-  // Friendly short links that mask the real page — the URL bar keeps
-  // showing the short path (unlike redirect(), which would send the
-  // browser to the destination URL instead).
-  async rewrites() {
-    return [
-      { source: '/ccsept5-2026', destination: '/meet/1a020f09-f618-42ed-b646-75c1927da38a' },
-    ]
-  },
+  // Event short links (e.g. /ccsept5-2026) used to be hardcoded here, which
+  // meant every new one needed a code change + deploy. They're now resolved
+  // dynamically from events.slug in middleware.js instead — see the
+  // eventSlugCache/resolveEventSlug logic there. Nothing belongs in this
+  // rewrites() block for that purpose anymore.
 }
 
 export default withSentryConfig(nextConfig, {

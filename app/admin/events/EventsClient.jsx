@@ -9,6 +9,7 @@ import {
 } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { ROAD_TRIP_TYPE_TO_NAME } from '../../../lib/eventMeta'
+import { normalizeSlug, isReservedSlug } from '../../../lib/reservedSlugs'
 import { WTET_EVENT_NAME } from '../../../lib/wtetRegistrationContent'
 import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
@@ -227,6 +228,7 @@ const FIELD_INFO = {
   location:             'Shown on the tile, popup, and used to generate an embedded map preview. Use the full venue name or address for the best map match.',
   description:          'Short teaser shown on the event tile and in the popup. 1–2 sentences is ideal.',
   registration_url:     'If set, the event tile shows a "Registration Open · Click to Register" link pointing here instead of the member portal. Use this for public events with their own page (e.g. /cars-coffee-dad-jokes).',
+  slug:                 'Optional short link, e.g. "ccsept5-2026" becomes canvasroutes.com/ccsept5-2026 and redirects to this event\'s /meet/ page. Takes effect immediately — no deploy needed. Lowercase letters, numbers, and hyphens only. Leave blank to only use the /meet/<event id> link shown below.',
   registration_opens:   'Date and time when members can start registering in the portal. Leave blank to disable member registration for this event entirely.',
   registration_closes:  'Optional cut-off after which the register button shows "Registration Closed." Leave blank to keep registration open indefinitely once it opens.',
   member_price:         'Price in CAD. Enter 0.00 for free events. Paid events trigger a Stripe checkout. Leave blank if this event uses an external registration URL instead.',
@@ -259,7 +261,7 @@ function InfoTip({ field }) {
   )
 }
 
-const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Route', trip_length: '', registration_url: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' }
+const EMPTY_FORM = { name: '', date: '', date_display: '', location: '', description: '', type: 'Route', trip_length: '', registration_url: '', slug: '', registration_opens_at: '', registration_closes_at: '', capacity: '', member_price: '', priority_window_end: '' }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
@@ -434,7 +436,7 @@ export default function EventsClient() {
     setEditForm({
       name: item.name, date: item.date, date_display: item.date_display || '',
       location: item.location || '', description: item.description || '',
-      type: item.type, trip_length: item.trip_length || '', registration_url: item.registration_url || '',
+      type: item.type, trip_length: item.trip_length || '', registration_url: item.registration_url || '', slug: item.slug || '',
       registration_opens_at: item.registration_opens_at || '',
       registration_closes_at: item.registration_closes_at || '',
       capacity: item.capacity || '', member_price: item.member_price || null,
@@ -1046,6 +1048,17 @@ export default function EventsClient() {
               Use <code>/meet/&lt;event id&gt;</code> for the generic public registration page, <code>/members/events/&lt;id&gt;</code> for a members-only page, or an external URL for a bespoke event page. Who can actually see and register for this event is controlled by the Visible/Registration toggles below, after it&apos;s created.
             </div>
           </div>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <L>Short Link<InfoTip field="slug" /></L>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '12px', color: '#aaa' }}>canvasroutes.com/</span>
+              <input style={{ ...inp, flex: 1 }} value={form.slug}
+                onChange={e => setForm(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') }))}
+                onBlur={() => setForm(p => ({ ...p, slug: normalizeSlug(p.slug) || '' }))}
+                placeholder="ccsept5-2026" />
+            </div>
+            {form.slug && isReservedSlug(form.slug) && <Err msg={`"${form.slug}" is a reserved page name — pick a different short link.`} />}
+          </div>
           <div style={{ marginBottom: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888', marginBottom: '0.75rem' }}>Member Registration</div>
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
@@ -1114,6 +1127,12 @@ export default function EventsClient() {
                       Public link: canvasroutes.com/meet/{item.id}
                       <CopyBtn value={`https://canvasroutes.com/meet/${item.id}`} />
                     </div>
+                    {item.slug && (
+                      <div style={{ fontSize: '11px', color: '#3B6B2F', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        Short link: canvasroutes.com/{item.slug}
+                        <CopyBtn value={`https://canvasroutes.com/${item.slug}`} />
+                      </div>
+                    )}
 
                     {/* Application stats */}
                     {(item.total_applications > 0 || item.confirmed_count > 0 || item.pending_review_count > 0) && (
@@ -1775,6 +1794,22 @@ export default function EventsClient() {
                           <div style={{ fontSize: '10px', color: '#aaa', marginTop: '0.3rem' }}>
                             Use <code>/meet/&lt;event id&gt;</code> for the generic public registration page, <code>/members/events/&lt;id&gt;</code> for a members-only page, or an external URL for a bespoke event page. Who can actually see and register for this event is controlled by the Visible/Registration toggles on the event card.
                           </div>
+                        </div>
+                        <div style={{ marginBottom: '0.6rem' }}>
+                          <L>Short Link<InfoTip field="slug" /></L>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '12px', color: '#aaa' }}>canvasroutes.com/</span>
+                            <input style={{ ...inp, flex: 1 }} value={editForm.slug || ''}
+                              onChange={e => setEditForm(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-') }))}
+                              onBlur={() => setEditForm(p => ({ ...p, slug: normalizeSlug(p.slug) || '' }))}
+                              placeholder="ccsept5-2026" />
+                          </div>
+                          {editForm.slug && isReservedSlug(editForm.slug) && <Err msg={`"${editForm.slug}" is a reserved page name — pick a different short link.`} />}
+                          {editForm.slug && !isReservedSlug(editForm.slug) && (
+                            <div style={{ fontSize: '11px', color: '#3B6B2F', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                              canvasroutes.com/{editForm.slug}<CopyBtn value={`https://canvasroutes.com/${editForm.slug}`} />
+                            </div>
+                          )}
                         </div>
                         <div style={{ paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '0.75rem' }}>
                           <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#888', marginBottom: '0.6rem' }}>Member Registration</div>

@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { captureMessage } from '../../../../../lib/sentry.js'
+import { normalizeSlug, isReservedSlug } from '../../../../../lib/reservedSlugs.js'
 
 export async function PATCH(request, { params }) {
   const adminUser = await requireAdmin()
@@ -9,7 +10,7 @@ export async function PATCH(request, { params }) {
   const { id } = await params
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
-  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'visible_to_members', 'visible_to_public', 'trip_length', 'checkin_enabled', 'checkin_sections', 'checkin_max_passengers', 'checkin_lunch_options', 'checkin_lunch_intro', 'checkin_waiver_text', 'checkin_waiver_text_fr', 'checkin_lunch_cutoff', 'checkin_lunch_extras', 'awards_enabled', 'awards_categories', 'awards_ineligible_names', 'awards_slug']
+  const allowed = ['name', 'date', 'date_display', 'location', 'description', 'type', 'registration_url', 'registration_opens_at', 'registration_closes_at', 'capacity', 'member_price', 'priority_window_end', 'sort_order', 'registration_enabled', 'public_registration_enabled', 'registration_visibility', 'visible_to_members', 'visible_to_public', 'trip_length', 'checkin_enabled', 'checkin_sections', 'checkin_max_passengers', 'checkin_lunch_options', 'checkin_lunch_intro', 'checkin_waiver_text', 'checkin_waiver_text_fr', 'checkin_lunch_cutoff', 'checkin_lunch_extras', 'awards_enabled', 'awards_categories', 'awards_ineligible_names', 'awards_slug', 'slug']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   if ('member_price' in update && update.member_price != null && update.member_price < 0)
@@ -40,9 +41,16 @@ export async function PATCH(request, { params }) {
   if ('awards_categories' in update) update.awards_categories = Array.isArray(update.awards_categories) ? update.awards_categories : []
   if ('awards_ineligible_names' in update) update.awards_ineligible_names = Array.isArray(update.awards_ineligible_names) ? update.awards_ineligible_names : []
   if ('awards_slug' in update) update.awards_slug = update.awards_slug ? update.awards_slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || null : null
+  if ('slug' in update) {
+    update.slug = normalizeSlug(update.slug)
+    if (update.slug && isReservedSlug(update.slug)) return Response.json({ error: `"${update.slug}" is a reserved page name — pick a different short link.` }, { status: 400 })
+  }
   const supabase = createAdminClient()
   const { error } = await supabase.from('events').update(update).eq('id', id)
-  if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  if (error) {
+    if (error.code === '23505') return Response.json({ error: `That short link is already in use by another event.` }, { status: 409 })
+    return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
+  }
   await logAdminAction(supabase, adminUser?.email, { action: 'event.update', entityType: 'event', entityId: id, metadata: { fields: Object.keys(update).join(', ') } })
   return Response.json({ success: true })
 }
