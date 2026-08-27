@@ -177,11 +177,16 @@ export default function MeetRegisterForm({ event }) {
           transform: skewX(-10deg); animation: meet-cta-shimmer 0.9s cubic-bezier(0.4,0,0.2,1) 1.4s forwards; pointer-events: none;
         }
         @media (max-width: 768px) {
-          .meet-hero { padding-left: 1.25rem !important; padding-right: 1.25rem !important; }
+          .meet-hero { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
+          .meet-hero-overlay { background: linear-gradient(to bottom, rgba(8,16,10,0.5) 0%, rgba(8,16,10,0.82) 100%) !important; }
+          .meet-hero-cta { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
         }
         @media (max-width: 640px) {
           .meet-submit-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom)); background: #F5F1EC; border-top: 0.5px solid rgba(0,0,0,0.1); z-index: 50; }
           .meet-form-pad { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }
+        }
+        @media (max-width: 480px) {
+          .meet-hero { padding-left: 1rem !important; padding-right: 1rem !important; }
         }
         input, select, textarea { font-size: 16px !important; }
       `}</style>
@@ -201,11 +206,11 @@ export default function MeetRegisterForm({ event }) {
           full-bleed photo, gold hairlines, staggered fade-in, gold date
           badge with a periodic shimmer streak. */}
       <section className="meet-hero" style={{
-        backgroundColor:'#0F1E14', paddingTop:'calc(72px + clamp(70px,10vw,110px))', paddingBottom:'4.5rem',
-        paddingLeft:'2rem', paddingRight:'2rem', textAlign:'center', position:'relative', overflow:'hidden',
+        backgroundColor:'#0F1E14', padding:'clamp(140px,18vw,210px) 3rem 6rem',
+        textAlign:'center', position:'relative', overflow:'hidden',
         ...(event.photo_url ? { backgroundImage:`url('${event.photo_url}')`, backgroundSize:'cover', backgroundPosition:'center 50%' } : {}),
       }}>
-        <div style={{ position:'absolute', inset:0, background:'rgba(10,20,12,0.72)', zIndex:1 }} />
+        <div className="meet-hero-overlay" style={{ position:'absolute', inset:0, background:'rgba(10,20,12,0.72)', zIndex:1 }} />
         <div style={{ position:'absolute', top:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)', zIndex:2 }} />
         <div style={{ position:'relative', zIndex:2, maxWidth:'520px', margin:'0 auto' }}>
           <div style={{ fontSize:'11px', letterSpacing:'0.25em', textTransform:'uppercase', color:'rgba(197,168,130,0.6)', marginBottom:'1.2rem', animation:'meet-fade-in 0.7s ease both', animationDelay:'100ms' }}>
@@ -221,7 +226,7 @@ export default function MeetRegisterForm({ event }) {
           )}
           {dateLine && (
             <div className="meet-date-badge" style={{ display:'inline-block', padding:'0.5rem 1.4rem', border:'1px solid rgba(197,168,130,0.7)', background:'rgba(197,168,130,0.12)', fontSize:'11px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#F5F1EC', marginBottom:'2.5rem', animation:'meet-fade-in 0.6s ease both', animationDelay:'600ms' }}>
-              {dateLine}{eventTime ? ` · ${eventTime}` : ''}
+              {dateLine}
             </div>
           )}
           <div style={{ width:'40px', height:'0.5px', background:'rgba(197,168,130,0.5)', margin:'0 auto 2.5rem', animation:'meet-fade-in 0.5s ease both', animationDelay:'700ms' }} />
@@ -240,6 +245,24 @@ export default function MeetRegisterForm({ event }) {
         </div>
         <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)', zIndex:2 }} />
       </section>
+
+      {/* Stat strip — Date / Venue / Time / Cost columns, same style this
+          page used before the Sunday-Silhouette-style hero replaced it. */}
+      <div style={{ background:'#0F1E14', borderTop:'0.5px solid rgba(197,168,130,0.15)', padding:'1.5rem 2rem' }}>
+        <div style={{ maxWidth:'520px', margin:'0 auto', display:'flex', flexWrap:'wrap', gap:'1rem', justifyContent:'center' }}>
+          {[
+            dateLine && { label:'Date', value: dateLine },
+            event.location && { label:'Venue', value: event.location },
+            eventTime && { label:'Time', value: eventTime },
+            { label:'Cost', value:'Free' },
+          ].filter(Boolean).map(({ label, value }) => (
+            <div key={label} style={{ textAlign:'center', minWidth:'110px' }}>
+              <div style={{ fontSize:'9px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.3rem' }}>{label}</div>
+              <div style={{ fontSize:'13px', color:'#F5F1EC', fontFamily:'var(--font-inter), sans-serif' }}>{value}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Form */}
       <div id="meet-form" className="meet-form-pad" style={{ background:'#F5F1EC', padding:'5rem 1.5rem 6rem' }}>
