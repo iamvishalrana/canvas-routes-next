@@ -317,6 +317,10 @@ export default function EventsClient() {
   const [sendingConfirmEmail, setSendingConfirmEmail] = useState({})
   const [confirmEmailResult, setConfirmEmailResult] = useState({})
 
+  // Accept/Decline a pending public registration (key = `${eventId}::${email}`)
+  const [reviewingRegistrant, setReviewingRegistrant] = useState({})
+  const [reviewResult, setReviewResult] = useState({})
+
   // Manual add registrant
   const [addRegOpen, setAddRegOpen] = useState({})
   const [addRegName, setAddRegName] = useState({})
@@ -376,16 +380,24 @@ export default function EventsClient() {
       const appData = appRes.ok ? await appRes.json().catch(() => []) : []
 
       const appMap = new Map((Array.isArray(appData) ? appData : []).map(ev => [ev.id, ev]))
-      const merged = (Array.isArray(evData) ? evData : []).map(ev => {
-        const a = appMap.get(ev.id) || {}
-        return {
-          confirmed_count:    a.confirmed_count    || 0,
-          invited_count:      a.invited_count      || 0,
-          total_applications: a.total_applications || 0,
-          applications:       a.applications       || [],
-          ...ev,
-        }
-      })
+      // Route-type events are the auto-created `events` row every road trip
+      // gets linked to (ensureRouteEventLinked, lib/routeEventLink.js) purely
+      // to power its Registrants/Check-in/Route Awards tabs under Admin >
+      // Routes (RouteEventConfigClient) — they're not meets, and managing
+      // them here too would just duplicate that page. Same filter the
+      // members-portal events list already applies for the same reason.
+      const merged = (Array.isArray(evData) ? evData : [])
+        .filter(ev => ev.type !== 'Route')
+        .map(ev => {
+          const a = appMap.get(ev.id) || {}
+          return {
+            confirmed_count:    a.confirmed_count    || 0,
+            invited_count:      a.invited_count      || 0,
+            total_applications: a.total_applications || 0,
+            applications:       a.applications       || [],
+            ...ev,
+          }
+        })
       setItems(merged)
     } catch {
       setItems([])
@@ -696,6 +708,38 @@ export default function EventsClient() {
     }
   }
 
+  async function reviewRegistrant(eventId, r, decision) {
+    if (!(await confirm({
+      title: decision === 'accept' ? 'Accept this registration?' : 'Decline this registration?',
+      message: decision === 'accept'
+        ? 'This emails the registrant a confirmation immediately.'
+        : 'This emails the registrant that their registration was not confirmed.',
+      details: <><strong>{r.name || '—'}</strong> · {r.email}</>,
+      confirmLabel: decision === 'accept' ? 'Yes, accept' : 'Yes, decline',
+    }))) return
+    const key = `${eventId}::${r.email}`
+    setReviewingRegistrant(p => ({ ...p, [key]: true }))
+    setReviewResult(p => ({ ...p, [key]: null }))
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/registrants/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: r.email, decision }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setReviewResult(p => ({ ...p, [key]: { error: d.error || 'Failed.' } })); return }
+      setReviewResult(p => ({ ...p, [key]: { reviewStatus: d.review_status } }))
+      setRegistrantsData(prev => ({
+        ...prev,
+        [eventId]: (prev[eventId] || []).map(reg => reg.email === r.email ? { ...reg, reviewStatus: d.review_status } : reg),
+      }))
+    } catch {
+      setReviewResult(p => ({ ...p, [key]: { error: 'Network error.' } }))
+    } finally {
+      setReviewingRegistrant(p => ({ ...p, [key]: false }))
+    }
+  }
+
   async function sendEmailToRegistrants(eventId) {
     const registrants = registrantsData[eventId] || []
     const emails = [...new Set(registrants.map(r => r.email).filter(e => e && e !== '—'))]
@@ -846,6 +890,12 @@ export default function EventsClient() {
             rsvpAnswers: rsvpToken?.answers || null,
             confirmedAt: rsvpToken?.confirmed_at || null,
             inviteSent: !!rsvpToken,
+            // Only present for public registrations submitted through
+            // /meet/[id] (app/api/public/events/[id]/register) — every one
+            // of those is admin-reviewed, so this drives the Accept/Decline
+            // buttons. Member-portal/road-trip registrants never have this
+            // key, so the buttons never show for them.
+            reviewStatus: reg?.review_status || null,
             car: [reg?.details?.car_year ?? c.car_year, make, model].filter(Boolean).join(' ') || null,
             href: `/admin/contacts?q=${encodeURIComponent(c.email || c.name || '')}`,
             wtetCheckin: c.wtet_checkin || null,
@@ -1027,6 +1077,10 @@ export default function EventsClient() {
                     </div>
                     <div style={{ fontSize: '11px', color: '#c5a882', fontWeight: '500', marginBottom: '0.2rem' }}>{item.date_display || item.date}</div>
                     {item.location && <div style={{ fontSize: '12px', color: '#888' }}>{item.location}</div>}
+                    <div style={{ fontSize: '11px', color: '#aaa', marginTop: '0.3rem', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                      Public link: canvasroutes.com/meet/{item.id}
+                      <CopyBtn value={`https://canvasroutes.com/meet/${item.id}`} />
+                    </div>
 
                     {/* Application stats */}
                     {(item.total_applications > 0 || item.confirmed_count > 0) && (
@@ -1048,13 +1102,17 @@ export default function EventsClient() {
 
                   {/* Action buttons */}
                   {isMobile ? (
-                    <KebabMenu items={[
-                      { label: 'Move up', onClick: () => moveEvent(item.id, 'up'), disabled: displayIdx === 0 || isPast || moving },
-                      { label: 'Move down', onClick: () => moveEvent(item.id, 'down'), disabled: displayIdx >= nonPastCount - 1 || isPast || moving },
-                      { label: showRegistrants === item.id ? 'Hide Registrants' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`, onClick: () => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price }) },
-                      { label: isEditing ? 'Close' : 'Edit', onClick: () => isEditing ? setEditing(null) : openEdit(item) },
-                      { label: 'Delete', danger: true, onClick: () => setDeleteEventConfirm(item.id) },
-                    ]} />
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                      <GhostBtn small onClick={() => toggleRegistrants(item.id, item.name, { eventType: item.type, eventPrice: item.member_price })}>
+                        {showRegistrants === item.id ? 'Hide' : `Registrants${registrantsData[item.id] ? ` (${registrantsData[item.id].length})` : ''}`}
+                      </GhostBtn>
+                      <KebabMenu items={[
+                        { label: 'Move up', onClick: () => moveEvent(item.id, 'up'), disabled: displayIdx === 0 || isPast || moving },
+                        { label: 'Move down', onClick: () => moveEvent(item.id, 'down'), disabled: displayIdx >= nonPastCount - 1 || isPast || moving },
+                        { label: isEditing ? 'Close' : 'Edit', onClick: () => isEditing ? setEditing(null) : openEdit(item) },
+                        { label: 'Delete', danger: true, onClick: () => setDeleteEventConfirm(item.id) },
+                      ]} />
+                    </div>
                   ) : (
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'flex-end' }}>
                       <div style={{ display: 'flex', gap: '0.2rem' }}>
@@ -1380,6 +1438,10 @@ export default function EventsClient() {
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
                               const canSend = r.email && r.email !== '—' && r.status !== 'confirmed'
+                              const reviewing = !!reviewingRegistrant[indivKey]
+                              const reviewRes = reviewResult[indivKey]
+                              const liveReviewStatus = reviewRes?.reviewStatus || r.reviewStatus
+                              const canReview = r.email && r.email !== '—' && liveReviewStatus === 'pending'
                               const isDeletePending = deleteRegConfirm === indivKey
                               const isDeleting = !!deletingReg[indivKey]
                               const deleteErr = deleteRegErr[indivKey]
@@ -1411,6 +1473,14 @@ export default function EventsClient() {
                                             </div>
                                           </div>
                                           <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                                            {canReview && (
+                                              <>
+                                                <GhostBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'accept')}>{reviewing ? '…' : 'Accept'}</GhostBtn>
+                                                <DangerBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'decline')}>{reviewing ? '…' : 'Decline'}</DangerBtn>
+                                              </>
+                                            )}
+                                            {liveReviewStatus === 'accepted' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Accepted</span>}
+                                            {liveReviewStatus === 'declined' && <span style={{ fontSize: '10px', color: '#93333E' }}>Declined</span>}
                                             {canSend && !result?.sent && (
                                               <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                             )}
@@ -1423,6 +1493,7 @@ export default function EventsClient() {
                                             }
                                           </div>
                                         </div>
+                                        {reviewRes?.error && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.25rem' }}>{reviewRes.error}</div>}
                                         {result?.error && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.25rem' }}>{result.error}</div>}
                                         {deleteErr && <div style={{ fontSize: '11px', color: '#93333E', marginTop: '0.25rem' }}>{deleteErr}</div>}
                                       </div>
@@ -1440,6 +1511,15 @@ export default function EventsClient() {
                                         <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#c5a882' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : r.status || '—'}</div>
                                         <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                                          {canReview && (
+                                            <div style={{ display: 'flex', gap: '0.3rem' }}>
+                                              <GhostBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'accept')}>{reviewing ? '…' : 'Accept'}</GhostBtn>
+                                              <DangerBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'decline')}>{reviewing ? '…' : 'Decline'}</DangerBtn>
+                                            </div>
+                                          )}
+                                          {liveReviewStatus === 'accepted' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Accepted</span>}
+                                          {liveReviewStatus === 'declined' && <span style={{ fontSize: '10px', color: '#93333E' }}>Declined</span>}
+                                          {reviewRes?.error && <span style={{ fontSize: '10px', color: '#93333E' }}>{reviewRes.error}</span>}
                                           {canSend && !result?.sent && (
                                             <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                           )}

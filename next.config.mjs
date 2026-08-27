@@ -27,6 +27,14 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }]
   },
+  // Friendly short links that mask the real page — the URL bar keeps
+  // showing the short path (unlike redirect(), which would send the
+  // browser to the destination URL instead).
+  async rewrites() {
+    return [
+      { source: '/ccsept5-2026', destination: '/meet/1a020f09-f618-42ed-b646-75c1927da38a' },
+    ]
+  },
 }
 
 export default withSentryConfig(nextConfig, {

@@ -8,6 +8,7 @@ import LocationMap from '../../../../../components/LocationMap'
 import AddToCalendar from '../../../../../components/AddToCalendar'
 import { MONTREAL_TZ } from '../../../../../lib/mtlTime'
 import { membersEventsT } from '../../../../../lib/i18n/membersEvents'
+import { EVENT_TIME_OVERRIDES } from '../../../../../lib/eventMeta'
 
 const OUR_DOMAIN = 'canvasroutes.com'
 function isInternalUrl(url) {
@@ -76,48 +77,57 @@ export default async function EventDetailPage({ params }) {
 
   return (
     <div style={{ maxWidth: '680px' }}>
-      {ev.photo_url && (
-        <div className="ev-detail-photo">
-          <img
-            src={ev.photo_url}
-            alt={ev.name}
-            style={{ width: '100%', height: 'auto', display: 'block' }}
-          />
-        </div>
-      )}
       <div className="ev-detail-body">
-      <div style={{ marginBottom: '1.5rem' }}>
+      <div style={{ marginBottom: '1.25rem' }}>
         <Link href="/members/events" style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', textDecoration: 'none', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
           <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           {t.events}
         </Link>
       </div>
 
-      <header style={{ marginBottom: '2.5rem', paddingBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#7B5B2E', border: '0.5px solid rgba(123,91,46,0.22)', padding: '3px 10px', background: 'rgba(123,91,46,0.04)', fontFamily: 'var(--font-inter)' }}>
-            {ev.type}
-          </span>
-          {ev.trip_length && (
-            <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.28)', padding: '3px 10px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter)' }}>
-              {ev.trip_length}
+      {/* Hero — dark panel with the event photo (if any) as a full-bleed
+          background, same treatment as the public /meet/[id] page, so a
+          member browsing the portal gets the same premium first impression
+          instead of a plain image + white text block. */}
+      <div className="ev-hero" style={{
+        position: 'relative', overflow: 'hidden',
+        background: '#0F1E14',
+        ...(ev.photo_url ? {
+          backgroundImage: `linear-gradient(180deg, rgba(10,20,12,0.35) 0%, rgba(10,20,12,0.9) 100%), url('${ev.photo_url}')`,
+          backgroundSize: 'cover', backgroundPosition: 'center',
+        } : {}),
+      }}>
+        <div style={{ padding: 'clamp(1.75rem,5vw,2.75rem) clamp(1.5rem,5vw,2.5rem)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.9rem', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '3px 10px', background: 'rgba(197,168,130,0.08)', fontFamily: 'var(--font-inter)' }}>
+              {ev.type}
             </span>
-          )}
-          {isRegistered && (
-            <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 10px', background: 'rgba(59,107,47,0.04)', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
-              <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              {t.registered}
-            </span>
-          )}
+            {ev.trip_length && (
+              <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9AC98C', border: '0.5px solid rgba(154,201,140,0.35)', padding: '3px 10px', background: 'rgba(154,201,140,0.06)', fontFamily: 'var(--font-inter)' }}>
+                {ev.trip_length}
+              </span>
+            )}
+            {isRegistered && (
+              <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9AC98C', border: '0.5px solid rgba(154,201,140,0.4)', padding: '3px 10px', background: 'rgba(154,201,140,0.06)', fontFamily: 'var(--font-inter)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+                <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                {t.registered}
+              </span>
+            )}
+          </div>
+          <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(1.9rem, 4.5vw, 2.7rem)', fontWeight: '300', color: '#F5F1EC', lineHeight: 1.1, margin: 0, letterSpacing: '-0.01em' }}>
+            {ev.name}
+          </h1>
         </div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: 'clamp(2rem, 4.5vw, 2.8rem)', fontWeight: '300', color: '#1a1a1a', lineHeight: 1.1, margin: '0 0 0.75rem', letterSpacing: '-0.01em' }}>
-          {ev.name}
-        </h1>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'center' }}>
+      </div>
+
+      {/* Meta strip — date / location / add-to-calendar, split out of the
+          hero so AddToCalendar's light-mode text stays legible. */}
+      {(ev.date_display || ev.date || ev.location || !isPast) && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1.25rem', alignItems: 'center', padding: '1rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.07)', marginBottom: '2rem' }}>
           {(ev.date_display || ev.date) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter)' }}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-              {ev.date_display || ev.date}
+              {ev.date_display || ev.date}{EVENT_TIME_OVERRIDES[ev.id] ? ` · ${EVENT_TIME_OVERRIDES[ev.id]}` : ''}
             </div>
           )}
           {ev.location && (
@@ -128,7 +138,7 @@ export default async function EventDetailPage({ params }) {
           )}
           {!isPast && <AddToCalendar name={ev.name} date={ev.date} location={ev.location} description={ev.description} />}
         </div>
-      </header>
+      )}
 
       {ev.location && <LocationMap location={ev.location} />}
 
@@ -238,11 +248,11 @@ export default async function EventDetailPage({ params }) {
       </div>
 
       <style>{`
-        .ev-detail-photo {
-          margin: -1rem -2rem 2rem;
+        .ev-hero {
+          margin: -1rem -2rem 0;
         }
         @media (max-width: 640px) {
-          .ev-detail-photo { margin: -1.75rem -1rem 1.5rem; }
+          .ev-hero { margin: -1.75rem -1rem 0; }
         }
         @keyframes evDetailFadeIn {
           from { opacity: 0; transform: translateY(10px); }

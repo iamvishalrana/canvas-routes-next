@@ -4,10 +4,21 @@ import { deviceType } from '../../../../../../lib/deviceType'
 import { captureException } from '../../../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { listEventRegistrants } from '../../../../../../lib/eventCheckinShared.js'
-import { buildEventConfirmHtml } from '../../../../../../lib/eventConfirmEmail.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
+import { buildPendingReviewHtml, buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
 
 const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
+
+// Every value below comes straight from an unauthenticated public submitter —
+// must be escaped before landing in raw HTML (the admin notify email's rows,
+// and this registrant's own confirmation-received email). Mirrors the h()
+// helper in app/api/ccd-register/route.js (the one-off this route
+// generalizes), which already does this for the same field set.
+function h(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
 
 // Generic no-auth registration route for any 'Meet'-type event with
 // public_registration_enabled — the reusable path for low-friction casual
@@ -41,9 +52,12 @@ export async function POST(request, { params }) {
     return Response.json({ error: 'Full name is required.' }, { status: 400 })
   if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     return Response.json({ error: 'A valid email address is required.' }, { status: 400 })
+  if (!year?.trim()) return Response.json({ error: 'Car year is required.' }, { status: 400 })
+  if (!carMake?.trim()) return Response.json({ error: 'Car make is required.' }, { status: 400 })
+  if (!carModel?.trim()) return Response.json({ error: 'Car model is required.' }, { status: 400 })
   if (name.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (email.length > 254) return Response.json({ error: 'Email too long.' }, { status: 400 })
-  if (carModel && carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
+  if (carModel.length > 100) return Response.json({ error: 'Car model too long.' }, { status: 400 })
 
   const admin = createAdminClient()
   const { data: ev } = await admin.from('events')
@@ -75,10 +89,17 @@ export async function POST(request, { params }) {
   if (!verifiedMember && (!source || !VALID_SOURCES.includes(source)))
     return Response.json({ error: 'Please tell us how you heard about us.' }, { status: 400 })
 
-  if (ev.capacity) {
+  // Verified members always get in — capacity only gates public/non-member
+  // submissions, which is also why it must run after verifiedMember is known.
+  if (ev.capacity && !verifiedMember) {
     try {
       const registrants = await listEventRegistrants(admin, ev.id, ev.name)
-      if (registrants.length >= ev.capacity) {
+      // Exclude the submitter's own existing registration — otherwise
+      // someone who already has a confirmed spot gets rejected as "full"
+      // when they revisit the link to correct their details after the
+      // event fills up.
+      const otherRegistrants = registrants.filter(r => r.email !== normalEmail)
+      if (otherRegistrants.length >= ev.capacity) {
         return Response.json({ error: 'This event is full. Contact us to be added to the waitlist.' }, { status: 400 })
       }
     } catch (e) {
@@ -99,6 +120,12 @@ export async function POST(request, { params }) {
       event: ev.name,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
       attended: existingReg?.attended ?? null,
+      // Public submissions are admin-reviewed (Accept/Decline in the event's
+      // Registrants panel) — preserve an already-decided outcome across a
+      // re-submission (e.g. fixing a typo) instead of bumping it back to
+      // pending. Verified members skip review entirely and are always
+      // accepted, regardless of any prior state or event capacity.
+      review_status: verifiedMember ? 'accepted' : (existingReg?.review_status || 'pending'),
       details: {
         car_year: year?.trim() || null, car_make: carMake?.trim() || null, car_model: fullCarModel || null,
         phone: phone || null, instagram: instagram ? instagram.trim().replace(/^@+/, '') : null,
@@ -149,9 +176,13 @@ export async function POST(request, { params }) {
           from: 'Canvas Routes <jerry@canvasroutes.com>',
           to: normalEmail,
           reply_to: 'jerry@canvasroutes.com',
-          subject: `You're registered — ${ev.name}`,
-          html: buildEventConfirmHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, isFree: true, amountPaid: 0, eventId: ev.id, date: ev.date || null }),
-          text: `Hey ${firstName},\n\nYou're registered for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}.\n\nSee you there,\nJerry\nCanvas Routes`,
+          subject: verifiedMember ? `You're confirmed — ${ev.name}` : `Registration received — ${ev.name}`,
+          html: verifiedMember
+            ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null })
+            : buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null }),
+          text: verifiedMember
+            ? `Hey ${firstName},\n\nYour spot at ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''} is confirmed. See you there.\n\nJerry\nCanvas Routes`
+            : `Hey ${firstName},\n\nWe've received your registration for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Every registration is personally reviewed — we'll follow up by email with your confirmation before the event.\n\nJerry\nCanvas Routes`,
         }),
       }).catch(err => captureException(err, { context: 'public-event-register-confirm-email', eventId })),
       fetch('https://api.resend.com/emails', {
@@ -162,14 +193,14 @@ export async function POST(request, { params }) {
           to: 'info@canvasroutes.com',
           subject: `Event Registration — ${ev.name} — ${name.trim()}`,
           html: buildAdminNotifyHtml('New public event registration', [
-            ['Event', `<strong>${ev.name}</strong>`],
-            ['Name', `<strong>${name.trim()}</strong>`],
-            ['Email', `<a href="mailto:${normalEmail}" style="color:#1a1a1a;">${normalEmail}</a>`],
-            ['Car', fullCarModel || '—'],
-            ['Phone', phone || '—'],
-            ['Instagram', instagram ? `@${instagram.replace(/^@+/, '')}` : '—'],
-            ['About', more || '—'],
-            ['Source', verifiedMember ? 'Canvas Routes Member' : (source || '—')],
+            ['Event', `<strong>${h(ev.name)}</strong>`],
+            ['Name', `<strong>${h(name.trim())}</strong>`],
+            ['Email', `<a href="mailto:${h(normalEmail)}" style="color:#1a1a1a;">${h(normalEmail)}</a>`],
+            ['Car', h(fullCarModel) || '—'],
+            ['Phone', h(phone) || '—'],
+            ['Instagram', instagram ? `@${h(instagram.replace(/^@+/, ''))}` : '—'],
+            ['About', h(more) || '—'],
+            ['Source', verifiedMember ? 'Canvas Routes Member' : (h(source) || '—')],
           ]),
         }),
       }).catch(err => captureException(err, { context: 'public-event-register-admin-email', eventId })),
