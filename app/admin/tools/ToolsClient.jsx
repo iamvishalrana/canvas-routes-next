@@ -15,6 +15,23 @@ export default function ToolsClient() {
   const [newToken, setNewToken] = useState('')
   const [settingToken, setSettingToken] = useState(false)
   const [setTokenResult, setSetTokenResult] = useState(null)
+  const [receiptsMigrating, setReceiptsMigrating] = useState(false)
+  const [receiptsResult, setReceiptsResult] = useState(null)
+
+  async function migrateReceiptsR2() {
+    setReceiptsMigrating(true)
+    setReceiptsResult(null)
+    try {
+      const res = await fetch('/api/admin/tools/migrate-receipts-r2', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setReceiptsResult({ error: data.error || 'Migration failed.' }); return }
+      setReceiptsResult(data)
+    } catch {
+      setReceiptsResult({ error: 'Network error.' })
+    } finally {
+      setReceiptsMigrating(false)
+    }
+  }
 
   useEffect(() => {
     fetchRuns()
@@ -232,6 +249,42 @@ export default function ToolsClient() {
             {hcStatus === 'loading' ? 'Triggering…' : hcStatus === 'ok' ? 'Triggered ✓' : hcStatus === 'error' ? 'Failed ✗' : 'Run Now'}
           </button>
         </div>
+      </div>
+
+      {/* Receipts → R2 migration */}
+      <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: tool.heading, marginBottom: '0.35rem' }}>Migrate Receipts to R2</div>
+            <div style={{ fontSize: '12px', color: tool.sub, lineHeight: '1.6', maxWidth: '420px' }}>
+              Copies every existing receipt file from Supabase Storage into Cloudflare R2, then updates each expense&apos;s saved receipt URL to point at R2. Safe to click more than once — already-migrated files and rows are skipped.
+            </div>
+          </div>
+          <button onClick={migrateReceiptsR2} disabled={receiptsMigrating}
+            style={{
+              flexShrink: 0, padding: '0.6rem 1.25rem',
+              background: receiptsResult && !receiptsResult.error ? 'rgba(59,107,47,0.08)' : receiptsResult?.error ? 'rgba(147,51,62,0.06)' : 'transparent',
+              border: `0.5px solid ${receiptsResult && !receiptsResult.error ? 'rgba(59,107,47,0.4)' : receiptsResult?.error ? 'rgba(147,51,62,0.4)' : 'rgba(0,0,0,0.2)'}`,
+              fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: receiptsResult && !receiptsResult.error ? '#3B6B2F' : receiptsResult?.error ? '#93333E' : '#1a1a1a',
+              cursor: receiptsMigrating ? 'wait' : 'pointer',
+              fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
+            }}>
+            {receiptsMigrating ? 'Migrating…' : 'Run Migration'}
+          </button>
+        </div>
+        {receiptsResult && (
+          <div style={{ marginTop: '0.75rem', fontSize: '12px', lineHeight: 1.6, color: receiptsResult.error ? '#93333E' : '#3B6B2F' }}>
+            {receiptsResult.error
+              ? `✕ ${receiptsResult.error}`
+              : `✓ ${receiptsResult.copied} copied, ${receiptsResult.alreadyOnR2} already on R2, ${receiptsResult.failed} failed, ${receiptsResult.rowsUpdated} expense row(s) updated (of ${receiptsResult.total} files total).`}
+            {receiptsResult.failures?.length > 0 && (
+              <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#93333E' }}>
+                {receiptsResult.failures.map((f, i) => <div key={i}>{f.path}: {f.error}</div>)}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
     </div>
