@@ -35,7 +35,7 @@ export async function POST(request, { params }) {
   const normalEmail = email.toLowerCase().trim()
 
   const [{ data: ev }, { data: app }] = await Promise.all([
-    admin.from('events').select('id, name, date, date_display, location').eq('id', id).maybeSingle(),
+    admin.from('events').select('id, name, date, date_display, location, photo_url').eq('id', id).maybeSingle(),
     admin.from('applications').select('id, name, registrations').eq('email', normalEmail).maybeSingle(),
   ])
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
@@ -59,8 +59,8 @@ export async function POST(request, { params }) {
   const firstName = (app.name || '').trim().split(' ')[0] || 'there'
   const dateDisplay = ev.date_display || ev.date || null
   const html = decision === 'accept'
-    ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null })
-    : buildDeclinedHtml({ firstName: h(firstName), eventName: h(ev.name) })
+    ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null })
+    : buildDeclinedHtml({ firstName: h(firstName), eventName: h(ev.name), photoUrl: ev.photo_url || null })
   const subject = decision === 'accept' ? `You're confirmed — ${ev.name}` : `Update on your registration — ${ev.name}`
 
   try {

@@ -61,7 +61,7 @@ export async function POST(request, { params }) {
 
   const admin = createAdminClient()
   const { data: ev } = await admin.from('events')
-    .select('id, name, date, date_display, location, public_registration_enabled, registration_opens_at, registration_closes_at, capacity')
+    .select('id, name, date, date_display, location, photo_url, public_registration_enabled, registration_opens_at, registration_closes_at, capacity')
     .eq('id', eventId).maybeSingle()
   if (!ev) return Response.json({ error: 'Event not found.' }, { status: 404 })
   if (ev.public_registration_enabled === false) {
@@ -178,8 +178,8 @@ export async function POST(request, { params }) {
           reply_to: 'jerry@canvasroutes.com',
           subject: verifiedMember ? `You're confirmed — ${ev.name}` : `Registration received — ${ev.name}`,
           html: verifiedMember
-            ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null })
-            : buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null }),
+            ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null })
+            : buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null }),
           text: verifiedMember
             ? `Hey ${firstName},\n\nYour spot at ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''} is confirmed. See you there.\n\nKnow any car friends who'd love this too? Tell them to register and mention your name — a referral from someone we already know is an easy yes.\n\nJerry\nCanvas Routes`
             : `Hey ${firstName},\n\nWe've received your registration for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Every registration is personally reviewed — we'll follow up by email with your confirmation before the event.\n\nJerry\nCanvas Routes`,

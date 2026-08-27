@@ -42,7 +42,7 @@ export async function POST(request, { params }) {
 
   const { data: ev, error: evErr } = await admin
     .from('events')
-    .select('name, type, date, date_display, location, member_price, public_registration_enabled')
+    .select('name, type, date, date_display, location, photo_url, member_price, public_registration_enabled')
     .eq('id', id)
     .maybeSingle()
   if (evErr) return Response.json({ error: evErr.message }, { status: 500 })
@@ -140,7 +140,7 @@ export async function POST(request, { params }) {
           to: normalEmail,
           reply_to: 'jerry@canvasroutes.com',
           subject: `You're confirmed — ${ev.name}`,
-          html: buildAcceptedHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null }),
+          html: buildAcceptedHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null }),
         }),
       })
       .then(res => {
