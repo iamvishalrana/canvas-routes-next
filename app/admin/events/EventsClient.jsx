@@ -1441,7 +1441,7 @@ export default function EventsClient() {
                           <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isNarrow ? 'unset' : '680px' }}>
                             {!isMobile && (
                               <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 180px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-                                {['Name', 'Email', 'Type', 'Status', 'Paid / Date', '', ''].map((h, i) => (
+                                {['Name', 'Email', 'Type', 'Status', item.member_price ? 'Paid / Date' : 'Date', '', ''].map((h, i) => (
                                   <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                                 ))}
                               </div>
