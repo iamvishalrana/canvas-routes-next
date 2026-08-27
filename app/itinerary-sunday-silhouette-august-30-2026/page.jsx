@@ -5,7 +5,7 @@ import PageLoader from '../../components/PageLoader'
 import { captureException } from '../../lib/sentry'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 
-const PASSWORD = 'sundaysilhouette'
+const PASSWORD = 'SUNDAY'
 const ROUTE_SLUG = 'sunday-silhouette-2026'
 
 // Only real venues so this one array can drive both the itinerary timeline

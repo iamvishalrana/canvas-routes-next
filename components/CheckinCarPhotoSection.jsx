@@ -5,6 +5,7 @@ import { CHECKIN_T } from '../lib/genericCheckinContent'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { uploadToSupabaseStorage } from '../lib/uploadToSupabaseStorage'
 import { convertHeicIfNeeded } from '../lib/convertHeicIfNeeded'
+import { compressImageClient } from '../lib/compressImageClient'
 import { MIME_TO_EXT } from '../lib/allowedImageTypes'
 
 const ALLOWED = MIME_TO_EXT
@@ -21,12 +22,18 @@ export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }
 
   // Converted here (not just at submit) so the preview itself renders
   // correctly too — a raw .heic object URL can't be displayed by any
-  // browser but Safari.
+  // browser but Safari. Also downscaled to a real display copy — an
+  // uncompressed phone/DSLR original can run 20-40MB, which is slow to
+  // upload on the spot and, worse, is what every future page load of the
+  // itinerary roster and car modal would fetch and render at full size
+  // forever after. There's no separate "original" this photo needs to
+  // preserve (unlike receipts), so the compressed copy just replaces it.
   async function pickFile(e) {
     const f = e.target.files?.[0]
     if (!f) return
     setError(null)
-    const converted = await convertHeicIfNeeded(f)
+    const heicConverted = await convertHeicIfNeeded(f)
+    const converted = await compressImageClient(heicConverted)
     setFile(converted)
     setPreview(URL.createObjectURL(converted))
   }
