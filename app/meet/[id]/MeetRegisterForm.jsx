@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import SiteFooter from '../../../components/SiteFooter'
 import TermsPrivacyNote from '../../../components/TermsPrivacyNote'
 import { EVENT_TIME_OVERRIDES } from '../../../lib/eventMeta'
@@ -177,7 +178,8 @@ export default function MeetRegisterForm({ event }) {
           transform: skewX(-10deg); animation: meet-cta-shimmer 0.9s cubic-bezier(0.4,0,0.2,1) 1.4s forwards; pointer-events: none;
         }
         @media (max-width: 768px) {
-          .meet-hero { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
+          .meet-hero { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; }
+          .meet-hero-photo { object-position: center 30% !important; }
           .meet-hero-overlay { background: linear-gradient(to bottom, rgba(8,16,10,0.5) 0%, rgba(8,16,10,0.82) 100%) !important; }
           .meet-hero-cta { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
         }
@@ -208,8 +210,14 @@ export default function MeetRegisterForm({ event }) {
       <section className="meet-hero" style={{
         backgroundColor:'#0F1E14', padding:'clamp(140px,18vw,210px) 3rem 6rem',
         textAlign:'center', position:'relative', overflow:'hidden',
-        ...(event.photo_url ? { backgroundImage:`url('${event.photo_url}')`, backgroundSize:'cover', backgroundPosition:'center 50%' } : {}),
       }}>
+        {event.photo_url && (
+          // next/image (not a CSS background-image) so Supabase Storage's
+          // full-resolution upload gets resized/compressed to the actual
+          // rendered size instead of downloading as-is — that mismatch was
+          // why this hero (and the homepage popup's photo) loaded so slowly.
+          <Image src={event.photo_url} alt="" fill sizes="100vw" className="meet-hero-photo" style={{ objectFit:'cover', objectPosition:'center 50%', zIndex:0 }} priority />
+        )}
         <div className="meet-hero-overlay" style={{ position:'absolute', inset:0, background:'rgba(10,20,12,0.72)', zIndex:1 }} />
         <div style={{ position:'absolute', top:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)', zIndex:2 }} />
         <div style={{ position:'relative', zIndex:2, maxWidth:'520px', margin:'0 auto' }}>
