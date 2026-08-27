@@ -326,6 +326,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
             event.location && { label:'Venue', value: event.location },
             eventTime && { label:'Time', value: eventTime },
             { label:'Cost', value:'Free' },
+            { label:'Coffee', value:'Complimentary' },
           ].filter(Boolean).map(({ label, value }) => (
             <div key={label} style={{ textAlign:'center', minWidth:'110px' }}>
               <div style={{ fontSize:'9px', letterSpacing:'0.2em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.3rem' }}>{label}</div>
