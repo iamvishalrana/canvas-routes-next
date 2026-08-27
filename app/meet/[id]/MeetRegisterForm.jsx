@@ -5,6 +5,7 @@ import Image from 'next/image'
 import SiteNav from '../../../components/SiteNav'
 import SiteFooter from '../../../components/SiteFooter'
 import TermsPrivacyNote from '../../../components/TermsPrivacyNote'
+import AddToCalendar from '../../../components/AddToCalendar'
 import { EVENT_TIME_OVERRIDES } from '../../../lib/eventMeta'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
@@ -50,7 +51,7 @@ function registrationStatus(ev) {
   return 'open'
 }
 
-export default function MeetRegisterForm({ event }) {
+export default function MeetRegisterForm({ event, spotsLeft = null }) {
   const status = registrationStatus(event)
   const [form, setForm] = useState({ name:'', email:'', year:'', carMake:'', carModel:'', phone:'', instagram:'', more:'', source:'' })
   const [countryCode, setCountryCode] = useState('+1')
@@ -112,6 +113,26 @@ export default function MeetRegisterForm({ event }) {
     setForm(p => ({ ...p, [field]: value }))
     if (errors[field]) setErrors(p => ({ ...p, [field]: false }))
     if (serverError) setServerError(null)
+  }
+
+  // Catches a mistake (an unfinished email, a still-empty required field)
+  // the moment someone tabs or clicks away from it, instead of only ever
+  // surfacing on submit after they've filled in the rest of the form.
+  // Never flags a field as an error for being merely empty-and-untouched —
+  // only once they've focused it and left it invalid.
+  function validateField(field) {
+    let hasError = false
+    switch (field) {
+      case 'name':     hasError = !form.name.trim() || form.name.trim().length < 2; break
+      case 'email':    hasError = !form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email); break
+      case 'year':     hasError = !form.year; break
+      case 'carMake':  hasError = !form.carMake; break
+      case 'carModel': hasError = !form.carModel.trim(); break
+      case 'phone':    hasError = phoneShown && !form.phone.trim(); break
+      case 'source':   hasError = !isMember && !form.source; break
+      default: return
+    }
+    setErrors(p => ({ ...p, [field]: hasError }))
   }
 
   function formatPhone(v) {
@@ -282,6 +303,15 @@ export default function MeetRegisterForm({ event }) {
               style={{ display:'inline-block', padding:'0.9rem 2.5rem', background:'#F5F1EC', color:'#0F1E14', fontSize:'11px', letterSpacing:'0.2em', textTransform:'uppercase', textDecoration:'none', fontFamily:'var(--font-inter),sans-serif', fontWeight:'600' }}>
               Request your spot →
             </a>
+            {/* Urgency signal, not a running counter — only surfaces once
+                inventory is actually low, and only for non-members: members
+                always get in regardless of capacity (see the public
+                register route), so this would be misleading for them. */}
+            {spotsLeft !== null && spotsLeft <= 10 && !isMember && (
+              <div style={{ marginTop:'0.9rem', fontSize:'11px', letterSpacing:'0.08em', textTransform:'uppercase', color: spotsLeft <= 3 ? '#e0a0a0' : 'rgba(245,241,236,0.55)', fontFamily:'var(--font-inter),sans-serif' }}>
+                {spotsLeft === 0 ? 'Full — contact us to be added to the waitlist' : spotsLeft === 1 ? 'Only 1 spot left' : `Only ${spotsLeft} spots left`}
+              </div>
+            )}
           </div>
         </div>
         <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.2),transparent)', zIndex:2 }} />
@@ -332,9 +362,13 @@ export default function MeetRegisterForm({ event }) {
                   ? <>Your spot at {event.name} is confirmed. See you there.</>
                   : <>We&apos;ll review your details and email you a confirmation before {event.name}.</>}
               </p>
-              <p style={{ fontSize:'12px', color:'#aaa', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'320px', margin:'0 auto 2rem' }}>
+              <p style={{ fontSize:'12px', color:'#aaa', lineHeight:1.7, fontFamily:'var(--font-inter), sans-serif', maxWidth:'320px', margin:'0 auto 1.5rem' }}>
                 If you don&apos;t see it, check your junk folder and mark it as not spam.
               </p>
+
+              <div style={{ marginBottom:'1.75rem' }}>
+                <AddToCalendar name={event.name} date={event.date} location={event.location} description={event.description} />
+              </div>
 
               <div style={{ borderTop:'0.5px solid rgba(0,0,0,0.07)', paddingTop:'1.75rem', marginBottom:'1.75rem' }}>
                 <div style={{ fontSize:'9px', letterSpacing:'0.22em', textTransform:'uppercase', color:'#c5a882', fontFamily:'var(--font-inter), sans-serif', marginBottom:'0.6rem' }}>
@@ -396,7 +430,7 @@ export default function MeetRegisterForm({ event }) {
                   <input
                     id="meet-name" type="text" autoComplete="name"
                     value={form.name} onChange={e => update('name', e.target.value)}
-                    onFocus={() => setFocused('name')} onBlur={() => setFocused(null)}
+                    onFocus={() => setFocused('name')} onBlur={() => { setFocused(null); validateField('name') }}
                     style={{ ...base, ...inp(focused==='name', !!form.name, errors.name) }}
                     placeholder="Your full name"
                   />
@@ -408,7 +442,7 @@ export default function MeetRegisterForm({ event }) {
                     id="meet-email" type="email" autoComplete="email"
                     autoCapitalize="none" autoCorrect="off" spellCheck={false}
                     value={form.email} onChange={e => update('email', e.target.value)}
-                    onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
+                    onFocus={() => setFocused('email')} onBlur={() => { setFocused(null); validateField('email') }}
                     style={{ ...base, ...inp(focused==='email', !!form.email, errors.email) }}
                     placeholder="your@email.com"
                   />
@@ -421,7 +455,7 @@ export default function MeetRegisterForm({ event }) {
                       <select
                         id="meet-year"
                         value={form.year} onChange={e => update('year', e.target.value)}
-                        onFocus={() => setFocused('year')} onBlur={() => setFocused(null)}
+                        onFocus={() => setFocused('year')} onBlur={() => { setFocused(null); validateField('year') }}
                         style={{ ...base, ...inp(focused==='year', !!form.year, errors.year), paddingRight:'2rem', cursor:'pointer' }}
                       >
                         <option value="">Year</option>
@@ -436,7 +470,7 @@ export default function MeetRegisterForm({ event }) {
                       <select
                         id="meet-carMake"
                         value={form.carMake} onChange={e => update('carMake', e.target.value)}
-                        onFocus={() => setFocused('carMake')} onBlur={() => setFocused(null)}
+                        onFocus={() => setFocused('carMake')} onBlur={() => { setFocused(null); validateField('carMake') }}
                         style={{ ...base, ...inp(focused==='carMake', !!form.carMake, errors.carMake), paddingRight:'2rem', cursor:'pointer' }}
                       >
                         <option value="">Make</option>
@@ -452,7 +486,7 @@ export default function MeetRegisterForm({ event }) {
                   <input
                     id="meet-carModel" type="text"
                     value={form.carModel} onChange={e => update('carModel', e.target.value)}
-                    onFocus={() => setFocused('carModel')} onBlur={() => setFocused(null)}
+                    onFocus={() => setFocused('carModel')} onBlur={() => { setFocused(null); validateField('carModel') }}
                     style={{ ...base, ...inp(focused==='carModel', !!form.carModel, errors.carModel) }}
                     placeholder="e.g. M3 Competition"
                   />
@@ -493,7 +527,7 @@ export default function MeetRegisterForm({ event }) {
                         id="meet-phone" type="tel" autoComplete="tel"
                         value={form.phone}
                         onChange={e => update('phone', formatPhone(e.target.value))}
-                        onFocus={() => setFocused('phone')} onBlur={() => setFocused(null)}
+                        onFocus={() => setFocused('phone')} onBlur={() => { setFocused(null); validateField('phone') }}
                         style={{ ...base, ...inp(focused==='phone', !!form.phone, errors.phone), flex:1 }}
                         placeholder="(514) 555-0100"
                       />
@@ -542,7 +576,7 @@ export default function MeetRegisterForm({ event }) {
                     <select
                       id="meet-source"
                       value={form.source} onChange={e => update('source', e.target.value)}
-                      onFocus={() => setFocused('source')} onBlur={() => setFocused(null)}
+                      onFocus={() => setFocused('source')} onBlur={() => { setFocused(null); validateField('source') }}
                       style={{ ...base, ...inp(focused==='source', !!form.source, errors.source), paddingRight:'2rem', cursor:'pointer' }}
                     >
                       <option value="">Select…</option>
@@ -563,12 +597,14 @@ export default function MeetRegisterForm({ event }) {
                     disabled={formStatus === 'loading'}
                     style={{ width:'100%', padding:'1.1rem', background:'#0F1E14', color:'#F5F1EC', border:'none', fontSize:'10px', letterSpacing:'0.26em', textTransform:'uppercase', cursor: formStatus === 'loading' ? 'not-allowed' : 'pointer', opacity: formStatus === 'loading' ? 0.7 : 1, fontFamily:'var(--font-inter), sans-serif', transition:'opacity 0.15s' }}
                   >
-                    {formStatus === 'loading' ? 'Submitting…' : 'Request My Spot'}
+                    {formStatus === 'loading' ? 'Submitting…' : isMember ? 'Confirm My Spot' : 'Request My Spot'}
                   </button>
                 </div>
 
                 <p style={{ textAlign:'center', fontSize:'11px', color:'#bbb', fontFamily:'var(--font-inter), sans-serif', lineHeight:1.6, margin:0 }}>
-                  Submitting is not a guarantee of attendance — we&apos;ll confirm by email.
+                  {isMember
+                    ? "As a member, your spot is confirmed instantly — no review needed."
+                    : <>Submitting is not a guarantee of attendance — we&apos;ll confirm by email.</>}
                 </p>
                 <TermsPrivacyNote style={{ marginTop: '0.5rem' }} />
               </form>
