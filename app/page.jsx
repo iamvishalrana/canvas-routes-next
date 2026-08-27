@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin } from 'lucide-react'
 import ErrorBoundary from '../components/ErrorBoundary'
 import SiteFooter from '../components/SiteFooter'
@@ -93,6 +94,23 @@ function resolvePopupCard(mode, route, event, t) {
   }
 }
 
+// next/image throws a hard render error for any src whose hostname isn't
+// in next.config.mjs's images.remotePatterns — fine for event photos
+// (always a Supabase upload) but upcoming_routes.photo_url is a free-text
+// admin field (RoadtripsAdminClient) that could contain any URL. Only use
+// next/image where it's guaranteed safe; fall back to a plain <img> so an
+// unexpected host degrades to an unoptimized image instead of crashing
+// the whole popup.
+const OPTIMIZABLE_IMAGE_HOSTS = ['supabase.co', 'res.cloudinary.com']
+function isOptimizableImage(url) {
+  if (!url) return false
+  if (url.startsWith('/')) return true
+  try {
+    const hostname = new URL(url).hostname
+    return OPTIMIZABLE_IMAGE_HOSTS.some(h => hostname === h || hostname.endsWith(`.${h}`))
+  } catch { return false }
+}
+
 // One popup card's photo + text block. `showMaybeLater` keeps the soft-
 // dismiss link inside this same block (original single-card layout) when
 // there's only one card; the two-card layout renders one shared dismiss
@@ -107,7 +125,16 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
         // point of a popup is that it's readable at a glance, not a page you
         // have to scroll through.
         <div className="routes-popup-photo" style={{ position: 'relative', width: '100%', height: 'clamp(110px, 20vh, 190px)', overflow: 'hidden' }}>
-          <img src={card.photo} alt={card.heading || 'Canvas Routes'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          {/* next/image instead of a plain <img> — an admin-uploaded event/
+              route photo is served at its original upload resolution
+              otherwise (often several MB from a phone camera) even though
+              this card only ever shows it at a couple hundred px tall. */}
+          {isOptimizableImage(card.photo) ? (
+            <Image src={card.photo} alt={card.heading || 'Canvas Routes'} fill sizes="(max-width: 640px) 100vw, 450px" style={{ objectFit: 'cover' }} />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={card.photo} alt={card.heading || 'Canvas Routes'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          )}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,30,20,0.1) 0%, rgba(15,30,20,0.75) 100%)' }} />
         </div>
       )}
