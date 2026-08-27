@@ -212,6 +212,17 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
       <style>{`
         @keyframes meet-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes meet-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        /* Continuous Ken Burns zoom on the hero photo — 12s in, 12s out,
+           looping for as long as the page stays open. ease-in-out on both
+           halves so the direction change at the midpoint/loop-back is a
+           smooth reversal, never a visible snap. transform (not width/
+           height) so it stays compositor-only — no layout/repaint cost. */
+        @keyframes meet-hero-zoom {
+          0%   { transform: scale(1); }
+          50%  { transform: scale(1.12); }
+          100% { transform: scale(1); }
+        }
+        .meet-hero-photo-zoom { animation: meet-hero-zoom 24s ease-in-out infinite; will-change: transform; }
         @keyframes meet-date-streak {
           0%, 100% { left: -110%; opacity: 0; }
           6%        { opacity: 1; }
@@ -270,7 +281,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
           // full-resolution upload gets resized/compressed to the actual
           // rendered size instead of downloading as-is — that mismatch was
           // why this hero (and the homepage popup's photo) loaded so slowly.
-          <Image src={event.photo_url} alt="" fill sizes="100vw" className="meet-hero-photo" style={{ objectFit:'cover', objectPosition:'center 50%', zIndex:0 }} priority />
+          <Image src={event.photo_url} alt="" fill sizes="100vw" className="meet-hero-photo meet-hero-photo-zoom" style={{ objectFit:'cover', objectPosition:'center 50%', zIndex:0 }} priority />
         )}
         <div className="meet-hero-overlay" style={{ position:'absolute', inset:0, background:'rgba(10,20,12,0.72)', zIndex:1 }} />
         <div style={{ position:'absolute', top:0, left:0, right:0, height:'1px', background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)', zIndex:2 }} />
@@ -546,9 +557,9 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
                     <button
                       type="button"
                       onClick={() => setPhoneShown(true)}
-                      style={{ background:'none', border:'0.5px solid rgba(0,0,0,0.15)', padding:'0.7rem 1rem', width:'100%', textAlign:'left', fontSize:'13px', color:'#aaa', cursor:'pointer', fontFamily:'var(--font-inter), sans-serif', display:'flex', alignItems:'center', gap:'0.5rem' }}
+                      style={{ background:'none', border:'0.5px solid rgba(0,0,0,0.15)', padding:'0.7rem 1rem', width:'100%', textAlign:'left', fontSize:'13px', color:'#aaa', cursor:'pointer', fontFamily:'var(--font-inter), sans-serif', display:'flex', alignItems:'center', gap:'0.5rem', flexWrap:'wrap', boxSizing:'border-box' }}
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink:0 }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                       Add phone number
                       <span style={{ marginLeft:'auto', fontSize:'10px', color:'#c5a882', letterSpacing:'0.06em' }}>helps us reach you directly</span>
                     </button>
