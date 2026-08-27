@@ -53,16 +53,24 @@ export async function GET() {
   const appEmailById = {}
   for (const a of (apps || [])) if (a.email) appEmailById[a.id] = a.email.toLowerCase()
 
-  // For each event, find applications that registered for it (match by event name)
+  // For each event, find applications that registered for it (match by event name).
+  // A registration whose review_status is 'declined' (the /meet/[id] public
+  // review flow — see app/api/public/events/[id]/register and
+  // app/api/admin/events/[id]/registrants/review) is excluded here the same
+  // way lib/eventCheckinShared.js's listEventRegistrants already excludes it
+  // from the registrants panel itself — otherwise "Applied" only ever grows,
+  // even for someone the admin explicitly turned away.
   const result = (events || []).map(ev => {
     const evName = normalizeEventName(ev.name)?.trim().toLowerCase()
     const evBase = evName.split(/\s[—–]\s/)[0].trim()
-    const evApps = (apps || []).filter(a =>
-      (a.registrations || []).some(r => {
-        const rName = normalizeEventName(r.event)?.trim().toLowerCase() || ''
-        return rName === evName || rName.split(/\s[—–]\s/)[0].trim() === evBase
-      })
-    )
+    const matchReg = a => (a.registrations || []).find(r => {
+      const rName = normalizeEventName(r.event)?.trim().toLowerCase() || ''
+      return rName === evName || rName.split(/\s[—–]\s/)[0].trim() === evBase
+    })
+    const evApps = (apps || []).filter(a => {
+      const r = matchReg(a)
+      return r && r.review_status !== 'declined'
+    })
     const evAppEmails = new Set(evApps.map(a => a.email?.toLowerCase()).filter(Boolean))
     const evRegEmails = regEmailsByEvent[ev.id] || new Set()
     const totalApplicants = new Set([...evAppEmails, ...evRegEmails]).size
@@ -78,8 +86,11 @@ export async function GET() {
       member_tier: tierByEmail[a.email?.toLowerCase()] || null,
     }))
 
-    // Confirmed = RSVP'd via the confirm-your-spot flow, OR already paid — a completed
-    // payment secures the spot outright regardless of whether the RSVP form was filled in.
+    // Confirmed = RSVP'd via the confirm-your-spot flow, already paid (a completed
+    // payment secures the spot outright regardless of whether the RSVP form was
+    // filled in), or accepted through the /meet/[id] review flow — that flow never
+    // touches rsvp_tokens or Stripe, so without this an admin who accepts every
+    // pending registrant still sees "Confirmed: 0" forever.
     const confirmedKeys = new Set()
     for (const t of evTokens) {
       if (!t.confirmed_at) continue
@@ -87,8 +98,14 @@ export async function GET() {
     }
     for (const a of evApps) {
       if (a.stripe_payment_status === 'paid' && a.email) confirmedKeys.add(a.email.toLowerCase())
+      if (matchReg(a)?.review_status === 'accepted' && a.email) confirmedKeys.add(a.email.toLowerCase())
     }
     for (const email of (paidRegEmailsByEvent[ev.id] || [])) confirmedKeys.add(email)
+
+    // Pending = still awaiting an Accept/Decline decision in the review flow —
+    // surfaced as its own stat so "9 people are waiting on you" isn't buried
+    // inside "Applied", which also money-flows/road-trip apps.
+    const pendingCount = evApps.filter(a => matchReg(a)?.review_status === 'pending').length
 
     const confirmedCount = confirmedKeys.size
     const invitedCount   = evTokens.length
@@ -99,6 +116,7 @@ export async function GET() {
       total_applications: totalApplicants,
       invited_count: invitedCount,
       confirmed_count: confirmedCount,
+      pending_review_count: pendingCount,
     }
   })
 

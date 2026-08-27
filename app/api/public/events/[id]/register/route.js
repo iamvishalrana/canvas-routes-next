@@ -3,7 +3,7 @@ import { checkRateLimit, getClientIp } from '../../../../../../lib/rateLimit.js'
 import { deviceType } from '../../../../../../lib/deviceType'
 import { captureException } from '../../../../../../lib/sentry.js'
 import { createAdminClient } from '../../../../../../lib/supabase/admin'
-import { listEventRegistrants } from '../../../../../../lib/eventCheckinShared.js'
+import { listEventRegistrants, isSameEvent } from '../../../../../../lib/eventCheckinShared.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 import { buildPendingReviewHtml, buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
 
@@ -115,7 +115,7 @@ export async function POST(request, { params }) {
     const { data: existing } = await admin.from('applications')
       .select('id, registrations').eq('email', normalEmail).maybeSingle()
 
-    const existingReg = (existing?.registrations || []).find(r => r.event === ev.name)
+    const existingReg = (existing?.registrations || []).find(r => isSameEvent(r.event, ev.name))
     const newReg = {
       event: ev.name,
       registered_at: existingReg?.registered_at || new Date().toISOString(),
@@ -132,7 +132,7 @@ export async function POST(request, { params }) {
         more: more || null, source: source || null,
       },
     }
-    const prevRegs = (existing?.registrations || []).filter(r => r.event !== ev.name)
+    const prevRegs = (existing?.registrations || []).filter(r => !isSameEvent(r.event, ev.name))
     const registrations = [...prevRegs, newReg]
 
     const { data: appData, error: upsertErr } = await admin.from('applications').upsert({

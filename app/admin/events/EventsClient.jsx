@@ -391,10 +391,11 @@ export default function EventsClient() {
         .map(ev => {
           const a = appMap.get(ev.id) || {}
           return {
-            confirmed_count:    a.confirmed_count    || 0,
-            invited_count:      a.invited_count      || 0,
-            total_applications: a.total_applications || 0,
-            applications:       a.applications       || [],
+            confirmed_count:      a.confirmed_count      || 0,
+            invited_count:        a.invited_count        || 0,
+            total_applications:   a.total_applications   || 0,
+            pending_review_count: a.pending_review_count  || 0,
+            applications:         a.applications          || [],
             ...ev,
           }
         })
@@ -732,6 +733,17 @@ export default function EventsClient() {
       setRegistrantsData(prev => ({
         ...prev,
         [eventId]: (prev[eventId] || []).map(reg => reg.email === r.email ? { ...reg, reviewStatus: d.review_status } : reg),
+      }))
+      // Keep the event card's stat pills in sync without a full reload — canReview
+      // only ever shows Accept/Decline while liveReviewStatus is 'pending', so
+      // every successful review here is a pending -> accepted/declined transition.
+      // 'declined' also drops out of total_applications, matching the same
+      // exclusion /api/admin/event-applications now applies server-side.
+      setItems(prev => prev.map(ev => ev.id !== eventId ? ev : {
+        ...ev,
+        pending_review_count: Math.max(0, (ev.pending_review_count || 0) - 1),
+        confirmed_count: d.review_status === 'accepted' ? (ev.confirmed_count || 0) + 1 : ev.confirmed_count,
+        total_applications: d.review_status === 'declined' ? Math.max(0, (ev.total_applications || 0) - 1) : ev.total_applications,
       }))
     } catch {
       setReviewResult(p => ({ ...p, [key]: { error: 'Network error.' } }))
@@ -1083,10 +1095,11 @@ export default function EventsClient() {
                     </div>
 
                     {/* Application stats */}
-                    {(item.total_applications > 0 || item.confirmed_count > 0) && (
+                    {(item.total_applications > 0 || item.confirmed_count > 0 || item.pending_review_count > 0) && (
                       <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.6rem' }}>
                         {[
                           { label: 'Applied',    value: item.total_applications, color: '#1a1a1a' },
+                          item.pending_review_count > 0 && { label: 'Pending review', value: item.pending_review_count, color: '#c5a882' },
                           { label: 'Invited',    value: item.invited_count,       color: '#8A6535' },
                           { label: 'Confirmed',  value: item.confirmed_count,     color: '#3B6B2F' },
                           spotsLeft !== null && { label: 'Spots left', value: Math.max(0, spotsLeft), color: spotsLeft <= 3 ? '#93333E' : '#888' },
@@ -1427,8 +1440,8 @@ export default function EventsClient() {
                         {(registrantsData[item.id] || []).length > 0 && <div style={{ overflowX: 'auto' }}>
                           <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isNarrow ? 'unset' : '680px' }}>
                             {!isMobile && (
-                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 140px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
-                                {['Name', 'Email', 'Type', 'Status', 'Paid', '', ''].map((h, i) => (
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 180px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                                {['Name', 'Email', 'Type', 'Status', 'Paid / Date', '', ''].map((h, i) => (
                                   <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                                 ))}
                               </div>
@@ -1437,11 +1450,32 @@ export default function EventsClient() {
                               const indivKey = `${item.id}::${r.email}`
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
-                              const canSend = r.email && r.email !== '—' && r.status !== 'confirmed'
                               const reviewing = !!reviewingRegistrant[indivKey]
                               const reviewRes = reviewResult[indivKey]
                               const liveReviewStatus = reviewRes?.reviewStatus || r.reviewStatus
                               const canReview = r.email && r.email !== '—' && liveReviewStatus === 'pending'
+                              // The Invite/Resend confirm-email flow (rsvp_tokens-based) is a
+                              // different, older mechanism than the Accept/Decline review flow
+                              // above — Accept already sends its own confirmation email, so any
+                              // registrant carrying a reviewStatus (present only for /meet/[id]
+                              // public registrations) must never also show Invite/Resend, or the
+                              // two unrelated actions pile up in the same narrow column and an
+                              // admin could click the wrong one.
+                              const canSend = r.email && r.email !== '—' && r.status !== 'confirmed' && liveReviewStatus == null
+                              // The generic Status column (paid/free/registered/etc.) previously
+                              // showed "Registered" for a Declined registrant at the same time the
+                              // actions column separately said "Declined" — two contradictory
+                              // signals for the same row. Review outcome now overrides the generic
+                              // status here instead, so there's exactly one place to look.
+                              const statusColor = liveReviewStatus === 'declined' ? '#93333E'
+                                : liveReviewStatus === 'accepted' ? '#3B6B2F'
+                                : liveReviewStatus === 'pending' ? '#c5a882'
+                                : (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F'
+                                : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : '#888'
+                              const statusLabel = liveReviewStatus === 'declined' ? 'Declined'
+                                : liveReviewStatus === 'accepted' ? '✓ Accepted'
+                                : liveReviewStatus === 'pending' ? 'Pending review'
+                                : r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : (r.status || '—')
                               const isDeletePending = deleteRegConfirm === indivKey
                               const isDeleting = !!deletingReg[indivKey]
                               const deleteErr = deleteRegErr[indivKey]
@@ -1454,7 +1488,7 @@ export default function EventsClient() {
                               const oldCheckinIsLastBlock = hasOldCheckin && !showWtetReg
                               return (
                                 <div key={ri}>
-                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 140px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 180px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
                                     {isMobile ? (
                                       <div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1467,7 +1501,7 @@ export default function EventsClient() {
                                             {r.car && <div style={{ fontSize: '10px', color: '#aaa', marginTop: '1px' }}>{r.car}</div>}
                                             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', flexWrap: 'wrap', alignItems: 'center' }}>
                                               <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</span>
-                                              {r.status && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : r.status}</span>}
+                                              {(r.status || liveReviewStatus) && <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: statusColor }}>{statusLabel}</span>}
                                               {r.amount > 0 && <span style={{ fontSize: '10px', color: '#555' }}>${(r.amount / 100).toFixed(2)}</span>}
                                               {!r.amount && r.status === 'free' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>Free</span>}
                                             </div>
@@ -1479,8 +1513,6 @@ export default function EventsClient() {
                                                 <DangerBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'decline')}>{reviewing ? '…' : 'Decline'}</DangerBtn>
                                               </>
                                             )}
-                                            {liveReviewStatus === 'accepted' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Accepted</span>}
-                                            {liveReviewStatus === 'declined' && <span style={{ fontSize: '10px', color: '#93333E' }}>Declined</span>}
                                             {canSend && !result?.sent && (
                                               <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                             )}
@@ -1508,17 +1540,15 @@ export default function EventsClient() {
                                         </div>
                                         <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '2px' }}>{r.email || '—'}<CopyBtn value={r.email} /></div>
                                         <div style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', color: r.type === 'Member' ? '#3B6B2F' : r.type === 'Public' ? '#2563a0' : '#8A6535' }}>{r.type}</div>
-                                        <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: (r.status === 'paid' || r.status === 'free' || r.status === 'confirmed') ? '#3B6B2F' : r.status === 'authorized' ? '#8A6535' : r.status === 'registered' ? '#2563a0' : r.status === 'pending' ? '#c5a882' : '#888' }}>{r.status === 'confirmed' ? '✓ Confirmed' : r.status === 'authorized' ? 'Hold' : r.status || '—'}</div>
+                                        <div style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: statusColor }}>{statusLabel}</div>
                                         <div style={{ fontSize: '11px', color: '#555' }}>{r.amount > 0 ? `$${(r.amount / 100).toFixed(2)}` : r.status === 'free' ? 'Free' : r.registeredAt ? new Date(r.registeredAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) : '—'}</div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                                           {canReview && (
-                                            <div style={{ display: 'flex', gap: '0.3rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                                               <GhostBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'accept')}>{reviewing ? '…' : 'Accept'}</GhostBtn>
                                               <DangerBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'decline')}>{reviewing ? '…' : 'Decline'}</DangerBtn>
                                             </div>
                                           )}
-                                          {liveReviewStatus === 'accepted' && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Accepted</span>}
-                                          {liveReviewStatus === 'declined' && <span style={{ fontSize: '10px', color: '#93333E' }}>Declined</span>}
                                           {reviewRes?.error && <span style={{ fontSize: '10px', color: '#93333E' }}>{reviewRes.error}</span>}
                                           {canSend && !result?.sent && (
                                             <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
