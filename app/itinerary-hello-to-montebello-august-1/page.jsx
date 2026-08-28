@@ -808,13 +808,12 @@ export default function HelloToMontebelloItineraryPage() {
         .car-modal-card.opening { animation: car-modal-card-in 0.24s cubic-bezier(0.2,0.7,0.3,1) both; }
         .car-modal-card.closing { animation: car-modal-card-out 0.18s ease both; }
 
-        /* Hero photo — slow one-time pan-out on mobile only, where the header
-           is the first full-bleed thing someone sees and has room to breathe
-           (desktop's header is comparatively short relative to its width, so
-           the same zoom reads as barely-there and isn't worth the cost). */
-        @media (max-width: 640px) and (prefers-reduced-motion: no-preference) {
-          @keyframes itin-hero-pan { from { transform: scale(1.18); } to { transform: scale(1); } }
-          .itin-hero-bg { animation: itin-hero-pan 16s ease-out both; will-change: transform; }
+        /* Continuous Ken Burns zoom, matching the Cars & Coffee registration
+           page hero and every other route hero — 20s in, 20s out, looping
+           for as long as the page stays open. */
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes itin-hero-pan { 0% { transform: scale(1); } 50% { transform: scale(1.09); } 100% { transform: scale(1); } }
+          .itin-hero-bg { animation: itin-hero-pan 40s ease-in-out infinite; will-change: transform; }
         }
 
         /* Language toggle — a quick punch on every switch, retriggered by

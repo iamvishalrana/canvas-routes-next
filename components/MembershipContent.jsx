@@ -630,6 +630,13 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
            90vh is computed against the larger toolbar-collapsed viewport, so
            the hero can render taller than what's actually visible on load. */
         .mem-hero { min-height: 90vh; min-height: 90dvh; }
+        /* Continuous Ken Burns zoom on the hero photo, matching the Cars &
+           Coffee registration page and the itinerary pages — 20s in, 20s
+           out, looping for as long as the page stays open. */
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes mem-hero-zoom { 0% { transform: scale(1); } 50% { transform: scale(1.09); } 100% { transform: scale(1); } }
+          .mem-hero-photo-zoom { animation: mem-hero-zoom 40s ease-in-out infinite; will-change: transform; }
+        }
       `}</style>
 
       <SiteNav ctaLabel={t.navCtaLabel}
@@ -639,7 +646,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
       {/* ── HERO ────────────────────────────────────────────────────── */}
       <section className="mem-hero" style={{ position: 'relative', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0 }}>
-          <img src="/membership-hero.jpeg" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
+          <img src="/membership-hero.jpeg" alt="" className="mem-hero-photo-zoom" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 40%' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,12,8,0.75) 0%, rgba(6,12,8,0.55) 45%, rgba(6,12,8,0.85) 100%)' }} />
         </div>
 

@@ -618,11 +618,20 @@ export default function CalabogieBoogiePage() {
         input, select, textarea { font-size: 16px !important; }
         /* No accidental horizontal scroll from any wide inline element */
         .cb-page-root { overflow-x: hidden; }
+        /* Continuous Ken Burns zoom on the hero photo, matching the Cars &
+           Coffee registration page and the itinerary pages — applied to a
+           dedicated background layer (not the section itself) so the zoom
+           never scales the hero text/CTA along with the photo. */
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes cb-hero-zoom { 0% { transform: scale(1); } 50% { transform: scale(1.09); } 100% { transform: scale(1); } }
+          .cb-hero-bg { animation: cb-hero-zoom 40s ease-in-out infinite; will-change: transform; }
+        }
         @media (hover: hover) {
           .cb-hover-underline:hover { text-decoration-color: rgba(0,0,0,0.4) !important; }
         }
         @media (max-width: 768px) {
-          .cb-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; background-position: center 30% !important; }
+          .cb-hero    { padding: clamp(100px,14vw,160px) 1.25rem 3.5rem !important; }
+          .cb-hero-bg { background-position: center 30% !important; }
           .cb-hero-overlay { background: linear-gradient(to bottom, rgba(8,16,10,0.5) 0%, rgba(8,16,10,0.82) 100%) !important; }
           .cb-details { padding: 3rem 1.25rem !important; }
           .cb-itinerary  { padding: 3.5rem 1.25rem 4.5rem !important; }
@@ -660,7 +669,8 @@ export default function CalabogieBoogiePage() {
       <SiteNav />
 
       {/* HERO */}
-      <section className="cb-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden',backgroundImage:"url('/routes-photos/the-calabogie-boogie.jpg')",backgroundSize:'cover',backgroundPosition:'center 50%'}}>
+      <section className="cb-hero" style={{backgroundColor:'#0F1E14',padding:'clamp(140px,18vw,210px) 3rem 6rem',textAlign:'center',position:'relative',overflow:'hidden'}}>
+        <div className="cb-hero-bg" style={{position:'absolute',inset:0,backgroundImage:"url('/routes-photos/the-calabogie-boogie.jpg')",backgroundSize:'cover',backgroundPosition:'center 50%',zIndex:0}} />
         <div className="cb-hero-overlay" style={{position:'absolute',inset:0,background:'rgba(10,20,12,0.72)',zIndex:1}} />
         <div style={{position:'absolute',top:0,left:0,right:0,height:'1px',background:'linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)',zIndex:2}} />
         <div style={{position:'relative',zIndex:2,fontSize:'11px',letterSpacing:'0.25em',textTransform:'uppercase',color:'rgba(197,168,130,0.6)',marginBottom:'1.2rem',animation:'cb-fade-in 0.7s ease both',animationDelay:'100ms'}}>{t.heroEyebrow}</div>

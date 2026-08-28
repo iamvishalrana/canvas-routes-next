@@ -89,15 +89,15 @@ export default async function EventDetailPage({ params }) {
           background, same treatment as the public /meet/[id] page, so a
           member browsing the portal gets the same premium first impression
           instead of a plain image + white text block. */}
-      <div className="ev-hero" style={{
-        position: 'relative', overflow: 'hidden',
-        background: '#0F1E14',
-        ...(ev.photo_url ? {
-          backgroundImage: `linear-gradient(180deg, rgba(10,20,12,0.35) 0%, rgba(10,20,12,0.9) 100%), url('${ev.photo_url}')`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-        } : {}),
-      }}>
-        <div style={{ padding: 'clamp(1.75rem,5vw,2.75rem) clamp(1.5rem,5vw,2.5rem)' }}>
+      <div className="ev-hero" style={{ position: 'relative', overflow: 'hidden', background: '#0F1E14' }}>
+        {ev.photo_url && (
+          <div className="ev-hero-bg" style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `linear-gradient(180deg, rgba(10,20,12,0.35) 0%, rgba(10,20,12,0.9) 100%), url('${ev.photo_url}')`,
+            backgroundSize: 'cover', backgroundPosition: 'center',
+          }} />
+        )}
+        <div style={{ position: 'relative', padding: 'clamp(1.75rem,5vw,2.75rem) clamp(1.5rem,5vw,2.5rem)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', marginBottom: '0.9rem', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '7px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#c5a882', border: '0.5px solid rgba(197,168,130,0.4)', padding: '3px 10px', background: 'rgba(197,168,130,0.08)', fontFamily: 'var(--font-inter)' }}>
               {ev.type}
@@ -253,6 +253,12 @@ export default async function EventDetailPage({ params }) {
         }
         @media (max-width: 640px) {
           .ev-hero { margin: -1.75rem -1rem 0; }
+        }
+        /* Continuous Ken Burns zoom, matching the public /meet/[id] page's
+           hero treatment this panel already mirrors. */
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes ev-hero-zoom { 0% { transform: scale(1); } 50% { transform: scale(1.09); } 100% { transform: scale(1); } }
+          .ev-hero-bg { animation: ev-hero-zoom 40s ease-in-out infinite; will-change: transform; }
         }
         @keyframes evDetailFadeIn {
           from { opacity: 0; transform: translateY(10px); }

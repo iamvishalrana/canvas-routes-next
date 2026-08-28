@@ -174,13 +174,19 @@ export default function RoutesPage() {
           .incl-grid { grid-template-columns: 1fr !important; gap: 2rem !important; }
           .reg-box-row { flex-direction: column !important; gap: 0.25rem !important; }
         }
+        /* Continuous Ken Burns zoom on the hero photo, matching the Cars &
+           Coffee registration page and the itinerary pages. */
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes routes-hero-zoom { 0% { transform: scale(1); } 50% { transform: scale(1.09); } 100% { transform: scale(1); } }
+          .routes-hero-photo-zoom { animation: routes-hero-zoom 40s ease-in-out infinite; will-change: transform; }
+        }
       `}</style>
 
       <SiteNav />
 
       {/* HERO */}
       <section className="routes-hero" style={{background:"#0F1E14",padding:"clamp(140px,18vw,210px) 3rem 6rem",textAlign:"center",position:"relative",overflow:"hidden"}}>
-        <Image src="/trem-trip.jpg" alt="" fill sizes="100vw" style={{objectFit:"cover",objectPosition:"70% 80%",zIndex:0}} priority />
+        <Image src="/trem-trip.jpg" alt="" fill sizes="100vw" className="routes-hero-photo-zoom" style={{objectFit:"cover",objectPosition:"70% 80%",zIndex:0}} priority />
         <div style={{position:"absolute",inset:0,background:"rgba(10,20,12,0.72)",zIndex:1}} />
         <div style={{position:"absolute",top:0,left:0,right:0,height:"1px",background:"linear-gradient(90deg,transparent,rgba(197,168,130,0.6),transparent)",zIndex:2}} />
         <div style={{position:"relative",zIndex:2,fontSize:"11px",letterSpacing:"0.25em",textTransform:"uppercase",color:"rgba(197,168,130,0.6)",marginBottom:"1.2rem"}}>Canvas Routes</div>

@@ -431,14 +431,20 @@ export default function DrivePage() {
         .cars-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: rgba(0,0,0,0.08); border: 0.5px solid rgba(0,0,0,0.08); }
         @media (min-width: 640px) { .cars-grid { grid-template-columns: repeat(5, 1fr); } }
         .shot-by { padding: 1.5rem 0; border-top: 0.5px solid rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; }
+        /* Continuous Ken Burns zoom, matching the Cars & Coffee registration
+           page hero and every other route hero. */
+        @media (prefers-reduced-motion: no-preference) {
+          @keyframes laurentians-hero-zoom { 0% { transform: scale(1); } 50% { transform: scale(1.09); } 100% { transform: scale(1); } }
+          .laurentians-hero-bg { animation: laurentians-hero-zoom 40s ease-in-out infinite; will-change: transform; }
+        }
       `}</style>
 
       {/* Header */}
       <div style={{
         position: 'relative', padding: '3.5rem 1.25rem 3rem', textAlign: 'center',
-        backgroundImage: 'url(/faq-page.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center',
         overflow: 'hidden',
       }}>
+        <div className="laurentians-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/faq-page.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(15,30,20,0.82) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <img src="/white-outline.png" alt="Canvas Routes" style={{ width: '210px', display: 'block', margin: '0 auto 1.5rem' }} />
