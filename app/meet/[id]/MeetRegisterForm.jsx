@@ -274,8 +274,15 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
           .meet-hero-cta { display: block !important; width: 100% !important; box-sizing: border-box !important; text-align: center !important; }
         }
         @media (max-width: 640px) {
-          .meet-submit-wrap { position: fixed; bottom: 0; left: 0; right: 0; padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom)); background: #F5F1EC; border-top: 0.5px solid rgba(0,0,0,0.1); z-index: 50; }
-          .meet-form-pad { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)) !important; }
+          /* sticky (not fixed) — a fixed bar stays glued to the bottom of
+             the screen from the moment the page loads, which meant it sat
+             on top of the hero stats (Date/Venue/Time/Cost) before anyone
+             had even reached the form. sticky only pins once its normal
+             in-flow position (the true end of the form) would otherwise
+             scroll off the bottom of the screen, and releases again once
+             you scroll past the form into the footer — visible exactly
+             when it's relevant, never before or after. */
+          .meet-submit-wrap { position: sticky; bottom: 0; padding: 1rem 1.5rem calc(1rem + env(safe-area-inset-bottom)); margin: 0 -1.5rem; background: #F5F1EC; border-top: 0.5px solid rgba(0,0,0,0.1); z-index: 50; }
         }
         @media (max-width: 480px) {
           .meet-hero { padding-left: 1rem !important; padding-right: 1rem !important; }
@@ -368,7 +375,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
       </div>
 
       {/* Form */}
-      <div id="meet-form" className="meet-form-pad" style={{ background:'#F5F1EC', padding:'5rem 1.5rem 6rem' }}>
+      <div id="meet-form" style={{ background:'#F5F1EC', padding:'5rem 1.5rem 6rem' }}>
         <div style={{ maxWidth:'520px', margin:'0 auto' }}>
 
           {status !== 'open' ? (
@@ -623,7 +630,14 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
                   <p style={{ fontSize:'13px', color:'#93333E', margin:0, fontFamily:'var(--font-inter), sans-serif' }}>{serverError}</p>
                 )}
 
-                <div className="meet-submit-wrap">
+                <p style={{ textAlign:'center', fontSize:'11px', color:'#bbb', fontFamily:'var(--font-inter), sans-serif', lineHeight:1.6, margin:0 }}>
+                  {matchesMemberEmail
+                    ? "As a member, your spot is confirmed instantly — no review needed."
+                    : <>Submitting is not a guarantee of attendance — we&apos;ll confirm by email.</>}
+                </p>
+                <TermsPrivacyNote style={{ marginTop: '0.5rem' }} />
+
+                <div className="meet-submit-wrap" data-fixed-bottom-bar>
                   <button
                     type="submit"
                     disabled={formStatus === 'loading'}
@@ -632,13 +646,6 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
                     {formStatus === 'loading' ? 'Submitting…' : matchesMemberEmail ? 'Confirm My Spot' : 'Request My Spot'}
                   </button>
                 </div>
-
-                <p style={{ textAlign:'center', fontSize:'11px', color:'#bbb', fontFamily:'var(--font-inter), sans-serif', lineHeight:1.6, margin:0 }}>
-                  {matchesMemberEmail
-                    ? "As a member, your spot is confirmed instantly — no review needed."
-                    : <>Submitting is not a guarantee of attendance — we&apos;ll confirm by email.</>}
-                </p>
-                <TermsPrivacyNote style={{ marginTop: '0.5rem' }} />
               </form>
             </>
           )}

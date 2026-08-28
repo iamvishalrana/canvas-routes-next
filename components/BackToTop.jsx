@@ -1,8 +1,42 @@
 'use client'
 import { useState, useEffect } from 'react'
 
+// Pages that need a CTA pinned to the bottom of the screen on mobile (e.g.
+// the Cars & Coffee registration form's sticky submit bar) mark it with
+// data-fixed-bottom-bar — this button reads that element's live position and
+// shifts itself above it whenever the two would actually overlap, so it
+// works regardless of whether the bar gets there via position:fixed (always
+// pinned) or position:sticky (only pinned while scrolling through its own
+// container) — checked by bounding rect, not the CSS position value, since
+// a sticky element reports position:sticky whether or not it's currently
+// stuck.
+function useFixedBarClearance() {
+  const [clearance, setClearance] = useState(0)
+  useEffect(() => {
+    function measure() {
+      const el = document.querySelector('[data-fixed-bottom-bar]')
+      if (!el) { setClearance(0); return }
+      const rect = el.getBoundingClientRect()
+      const pinnedToBottom = rect.height > 0 && Math.abs(rect.bottom - window.innerHeight) < 4
+      setClearance(pinnedToBottom ? rect.height : 0)
+    }
+    measure()
+    window.addEventListener('scroll', measure, { passive: true })
+    window.addEventListener('resize', measure, { passive: true })
+    const ro = new ResizeObserver(measure)
+    ro.observe(document.body)
+    return () => {
+      window.removeEventListener('scroll', measure)
+      window.removeEventListener('resize', measure)
+      ro.disconnect()
+    }
+  }, [])
+  return clearance
+}
+
 export default function BackToTop() {
   const [visible, setVisible] = useState(false)
+  const clearance = useFixedBarClearance()
 
   useEffect(() => {
     function onScroll() { setVisible(window.scrollY > 400) }
@@ -20,9 +54,10 @@ export default function BackToTop() {
       aria-label="Back to top"
       style={{
         position: 'fixed',
-        bottom: '1.75rem',
+        bottom: `calc(1.75rem + ${clearance}px)`,
         right: '1.75rem',
         zIndex: 999,
+        transition: 'opacity 0.2s, bottom 0.2s ease',
         width: '40px',
         height: '40px',
         borderRadius: '50%',
@@ -33,7 +68,6 @@ export default function BackToTop() {
         alignItems: 'center',
         justifyContent: 'center',
         opacity: 0.85,
-        transition: 'opacity 0.2s',
         boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
         animation: 'btt-in 0.25s ease forwards',
       }}
