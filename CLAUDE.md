@@ -579,3 +579,42 @@ Schema source of truth is `supabase/schema.sql`. Incremental changes are in `sup
 `app/admin/page.jsx` (~4000 lines) is a single-file tabbed client component covering: Dashboard, Members, Cars, Applications, Contacts, Announcements, Events, Payments, and Tools. All data fetching is client-side via `useEffect` on tab mount with no pagination — the full dataset is loaded each time.
 
 Admin API routes live under `app/api/admin/`. Every handler calls `requireAdmin()` at the top and uses `createAdminClient()` for DB access.
+
+## Working Agreement (how to operate in this repo)
+
+Standing operating rules — they apply on every task unless the user says otherwise. Each one traces to a real incident.
+
+- **Build before every commit.** Run `npm run build` and confirm it's green before committing. Never commit or push code that hasn't built. There is no lint/test suite — the build is the only gate.
+- **Stage exact files, never `git add -A` / `git add .`.** A broad add once silently deleted 10 live participant photos for two weeks. Always `git add <specific paths>` and eyeball `git status` before every commit.
+- **Commit and push once a change is done and verified** — don't wait to be asked. But batch a logical unit of work into ONE commit; don't push after every tiny edit.
+- **Never add `Co-Authored-By: Claude` (or any Claude trailer) to commit messages.**
+- **Don't spin up dev servers or Playwright screenshots unless asked.** Careful code review + a green build is the default bar. (A visual check is fine when the user explicitly asks to confirm how something looks.)
+- **Paste full migration SQL as a code block in chat, every time** — not just a file reference. There's no migration runner; the user runs it by hand in the Supabase SQL Editor.
+- **Mobile-first, iOS-first, always.** Every UI change must work on mobile: 16px min font on inputs (prevents iOS zoom), `env(safe-area-inset-*)`, `@media (hover:hover)` guards on hover styles, and never introduce horizontal scroll (`overflow-x:hidden` on BOTH `html` and `body`).
+- **Don't proactively touch WTET** (`app/wtet*`, "Whips to Eastern Townships") — it's a past event with no live traffic. Change it only if explicitly asked.
+
+## Data & tooling access
+
+- `.mcp.json` (committed) wires up the **Supabase MCP** — query the live DB through it to look up real events, registrants, members, etc. rather than guessing — and the **Cloudflare MCP**. A fresh environment may need to authenticate these once (OAuth).
+- Local build/dev needs the env vars under "Environment Variables" above. Without them, services degrade to no-ops and `npm run build` won't fully exercise DB-backed code. Secrets are never committed — set them in each environment.
+
+## Voice & Content Conventions (site copy, emails, admin UI)
+
+- **The owner is "Jerry" or "Canvas Routes" in all user-facing text** — site copy, emails, admin UI. Never write "Vishal". Sole carve-out: waiver / legal text, left exactly as written.
+- **Never say "road trip"** in UI copy, or in new internal code where avoidable — the brand word is "route" / "drive". Exception: never rename the already-stored `road_trip_<slug>` Stripe payment-type keys (frozen).
+- **Event names used as labels/links read "Name — Year", never an exact date** (e.g. "Sunday Silhouette — 2026"). On-page schedule info (hero badge, countdown) keeps the real date.
+- **Avoid generic automotive taglines** ("reminds you why you fell in love with driving", etc.). Keep copy concrete and specific to the actual route/event.
+- **Every new shareable page needs its own OG/title/description metadata before launch** — not the generic sitewide fallback.
+- **Every phone/email shown in the admin panel gets an adjacent `CopyBtn`.**
+
+## Recurring Gotchas
+
+- **Dates: use `ev.date` for past/upcoming comparisons, never `ev.date_display`** (`date_display` is free-text; this bug has recurred in ≥4 files). Compare as `YYYY-MM-DD` strings in Montreal time.
+- **Timezone: always go through the central `MONTREAL_TZ` constant in `lib/mtlTime.js`.** Comparing `new Date(dateOnly)` (parsed as UTC midnight) against `new Date()` (local) misfiles "today" events as past for anyone west of UTC.
+- **`framer-motion` in SSR: a `motion.*` element with an `initial` state breaks ALL JS hydration on the page in Next.js 15** — only use it inside a client-only conditional render.
+- **`isMobile` via `useState(false)` + `useEffect` flashes desktop content on mobile** on slow connections. Branch layout with CSS media queries, not JS state.
+- **Admin: don't call `requireAdmin()` inside admin page/layout Server Components** — `middleware.js` already gates `/admin/*`; re-checking blocks static/ISR caching. (API route handlers still must call it.)
+- **New event features (check-in, awards, etc.) go as tabs on the event in `/admin/events`**, not new top-level admin nav routes.
+- **Recurring yearly events need the year baked into the Stripe `type`, backend routes, AND event-name matching** — not just the URL slug.
+- **`lib/roadTripConfirmEmail.js` feeds 7 route confirmation flows** — any change there must be checked against every caller, not just the one in front of you.
+- **Don't keep permanent copies of non-member data** — read it live / joined by email so natural expiry applies.
