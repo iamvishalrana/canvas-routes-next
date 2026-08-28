@@ -15,6 +15,42 @@ export default function ToolsClient() {
   const [newToken, setNewToken] = useState('')
   const [settingToken, setSettingToken] = useState(false)
   const [setTokenResult, setSetTokenResult] = useState(null)
+  const [galleryMigrating, setGalleryMigrating] = useState(false)
+  const [galleryResult, setGalleryResult] = useState(null)
+  const [galleryDeleting, setGalleryDeleting] = useState(false)
+  const [galleryDeleteResult, setGalleryDeleteResult] = useState(null)
+  const [galleryDeleteConfirm, setGalleryDeleteConfirm] = useState(false)
+
+  async function migrateGalleryPhotosR2() {
+    setGalleryMigrating(true)
+    setGalleryResult(null)
+    try {
+      const res = await fetch('/api/admin/tools/migrate-gallery-photos-r2', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setGalleryResult({ error: data.error || 'Migration failed.' }); return }
+      setGalleryResult(data)
+    } catch {
+      setGalleryResult({ error: 'Network error.' })
+    } finally {
+      setGalleryMigrating(false)
+    }
+  }
+
+  async function deleteGalleryPhotosSupabaseOriginals() {
+    setGalleryDeleteConfirm(false)
+    setGalleryDeleting(true)
+    setGalleryDeleteResult(null)
+    try {
+      const res = await fetch('/api/admin/tools/delete-gallery-photos-supabase-originals', { method: 'POST' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { setGalleryDeleteResult({ error: data.error || 'Deletion failed.' }); return }
+      setGalleryDeleteResult(data)
+    } catch {
+      setGalleryDeleteResult({ error: 'Network error.' })
+    } finally {
+      setGalleryDeleting(false)
+    }
+  }
 
   useEffect(() => {
     fetchRuns()
@@ -232,6 +268,92 @@ export default function ToolsClient() {
             {hcStatus === 'loading' ? 'Triggering…' : hcStatus === 'ok' ? 'Triggered ✓' : hcStatus === 'error' ? 'Failed ✗' : 'Run Now'}
           </button>
         </div>
+      </div>
+
+      {/* Gallery photos → R2 migration */}
+      <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: tool.heading, marginBottom: '0.35rem' }}>Migrate Gallery Photos to R2</div>
+            <div style={{ fontSize: '12px', color: tool.sub, lineHeight: '1.6', maxWidth: '420px' }}>
+              Copies every existing gallery-photos file (event albums, personal photos, and any still-pending submissions) from Supabase Storage into Cloudflare R2, then updates each photo&apos;s saved URLs to point at R2. Safe to click more than once — already-migrated files and rows are skipped.
+            </div>
+          </div>
+          <button onClick={migrateGalleryPhotosR2} disabled={galleryMigrating}
+            style={{
+              flexShrink: 0, padding: '0.6rem 1.25rem',
+              background: galleryResult && !galleryResult.error ? 'rgba(59,107,47,0.08)' : galleryResult?.error ? 'rgba(147,51,62,0.06)' : 'transparent',
+              border: `0.5px solid ${galleryResult && !galleryResult.error ? 'rgba(59,107,47,0.4)' : galleryResult?.error ? 'rgba(147,51,62,0.4)' : 'rgba(0,0,0,0.2)'}`,
+              fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+              color: galleryResult && !galleryResult.error ? '#3B6B2F' : galleryResult?.error ? '#93333E' : '#1a1a1a',
+              cursor: galleryMigrating ? 'wait' : 'pointer',
+              fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
+            }}>
+            {galleryMigrating ? 'Migrating…' : 'Run Migration'}
+          </button>
+        </div>
+        {galleryResult && (
+          <div style={{ marginTop: '0.75rem', fontSize: '12px', lineHeight: 1.6, color: galleryResult.error ? '#93333E' : '#3B6B2F' }}>
+            {galleryResult.error
+              ? `✕ ${galleryResult.error}`
+              : `✓ ${galleryResult.copied} copied, ${galleryResult.alreadyOnR2} already on R2, ${galleryResult.failed} failed, ${galleryResult.rowsUpdated} row(s) updated (${galleryResult.photoRowsUpdated} published, ${galleryResult.submissionRowsUpdated} pending) of ${galleryResult.total} files total.`}
+            {galleryResult.failures?.length > 0 && (
+              <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#93333E' }}>
+                {galleryResult.failures.map((f, i) => <div key={i}>{f.path}: {f.error}</div>)}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Delete Supabase gallery-photos originals — destructive, only after migration is verified */}
+      <div style={{ border: `0.5px solid ${tool.border}`, background: tool.bg, padding: '1.5rem', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: tool.heading, marginBottom: '0.35rem' }}>Delete Supabase Gallery Photo Originals</div>
+            <div style={{ fontSize: '12px', color: tool.sub, lineHeight: '1.6', maxWidth: '420px' }}>
+              Frees up Supabase storage quota by deleting the originals now that they&apos;re on R2. Every file is re-verified against R2 (fresh download + exact byte-size match) immediately before its Supabase copy is deleted — anything that doesn&apos;t verify is skipped, not deleted. Run the migration above first.
+            </div>
+          </div>
+          {galleryDeleteConfirm ? (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexShrink: 0 }}>
+              <span style={{ fontSize: '11px', color: '#93333E' }}>Delete verified originals?</span>
+              <button onClick={deleteGalleryPhotosSupabaseOriginals}
+                style={{ padding: '0.5rem 1rem', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.4)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#93333E', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Yes, Delete
+              </button>
+              <button onClick={() => setGalleryDeleteConfirm(false)}
+                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '0.5px solid rgba(0,0,0,0.2)', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#1a1a1a', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => setGalleryDeleteConfirm(true)} disabled={galleryDeleting}
+              style={{
+                flexShrink: 0, padding: '0.6rem 1.25rem',
+                background: galleryDeleteResult && !galleryDeleteResult.error ? 'rgba(59,107,47,0.08)' : galleryDeleteResult?.error ? 'rgba(147,51,62,0.06)' : 'transparent',
+                border: `0.5px solid ${galleryDeleteResult && !galleryDeleteResult.error ? 'rgba(59,107,47,0.4)' : galleryDeleteResult?.error ? 'rgba(147,51,62,0.4)' : 'rgba(147,51,62,0.3)'}`,
+                fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase',
+                color: galleryDeleteResult && !galleryDeleteResult.error ? '#3B6B2F' : '#93333E',
+                cursor: galleryDeleting ? 'wait' : 'pointer',
+                fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.2s',
+              }}>
+              {galleryDeleting ? 'Deleting…' : 'Delete Originals'}
+            </button>
+          )}
+        </div>
+        {galleryDeleteResult && (
+          <div style={{ marginTop: '0.75rem', fontSize: '12px', lineHeight: 1.6, color: galleryDeleteResult.error ? '#93333E' : '#3B6B2F' }}>
+            {galleryDeleteResult.error
+              ? `✕ ${galleryDeleteResult.error}`
+              : `✓ ${galleryDeleteResult.deleted} deleted, ${galleryDeleteResult.alreadyGone} already gone, ${galleryDeleteResult.skippedUnverified} skipped (unverified), ${galleryDeleteResult.failed} failed (of ${galleryDeleteResult.total} total).`}
+            {galleryDeleteResult.skipped?.length > 0 && (
+              <div style={{ marginTop: '0.4rem', fontSize: '11px', color: '#93333E' }}>
+                {galleryDeleteResult.skipped.map((f, i) => <div key={i}>{f.path}: {f.reason}</div>)}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
     </div>
