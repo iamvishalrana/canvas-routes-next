@@ -91,6 +91,7 @@ function CheckinContent() {
   }, [data])
 
   const autoSubmitted = useRef(false)
+  const scrolledToIncomplete = useRef(false)
   useEffect(() => {
     const prefillEmail = searchParams.get('email')
     if (autoSubmitted.current || !prefillEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefillEmail)) return
@@ -106,6 +107,7 @@ function CheckinContent() {
     const targetEmail = normalizeEmail(emailOverride ?? email)
     if (!targetEmail || !targetEmail.includes('@')) { setError(t.invalidEmailError); return }
     setStatus('loading')
+    scrolledToIncomplete.current = false
     try {
       const res = await fetch(`/api/checkin/${eventId}/lookup`, {
         method: 'POST',
@@ -142,6 +144,31 @@ function CheckinContent() {
   const allDone = data && (!hasTrip || !!data.tripDetails) && (!hasWaiver || !!data.waiver)
     && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
     && (!hasCarPhoto || !!data.carPhoto)
+  // First not-yet-complete section, in the same order they render — whoever
+  // lands here (e.g. redirected from the itinerary page's "not done yet"
+  // gate) gets scrolled straight to whatever they still need to fill in,
+  // instead of having to find it themselves among sections that are already
+  // checked off.
+  const incompleteSection =
+    (hasTrip && !data?.tripDetails) ? 'trip_details' :
+    (hasWaiver && !data?.waiver) ? 'waiver' :
+    (hasLunch && !(data?.lunch?.length > 0 && data.lunch.length === passengersList.length)) ? 'lunch' :
+    (hasCarPhoto && !data?.carPhoto) ? 'car_photo' :
+    null
+
+  useEffect(() => {
+    if (status !== 'found' || !data || scrolledToIncomplete.current) return
+    scrolledToIncomplete.current = true
+    if (!incompleteSection) return
+    // Let the sections actually paint first — scrolling on the same tick as
+    // the status flip can run before the target section's ref exists yet.
+    const id = setTimeout(() => {
+      document.getElementById(`checkin-section-${incompleteSection}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 80)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, data])
+
   // Optional "come from" page (e.g. an itinerary page that redirected here
   // to finish an incomplete check-in) — only ever a same-site relative path,
   // never trust it as an arbitrary redirect target from a query param.
@@ -216,31 +243,36 @@ function CheckinContent() {
           )}
 
           {hasTrip && (
-            <CheckinTripDetailsSection
-              identifier={identifier}
-              alreadyCompleted={!!data.tripDetails}
-              initialPassengerCount={1}
-              maxPassengers={data.maxPassengers || 2}
-              onSaved={savedPassengers => setData(prev => ({ ...prev, tripDetails: { ...prev.tripDetails, passengers_list: savedPassengers } }))}
-            />
+            <div id="checkin-section-trip_details">
+              <CheckinTripDetailsSection
+                identifier={identifier}
+                alreadyCompleted={!!data.tripDetails}
+                initialPassengerCount={1}
+                maxPassengers={data.maxPassengers || 2}
+                onSaved={savedPassengers => setData(prev => ({ ...prev, tripDetails: { ...prev.tripDetails, passengers_list: savedPassengers } }))}
+              />
+            </div>
           )}
 
           {hasWaiver && (
-            <CheckinWaiverSection
-              waiverText={data.waiverText}
-              waiverTextFr={data.waiverTextFr}
-              identifier={identifier}
-              waiver={data.waiver}
-              carYear={data.carYear}
-              carMake={data.carMake}
-              carModel={data.carModel}
-              maxPassengers={data.maxPassengers || 2}
-              tripPassengers={passengersList.slice(1)}
-              onSaved={waiver => setData(prev => ({ ...prev, waiver }))}
-            />
+            <div id="checkin-section-waiver">
+              <CheckinWaiverSection
+                waiverText={data.waiverText}
+                waiverTextFr={data.waiverTextFr}
+                identifier={identifier}
+                waiver={data.waiver}
+                carYear={data.carYear}
+                carMake={data.carMake}
+                carModel={data.carModel}
+                maxPassengers={data.maxPassengers || 2}
+                tripPassengers={passengersList.slice(1)}
+                onSaved={waiver => setData(prev => ({ ...prev, waiver }))}
+              />
+            </div>
           )}
 
           {hasLunch && (
+            <div id="checkin-section-lunch">
             <CheckinLunchSection
               key={passengersList.length}
               identifier={identifier}
@@ -253,14 +285,17 @@ function CheckinContent() {
               tripDone={!hasTrip || !!data.tripDetails}
               onSaved={lunch => setData(prev => ({ ...prev, lunch }))}
             />
+            </div>
           )}
 
           {hasCarPhoto && (
-            <CheckinCarPhotoSection
-              identifier={identifier}
-              carPhoto={data.carPhoto}
-              onSaved={carPhoto => setData(prev => ({ ...prev, carPhoto }))}
-            />
+            <div id="checkin-section-car_photo">
+              <CheckinCarPhotoSection
+                identifier={identifier}
+                carPhoto={data.carPhoto}
+                onSaved={carPhoto => setData(prev => ({ ...prev, carPhoto }))}
+              />
+            </div>
           )}
         </>
       )}
