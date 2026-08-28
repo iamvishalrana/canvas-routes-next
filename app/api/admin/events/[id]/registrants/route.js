@@ -6,7 +6,8 @@ import { buildInviteHtml } from '../../../../../../lib/inviteEmail'
 import { buildRoadTripConfirmHtml } from '../../../../../../lib/roadTripConfirmEmail.js'
 import { buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
 import { isWtetEventName } from '../../../../../../lib/wtetRegistrationContent.js'
-import { normalizeEventName, attendanceKey } from '../../../../../../lib/eventMeta.js'
+import { normalizeEventName, attendanceKey, getEventTimes } from '../../../../../../lib/eventMeta.js'
+import { calendarButtonsHtml } from '../../../../../../lib/eventCalendarLinks.js'
 import { normalizeEmail } from '../../../../../../lib/normalizeEmail.js'
 import { MONTREAL_TZ } from '../../../../../../lib/mtlTime'
 
@@ -131,6 +132,7 @@ export async function POST(request, { params }) {
   if (appId && process.env.RESEND_API_KEY && ev.public_registration_enabled) {
     const firstName = trimmedName.split(' ')[0]
     const dateDisplay = ev.date_display || ev.date || null
+    const timeDisplay = getEventTimes(id)?.display || null
     after(() =>
       fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -140,7 +142,7 @@ export async function POST(request, { params }) {
           to: normalEmail,
           reply_to: 'jerry@canvasroutes.com',
           subject: `You're confirmed — ${ev.name}`,
-          html: buildAcceptedHtml({ firstName, eventName: ev.name, dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null }),
+          html: buildAcceptedHtml({ firstName, eventName: ev.name, dateDisplay, timeDisplay, location: ev.location || null, photoUrl: ev.photo_url || null, calendarHtml: calendarButtonsHtml({ eventId: id, eventName: ev.name, date: ev.date, location: ev.location || null }) }),
         }),
       })
       .then(res => {

@@ -7,6 +7,8 @@ import { createClient } from '../../../../../../lib/supabase/server'
 import { listEventRegistrants, isSameEvent } from '../../../../../../lib/eventCheckinShared.js'
 import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 import { buildPendingReviewHtml, buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
+import { getEventTimes } from '../../../../../../lib/eventMeta.js'
+import { calendarButtonsHtml } from '../../../../../../lib/eventCalendarLinks.js'
 
 const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
@@ -182,6 +184,11 @@ export async function POST(request, { params }) {
 
   if (process.env.RESEND_API_KEY) {
     const dateDisplay = ev.date_display || ev.date || null
+    const timeDisplay = getEventTimes(ev.id)?.display || null
+    // Accepted (member) email gets the "add to calendar" buttons; the pending
+    // (non-member) email doesn't — the spot isn't confirmed yet, so a calendar
+    // hold would be premature. They get it in the Accepted email after review.
+    const calendarHtml = calendarButtonsHtml({ eventId: ev.id, eventName: ev.name, date: ev.date, location: ev.location || null })
     after(() => Promise.allSettled([
       fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -192,8 +199,8 @@ export async function POST(request, { params }) {
           reply_to: 'jerry@canvasroutes.com',
           subject: verifiedMember ? `You're confirmed — ${ev.name}` : `Registration received — ${ev.name}`,
           html: verifiedMember
-            ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null })
-            : buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null }),
+            ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, timeDisplay, location: ev.location || null, photoUrl: ev.photo_url || null, calendarHtml })
+            : buildPendingReviewHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, timeDisplay, location: ev.location || null, photoUrl: ev.photo_url || null }),
           text: verifiedMember
             ? `Hey ${firstName},\n\nYour spot at ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''} is confirmed. See you there.\n\nKnow any car friends who'd love this too? Tell them to register and mention your name — a referral from someone we already know is an easy yes.\n\nJerry\nCanvas Routes`
             : `Hey ${firstName},\n\nWe've received your registration for ${ev.name}${dateDisplay ? ` on ${dateDisplay}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Every registration is personally reviewed — we'll follow up by email with your confirmation before the event.\n\nJerry\nCanvas Routes`,

@@ -1,4 +1,5 @@
 import { createAdminClient } from '../../../../../lib/supabase/admin'
+import { eventCalendarRange } from '../../../../../lib/eventCalendarLinks'
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'
 
@@ -17,14 +18,14 @@ export async function GET(request, { params }) {
 
   if (!ev || !ev.date) return new Response('Not found', { status: 404 })
 
-  // Parse YYYY-MM-DD → YYYYMMDD  (date is stored in local/naive form — treat as all-day)
-  const dateStr = ev.date.replace(/-/g, '')
-  const nextDay = (() => {
-    const d = new Date(`${ev.date}T12:00:00Z`)
-    d.setUTCDate(d.getUTCDate() + 1)
-    return d.toISOString().slice(0, 10).replace(/-/g, '')
-  })()
+  // Timed (DTSTART/DTEND in UTC) when the event has a structured start/end in
+  // EVENT_TIMES, else an all-day entry (VALUE=DATE, DTEND exclusive next day).
+  const range = eventCalendarRange(id, ev.date)
   const dtstamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z'
+  const dtLines = range && !range.allDay
+    ? [`DTSTART:${range.start}`, `DTEND:${range.end}`]
+    : [`DTSTART;VALUE=DATE:${range ? range.start : ev.date.replace(/-/g, '')}`,
+       `DTEND;VALUE=DATE:${range ? range.end : ev.date.replace(/-/g, '')}`]
 
   const lines = [
     'BEGIN:VCALENDAR',
@@ -36,8 +37,7 @@ export async function GET(request, { params }) {
     'BEGIN:VEVENT',
     `UID:event-${id}@canvasroutes.com`,
     `DTSTAMP:${dtstamp}`,
-    `DTSTART;VALUE=DATE:${dateStr}`,
-    `DTEND;VALUE=DATE:${nextDay}`,
+    ...dtLines,
     `SUMMARY:${escapeIcs(ev.name)}`,
     ev.location ? `LOCATION:${escapeIcs(ev.location)}` : null,
     ev.description ? `DESCRIPTION:${escapeIcs(ev.description)}` : null,

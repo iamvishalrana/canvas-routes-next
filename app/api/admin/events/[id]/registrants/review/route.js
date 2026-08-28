@@ -3,6 +3,8 @@ import { createAdminClient } from '../../../../../../../lib/supabase/admin'
 import { captureException } from '../../../../../../../lib/sentry'
 import { isSameEvent } from '../../../../../../../lib/eventCheckinShared.js'
 import { buildAcceptedHtml, buildDeclinedHtml } from '../../../../../../../lib/eventReviewEmails.js'
+import { getEventTimes } from '../../../../../../../lib/eventMeta.js'
+import { calendarButtonsHtml } from '../../../../../../../lib/eventCalendarLinks.js'
 
 // Every value here can trace back to something a public registrant typed on
 // their own form submission (name) — escape before landing in raw HTML,
@@ -58,8 +60,13 @@ export async function POST(request, { params }) {
 
   const firstName = (app.name || '').trim().split(' ')[0] || 'there'
   const dateDisplay = ev.date_display || ev.date || null
+  const timeDisplay = getEventTimes(ev.id)?.display || null
   const html = decision === 'accept'
-    ? buildAcceptedHtml({ firstName: h(firstName), eventName: h(ev.name), dateDisplay, location: ev.location || null, photoUrl: ev.photo_url || null })
+    ? buildAcceptedHtml({
+        firstName: h(firstName), eventName: h(ev.name), dateDisplay, timeDisplay,
+        location: ev.location || null, photoUrl: ev.photo_url || null,
+        calendarHtml: calendarButtonsHtml({ eventId: ev.id, eventName: ev.name, date: ev.date, location: ev.location || null }),
+      })
     : buildDeclinedHtml({ firstName: h(firstName), eventName: h(ev.name), photoUrl: ev.photo_url || null })
   const subject = decision === 'accept' ? `You're confirmed — ${ev.name}` : `Update on your registration — ${ev.name}`
 
