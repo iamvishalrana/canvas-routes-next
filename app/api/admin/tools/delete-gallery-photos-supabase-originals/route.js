@@ -3,7 +3,26 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { getObjectMeta } from '../../../../../lib/r2'
 import { captureException } from '../../../../../lib/sentry'
 
+export const maxDuration = 300
+
 const BUCKET = 'gallery-photos'
+const CONCURRENCY = 10
+
+// See migrate-gallery-photos-r2/route.js — same fully-sequential-loop risk
+// (long enough to hit a function timeout despite every file succeeding),
+// same fix.
+async function mapLimit(items, limit, fn) {
+  const results = new Array(items.length)
+  let i = 0
+  async function worker() {
+    while (i < items.length) {
+      const idx = i++
+      results[idx] = await fn(items[idx], idx)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+  return results
+}
 
 // Deletes the Supabase Storage originals for gallery-photos now that
 // migrate-gallery-photos-r2 has copied them to R2 and rewritten the DB URLs.
@@ -37,29 +56,29 @@ export async function POST() {
   let deleted = 0, alreadyGone = 0, skippedUnverified = 0, failed = 0
   const skipped = []
 
-  for (const path of paths) {
+  await mapLimit([...paths], CONCURRENCY, async (path) => {
     try {
       const { data: blob, error: dlErr } = await admin.storage.from(BUCKET).download(path)
-      if (dlErr || !blob) { alreadyGone++; continue }
+      if (dlErr || !blob) { alreadyGone++; return }
 
       const supabaseSize = blob.size
       const r2Meta = await getObjectMeta({ bucket: BUCKET, path })
       if (!r2Meta) {
         skippedUnverified++
         skipped.push({ path, reason: 'not found in R2' })
-        continue
+        return
       }
       if (r2Meta.size !== supabaseSize) {
         skippedUnverified++
         skipped.push({ path, reason: `size mismatch (supabase ${supabaseSize} vs r2 ${r2Meta.size})` })
-        continue
+        return
       }
 
       const { error: rmErr } = await admin.storage.from(BUCKET).remove([path])
       if (rmErr) {
         failed++
         skipped.push({ path, reason: rmErr.message })
-        continue
+        return
       }
       deleted++
     } catch (err) {
@@ -67,7 +86,7 @@ export async function POST() {
       skipped.push({ path, reason: err.message })
       captureException(err, { context: 'delete-gallery-photos-supabase-object', path })
     }
-  }
+  })
 
   return Response.json({ total: paths.size, deleted, alreadyGone, skippedUnverified, failed, skipped: skipped.slice(0, 20) })
 }

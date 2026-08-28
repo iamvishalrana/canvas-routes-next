@@ -27,7 +27,7 @@ export default function ToolsClient() {
     try {
       const res = await fetch('/api/admin/tools/migrate-gallery-photos-r2', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setGalleryResult({ error: data.error || 'Migration failed.' }); return }
+      if (!res.ok) { setGalleryResult({ error: data.error || `Migration failed (HTTP ${res.status}).` }); return }
       setGalleryResult(data)
     } catch {
       setGalleryResult({ error: 'Network error.' })
@@ -43,7 +43,7 @@ export default function ToolsClient() {
     try {
       const res = await fetch('/api/admin/tools/delete-gallery-photos-supabase-originals', { method: 'POST' })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) { setGalleryDeleteResult({ error: data.error || 'Deletion failed.' }); return }
+      if (!res.ok) { setGalleryDeleteResult({ error: data.error || `Deletion failed (HTTP ${res.status}).` }); return }
       setGalleryDeleteResult(data)
     } catch {
       setGalleryDeleteResult({ error: 'Network error.' })
