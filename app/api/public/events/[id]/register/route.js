@@ -210,6 +210,7 @@ export async function POST(request, { params }) {
             ['Event', `<strong>${h(ev.name)}</strong>`],
             ['Name', `<strong>${h(name.trim())}</strong>`],
             ['Email', `<a href="mailto:${h(normalEmail)}" style="color:#1a1a1a;">${h(normalEmail)}</a>`],
+            ['Car year', h(year?.trim()) || '—'],
             ['Car', h(fullCarModel) || '—'],
             ['Phone', h(phone) || '—'],
             ['Instagram', instagram ? `@${h(instagram.replace(/^@+/, ''))}` : '—'],
