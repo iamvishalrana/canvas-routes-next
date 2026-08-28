@@ -5,10 +5,8 @@ import { captureException } from '../../../../../../lib/sentry'
 import { removeObjects } from '../../../../../../lib/r2'
 
 const BUCKET_BY_SOURCE = { member: 'gallery-photos', non_member: 'photo-shares' }
-// Only photo-shares (non-member submissions) has moved to R2 so far —
-// gallery-photos (member submissions) is still on Supabase Storage until
-// its own migration slice.
-const R2_BUCKETS = new Set(['photo-shares'])
+// Both buckets are on R2 now (gallery-photos migrated 2026-08-28).
+const R2_BUCKETS = new Set(['photo-shares', 'gallery-photos'])
 
 // Same atomic conditional-claim pattern as ./publish/route.js — the status
 // flip happens first and is what prevents a double-click (or a race with a

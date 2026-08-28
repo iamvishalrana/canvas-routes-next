@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { captureException } from '../../../../../lib/sentry'
+import { removeObjects } from '../../../../../lib/r2'
 
 const BUCKET = 'gallery-photos'
 
@@ -57,9 +58,9 @@ export async function DELETE(request, { params }) {
   if (delErr) return Response.json({ error: delErr.message }, { status: 500 })
 
   // storage_path === original_path for new rows (single-upload flow) —
-  // dedupe so we don't ask Supabase to remove the same path twice.
+  // dedupe so we don't ask R2 to remove the same path twice.
   const paths = [...new Set([row.storage_path, row.original_path].filter(Boolean))]
-  if (paths.length) await supabase.storage.from(BUCKET).remove(paths).catch(err =>
+  if (paths.length) await removeObjects({ bucket: BUCKET, paths }).catch(err =>
     captureException(err, { context: 'admin-gallery-photo-delete-storage', id }))
 
   await logAdminAction(supabase, adminUser?.email, { action: 'gallery.photo_delete', entityType: 'gallery_photo', entityId: id, entityName: row.album })

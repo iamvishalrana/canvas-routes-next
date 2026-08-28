@@ -4,6 +4,7 @@ import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { captureException } from '../../../../lib/sentry'
 import { ALLOWED_EXTS } from '../../../../lib/allowedImageTypes'
 import { attendanceKey } from '../../../../lib/eventMeta'
+import { objectExists, getPublicUrl } from '../../../../lib/r2'
 
 const BUCKET = 'gallery-photos'
 // Ceiling on how many un-reviewed submissions one member can have sitting in
@@ -51,9 +52,9 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid storage path.' }, { status: 400 })
   }
 
-  const [{ data: origExists }, { data: dispExists }] = await Promise.all([
-    admin.storage.from(BUCKET).exists(originalPath),
-    admin.storage.from(BUCKET).exists(displayPath),
+  const [origExists, dispExists] = await Promise.all([
+    objectExists({ bucket: BUCKET, path: originalPath }),
+    objectExists({ bucket: BUCKET, path: displayPath }),
   ])
   if (!origExists || !dispExists) return Response.json({ error: 'Upload incomplete — please retry.' }, { status: 400 })
 
@@ -63,8 +64,8 @@ export async function POST(request) {
     return Response.json({ error: 'You have too many photos awaiting review — wait for some to be published before submitting more.' }, { status: 429 })
   }
 
-  const { data: { publicUrl: originalUrl } } = admin.storage.from(BUCKET).getPublicUrl(originalPath)
-  const { data: { publicUrl: displayUrl } } = admin.storage.from(BUCKET).getPublicUrl(displayPath)
+  const originalUrl = getPublicUrl({ bucket: BUCKET, path: originalPath })
+  const displayUrl = getPublicUrl({ bucket: BUCKET, path: displayPath })
 
   const { data: row, error } = await admin.from('gallery_photo_submissions').insert({
     source: 'member',

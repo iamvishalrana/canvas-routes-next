@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, CopyBtn } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
-import { uploadToSupabaseStorage } from '../../../lib/uploadToSupabaseStorage'
+import { uploadToR2 } from '../../../lib/uploadToR2'
 import { onImgError } from '../../../lib/imgFallback'
 import { compressImageClient } from '../../../lib/compressImageClient'
 import { convertHeicIfNeeded, isHeicFile } from '../../../lib/convertHeicIfNeeded'
@@ -11,7 +11,6 @@ import { formatMbps } from '../../../lib/formatMbps'
 import { MIME_TO_EXT } from '../../../lib/allowedImageTypes'
 import AdminPhotoLightbox from '../_components/AdminPhotoLightbox'
 
-const BUCKET = 'gallery-photos'
 const ALLOWED = MIME_TO_EXT
 
 function formatDate(d) {
@@ -259,11 +258,11 @@ export default function PhotosClient() {
       })()
   const lightboxPhotos = lightboxGroup.map(p => ({ id: p.id, url: p.photo_url, originalUrl: p.original_url, caption: p.caption }))
 
-  // Uploads go browser → Supabase Storage directly via signed URLs (full-size
-  // originals exceed the serverless request-body limit). Two files are sent
-  // per photo: the untouched original (full-resolution download) and a
-  // client-compressed display copy (grid/lightbox) — Supabase's on-the-fly
-  // image transform endpoint proved unreliable for large camera originals
+  // Uploads go browser → R2 directly via presigned URLs (full-size originals
+  // exceed the serverless request-body limit). Two files are sent per photo:
+  // the untouched original (full-resolution download) and a
+  // client-compressed display copy (grid/lightbox) — an on-the-fly image
+  // transform endpoint proved unreliable for large camera originals
   // (broken-image icon, or slow enough to look broken), so the display copy
   // is a real small file rather than a live-transformed URL. HEIC/HEIF files
   // (iOS default when not auto-converted) are converted to JPEG first — no
@@ -292,8 +291,8 @@ export default function PhotosClient() {
         // two sequential durations.
         const pairStarted = performance.now()
         await Promise.all([
-          uploadToSupabaseStorage({ bucket: BUCKET, path: urls.originalPath, token: urls.originalToken, file }),
-          uploadToSupabaseStorage({ bucket: BUCKET, path: urls.displayPath, token: urls.displayToken, file: display }),
+          uploadToR2({ uploadUrl: urls.originalUploadUrl, file }),
+          uploadToR2({ uploadUrl: urls.displayUploadUrl, file: display }),
         ])
         const pairMs = performance.now() - pairStarted
         const pairBytes = file.size + display.size

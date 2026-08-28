@@ -4,6 +4,7 @@ import { attendanceKey, attendanceKeyToEventName, normalizeEventName } from '../
 import { captureException } from '../../../../../lib/sentry.js'
 import { logAdminAction } from '../../../../../lib/adminAudit.js'
 import { padForStorage } from '../../../../../lib/memberNumber.js'
+import { removeObjects } from '../../../../../lib/r2'
 
 export async function PATCH(request, { params }) {
   const admin = await requireAdmin()
@@ -217,7 +218,7 @@ export async function DELETE(request, { params }) {
     ...(pendingSubmissions || []).flatMap(p => [p.storage_path, p.original_path]),
   ].filter(Boolean))]
   if (galleryPaths.length) {
-    try { await supabase.storage.from('gallery-photos').remove(galleryPaths) } catch {}
+    try { await removeObjects({ bucket: 'gallery-photos', paths: galleryPaths }) } catch {}
   }
 
   // Delete application row by email — cascades to contacts

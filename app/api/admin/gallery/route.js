@@ -3,6 +3,7 @@ import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { captureException } from '../../../../lib/sentry'
 import { ALLOWED_EXTS } from '../../../../lib/allowedImageTypes'
+import { objectExists, getPublicUrl, removeObjects } from '../../../../lib/r2'
 
 const BUCKET = 'gallery-photos'
 
@@ -79,16 +80,16 @@ export async function POST(request) {
 
   // Both files must actually exist — a record pointing at a failed upload
   // would render as a broken tile for every member
-  const [{ data: origExists }, { data: dispExists }] = await Promise.all([
-    supabase.storage.from(BUCKET).exists(originalPath),
-    supabase.storage.from(BUCKET).exists(displayPath),
+  const [origExists, dispExists] = await Promise.all([
+    objectExists({ bucket: BUCKET, path: originalPath }),
+    objectExists({ bucket: BUCKET, path: displayPath }),
   ])
   if (!origExists || !dispExists) {
     return Response.json({ error: 'Upload incomplete — please retry this photo.' }, { status: 400 })
   }
 
-  const { data: { publicUrl: originalUrl } } = supabase.storage.from(BUCKET).getPublicUrl(originalPath)
-  const { data: { publicUrl: displayUrl } } = supabase.storage.from(BUCKET).getPublicUrl(displayPath)
+  const originalUrl = getPublicUrl({ bucket: BUCKET, path: originalPath })
+  const displayUrl = getPublicUrl({ bucket: BUCKET, path: displayPath })
 
   const { data: row, error: insertErr } = await supabase.from('gallery_photos')
     .insert({
@@ -163,9 +164,9 @@ export async function DELETE(request) {
   if (delErr) return Response.json({ error: delErr.message }, { status: 500 })
 
   // storage_path === original_path for new rows (single-upload flow) —
-  // dedupe so we don't ask Supabase to remove the same path twice.
+  // dedupe so we don't ask R2 to remove the same path twice.
   const paths = [...new Set((rows || []).flatMap(r => [r.storage_path, r.original_path]).filter(Boolean))]
-  if (paths.length) await supabase.storage.from(BUCKET).remove(paths).catch(err =>
+  if (paths.length) await removeObjects({ bucket: BUCKET, paths }).catch(err =>
     captureException(err, { context: 'admin-gallery-album-delete-storage', album }))
 
   await logAdminAction(supabase, adminUser?.email, { action: 'gallery.album_delete', entityType: 'gallery_album', entityName: album.trim(), metadata: { photos: paths.length } })

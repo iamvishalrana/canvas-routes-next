@@ -1,9 +1,9 @@
 import { createClient } from '../../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
-import { ALLOWED_EXTS, ALLOWED_MIME_TYPES } from '../../../../../lib/allowedImageTypes'
+import { ALLOWED_EXTS, EXT_TO_MIME } from '../../../../../lib/allowedImageTypes'
 import { attendanceKey } from '../../../../../lib/eventMeta'
-import { captureException } from '../../../../../lib/sentry'
+import { createSignedUploadUrl } from '../../../../../lib/r2'
 
 const BUCKET = 'gallery-photos'
 
@@ -34,27 +34,20 @@ export async function POST(request) {
     return Response.json({ error: 'You can only submit photos for an event you attended.' }, { status: 400 })
   }
 
-  const bucketOpts = { public: true, allowedMimeTypes: ALLOWED_MIME_TYPES, fileSizeLimit: '100MB' }
-  // A failed updateBucket must not be silently swallowed — the server-side
-  // allowlist is the real gate here. See lib/allowedImageTypes.js's SVG
-  // comment (2026-08-24).
-  await admin.storage.createBucket(BUCKET, bucketOpts).catch(() =>
-    admin.storage.updateBucket(BUCKET, bucketOpts).catch(err =>
-      captureException(err, { context: 'member-gallery-submission-bucket-config', bucket: BUCKET })))
-
   const base = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`
   const originalPath = `submissions/${user.id}/originals/${base}.${origExt}`
   const displayPath = `submissions/${user.id}/display/${base}.${dispExt}`
 
-  const [origResult, dispResult] = await Promise.all([
-    admin.storage.from(BUCKET).createSignedUploadUrl(originalPath),
-    admin.storage.from(BUCKET).createSignedUploadUrl(displayPath),
-  ])
-  if (origResult.error) return Response.json({ error: origResult.error.message }, { status: 500 })
-  if (dispResult.error) return Response.json({ error: dispResult.error.message }, { status: 500 })
-
-  return Response.json({
-    originalPath, originalToken: origResult.data.token,
-    displayPath, displayToken: dispResult.data.token,
-  })
+  try {
+    const [orig, disp] = await Promise.all([
+      createSignedUploadUrl({ bucket: BUCKET, path: originalPath, contentType: EXT_TO_MIME[origExt] }),
+      createSignedUploadUrl({ bucket: BUCKET, path: displayPath, contentType: EXT_TO_MIME[dispExt] }),
+    ])
+    return Response.json({
+      originalPath, originalUploadUrl: orig.uploadUrl,
+      displayPath, displayUploadUrl: disp.uploadUrl,
+    })
+  } catch (err) {
+    return Response.json({ error: err.message || 'Failed to prepare upload.' }, { status: 500 })
+  }
 }
