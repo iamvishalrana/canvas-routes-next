@@ -103,7 +103,7 @@ const UI = {
     meetupLabel: 'Meetup', meetupLine: 'Meetup — 7:30 AM · Laval, QC', departure: 'Departure 8:00 AM sharp',
     contactLabel: 'Contact', navLabel: 'Navigation',
     navOpen: 'Open route →',
-    navQuick: "Best run on your passenger's phone — how-to below.",
+    navQuick: "Run it on your passenger's phone if you have one — see the steps below.",
     navHowLabel: 'Using the Route',
     navSteps: [
       { lead: 'Open the route', body: '— tap the green button above. The full route opens with every stop already loaded; hit Start to begin turn-by-turn navigation.' },
@@ -128,7 +128,7 @@ const UI = {
     meetupLabel: 'Rendez-vous', meetupLine: 'Rendez-vous — 7 h 30 · Laval, QC', departure: 'Départ à 8 h précises',
     contactLabel: 'Contact', navLabel: 'Navigation',
     navOpen: "Ouvrir l'itinéraire →",
-    navQuick: 'Idéalement sur le téléphone du passager — voir plus bas.',
+    navQuick: 'Lancez-le sur le téléphone du passager si vous en avez un — étapes ci-dessous.',
     navHowLabel: "Utiliser l'itinéraire",
     navSteps: [
       { lead: "Ouvrez l'itinéraire", body: "— touchez le bouton vert ci-dessus. La route complète s'ouvre avec tous les arrêts déjà chargés; appuyez sur Démarrer pour lancer la navigation." },
