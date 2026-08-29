@@ -13,7 +13,7 @@ export async function POST(request, { params }) {
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid JSON' }, { status: 400 }) }
   const email = normalizeEmail(body?.email)
-  const { dietary, whatsapp, passengers_list } = body || {}
+  const { dietary, whatsapp, passengers_list, edit } = body || {}
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
@@ -44,7 +44,10 @@ export async function POST(request, { params }) {
 
   const { data: existing } = await admin.from('event_checkins')
     .select('trip_details').eq('event_id', eventId).eq('email', email).maybeSingle()
-  if (existing?.trip_details) return Response.json({ error: 'Already completed.' }, { status: 400 })
+  // `edit: true` (from the itinerary's Edit-passengers flow) allows overwriting
+  // an already-completed entry; without it, a re-submit is still blocked to
+  // guard against accidental double-submits in the normal flow.
+  if (existing?.trip_details && !edit) return Response.json({ error: 'Already completed.' }, { status: 400 })
 
   const cleanedPassengers = passengers_list.map(p => ({ name: p.name.trim(), age: p.age.toString().trim() }))
   const tripDetails = {

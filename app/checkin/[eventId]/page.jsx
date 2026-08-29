@@ -181,6 +181,10 @@ function CheckinContent() {
   // finish an incomplete check-in) — only ever a same-site relative path,
   // never trust it as an arbitrary redirect target. Persisted per-event so a
   // return visit still offers the itinerary link even without the query param.
+  // Edit mode (from the itinerary's "Edit check-in" link) unlocks the
+  // passenger/car-photo sections for a completed registrant. The waiver stays
+  // as originally signed.
+  const editMode = searchParams.get('edit') === '1'
   const returnToParam = searchParams.get('returnTo')
   const [returnTo, setReturnTo] = useState(null)
   useEffect(() => {
@@ -291,6 +295,8 @@ function CheckinContent() {
                 alreadyCompleted={!!data.tripDetails}
                 initialPassengerCount={1}
                 maxPassengers={data.maxPassengers || 2}
+                allowEdit={editMode}
+                existingTripDetails={data.tripDetails}
                 onSaved={savedPassengers => setData(prev => ({ ...prev, tripDetails: { ...prev.tripDetails, passengers_list: savedPassengers } }))}
               />
             </div>
@@ -336,6 +342,7 @@ function CheckinContent() {
               <CheckinCarPhotoSection
                 identifier={identifier}
                 carPhoto={data.carPhoto}
+                allowEdit={editMode}
                 onSaved={carPhoto => setData(prev => ({ ...prev, carPhoto }))}
               />
             </div>

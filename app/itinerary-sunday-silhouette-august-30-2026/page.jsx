@@ -121,6 +121,8 @@ const UI = {
     mapLabel: 'Map',
     openRoute: 'Open the Route in Google Maps',
     openRouteSub: 'Tap to start turn-by-turn navigation',
+    editCheckinLabel: 'Edit my check-in →',
+    editCheckinSub: 'Update a passenger or your car photo',
     modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
     heroTags: ['Laurentian Backroads', '~220km Drive', 'Coffee + Brunch'],
     countdownUnits: ['Days', 'Hrs', 'Min', 'Sec'],
@@ -147,6 +149,8 @@ const UI = {
     mapLabel: 'Carte',
     openRoute: "Ouvrir l'itinéraire dans Google Maps",
     openRouteSub: 'Touchez pour lancer la navigation',
+    editCheckinLabel: 'Modifier mon enregistrement →',
+    editCheckinSub: 'Modifier un passager ou la photo de votre voiture',
     modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
     heroTags: ['Routes secondaires laurentiennes', '~220 km de route', 'Café + brunch'],
     countdownUnits: ['Jours', 'Hres', 'Min', 'Sec'],
@@ -426,6 +430,10 @@ export default function SundaySilhouetteItineraryPage() {
   const [fetchedParticipants, setFetchedParticipants] = useState([])
   const [countdown, setCountdown] = useState(null)
   const [lang, setLang] = useState('en')
+  // Set only when they got in via email (not the crew password), so the
+  // "Edit check-in" link is shown to registrants who can actually edit.
+  const [authedEmail, setAuthedEmail] = useState('')
+  const [checkinEventId, setCheckinEventId] = useState('')
   const t = UI[lang]
 
   useEffect(() => {
@@ -613,6 +621,8 @@ export default function SundaySilhouetteItineraryPage() {
         // remembered, so closing the check-in routes them back through it
         // (email gate → check-in) rather than skipping straight in.
         try { localStorage.setItem('ss_itinerary_email', entered) } catch {}
+        setAuthedEmail(entered)
+        setCheckinEventId(idData.eventId)
         setAuthed(true)
       } else {
         // Includes the email in the return URL too, so coming back auto-submits
@@ -1085,6 +1095,18 @@ export default function SundaySilhouetteItineraryPage() {
             <RouteMap key={lang} stops={MAP_STOPS} routePath={ROUTE_PATH} lang={lang} />
           </div>
         </section>
+
+        {/* Edit check-in — only for registrants who got in via their email
+            (authedEmail is unset for the crew-password bypass). */}
+        {authedEmail && checkinEventId && (
+          <section className="scroll-reveal" style={{ padding: '2rem 0 0', textAlign: 'center' }}>
+            <a href={`/checkin/${checkinEventId}?email=${encodeURIComponent(authedEmail)}&edit=1`}
+              style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}>
+              {t.editCheckinLabel}
+            </a>
+            <p style={{ fontSize: '11px', color: '#aaa', marginTop: '0.4rem', marginBottom: 0 }}>{t.editCheckinSub}</p>
+          </section>
+        )}
 
       </main>
 

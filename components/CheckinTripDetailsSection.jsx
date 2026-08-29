@@ -18,13 +18,17 @@ function parsePassengerCount(str, max) {
 }
 
 // identifier: { email, eventId }
-export default function CheckinTripDetailsSection({ identifier, alreadyCompleted, initialPassengerCount, maxPassengers, onSaved }) {
+export default function CheckinTripDetailsSection({ identifier, alreadyCompleted, initialPassengerCount, maxPassengers, onSaved, allowEdit = false, existingTripDetails = null }) {
   const { lang } = useLanguage()
   const t = CHECKIN_T[lang]
   const [editing, setEditing] = useState(!alreadyCompleted)
-  const [dietary, setDietary] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
-  const [passengers, setPassengers] = useState(() => Array.from({ length: parsePassengerCount(initialPassengerCount, maxPassengers) }, emptyPassenger))
+  const [dietary, setDietary] = useState(existingTripDetails?.dietary || '')
+  const [whatsapp, setWhatsapp] = useState(existingTripDetails?.whatsapp || '')
+  const [passengers, setPassengers] = useState(() =>
+    existingTripDetails?.passengers_list?.length
+      ? existingTripDetails.passengers_list.map(p => ({ name: p.name || '', age: String(p.age ?? '') }))
+      : Array.from({ length: parsePassengerCount(initialPassengerCount, maxPassengers) }, emptyPassenger)
+  )
   const [fieldErrors, setFieldErrors] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState(null)
@@ -64,6 +68,7 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
           dietary: dietary.trim() || null,
           whatsapp: whatsapp.trim() || null,
           passengers_list: passengers,
+          edit: alreadyCompleted,
         }),
       })
       if (!res.ok) {
@@ -84,6 +89,12 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
     return (
       <SectionCard title={t.tripTitle} done doneLabel={t.tripDoneLabel} pendingLabel={t.tripPendingLabel}>
         <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>{t.tripDoneMsg}</div>
+        {allowEdit && (
+          <button type="button" onClick={() => setEditing(true)} className="wtetci-btn-ghost"
+            style={{ marginTop: '0.9rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.5rem 1.1rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer' }}>
+            {t.editBtn}
+          </button>
+        )}
       </SectionCard>
     )
   }

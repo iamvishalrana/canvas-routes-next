@@ -11,13 +11,14 @@ import { MIME_TO_EXT } from '../lib/allowedImageTypes'
 const ALLOWED = MIME_TO_EXT
 
 // identifier: { email, eventId }
-export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }) {
+export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved, allowEdit = false }) {
   const { lang } = useLanguage()
   const t = CHECKIN_T[lang]
   const [preview, setPreview] = useState(null)
   const [file, setFile] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [replacing, setReplacing] = useState(false)
   const inputRef = useRef(null)
 
   // Converted here (not just at submit) so the preview itself renders
@@ -55,11 +56,14 @@ export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }
       await uploadToSupabaseStorage({ bucket: 'route-car-photos', path: urls.path, token: urls.token, file })
       const res = await fetch(`/api/checkin/${identifier.eventId}/car-photo`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: identifier.email, path: urls.path }),
+        body: JSON.stringify({ email: identifier.email, path: urls.path, edit: !!carPhoto }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setError(d.error || t.genericError); return }
       onSaved(d.carPhoto)
+      setReplacing(false)
+      setPreview(null)
+      setFile(null)
     } catch {
       setError(t.networkError)
     } finally {
@@ -67,7 +71,7 @@ export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }
     }
   }
 
-  if (carPhoto) {
+  if (carPhoto && !replacing) {
     return (
       <SectionCard title={t.carPhotoTitle} done delay={270} doneLabel={t.carPhotoDoneLabel} pendingLabel={t.carPhotoPendingLabel}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
@@ -75,6 +79,12 @@ export default function CheckinCarPhotoSection({ identifier, carPhoto, onSaved }
           <img src={carPhoto.url} alt="" style={{ width: '110px', height: '110px', objectFit: 'cover', border: '0.5px solid rgba(0,0,0,0.1)' }} />
           <div style={{ fontSize: '13px', color: '#555', lineHeight: 1.8 }}>{t.carPhotoThanks}</div>
         </div>
+        {allowEdit && (
+          <button type="button" onClick={() => setReplacing(true)} className="wtetci-btn-ghost"
+            style={{ marginTop: '0.9rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', padding: '0.5rem 1.1rem', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#666', cursor: 'pointer' }}>
+            {t.replaceBtn}
+          </button>
+        )}
       </SectionCard>
     )
   }

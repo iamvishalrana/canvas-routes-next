@@ -25,7 +25,7 @@ export async function POST(request, { params }) {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
-  const { path } = body
+  const { path, edit } = body
   if (!PATH_RE.test(path || '') || !path.startsWith(`${eventId}-`)) {
     return Response.json({ error: 'Invalid storage path.' }, { status: 400 })
   }
@@ -43,7 +43,9 @@ export async function POST(request, { params }) {
 
   const { data: existing } = await admin.from('event_checkins')
     .select('car_photo').eq('event_id', eventId).eq('email', email).maybeSingle()
-  if (existing?.car_photo) return Response.json({ error: 'A photo has already been submitted.' }, { status: 400 })
+  // `edit: true` (from the itinerary's Edit flow) allows replacing an existing
+  // photo; otherwise a re-submit is blocked as an accidental double-submit.
+  if (existing?.car_photo && !edit) return Response.json({ error: 'A photo has already been submitted.' }, { status: 400 })
 
   const { data: exists } = await admin.storage.from(BUCKET).exists(path)
   if (!exists) return Response.json({ error: 'Upload incomplete — please retry.' }, { status: 400 })
