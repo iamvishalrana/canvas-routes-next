@@ -37,12 +37,13 @@ const MAP_STOPS = STOPS.filter(s => s.lat != null && s.lng != null)
 // Updated 2026-08-29 to Jerry's latest shared route.
 const ROUTE_LINK = 'https://maps.app.goo.gl/aCzC4aoS9edUGgqe6?g_st=ic'
 
-// Google My Maps embed for the visual map at the bottom of the page — Jerry's
-// actual drawn route with every waypoint. The `/maps/d/edit?mid=…` share link
-// becomes `/maps/d/embed?mid=…` for iframing; the My Map must be shared as
-// "Anyone with the link" (or public) for this to render for attendees.
-// www.google.com is already allowlisted in vercel.json's CSP frame-src.
-const MYMAPS_EMBED = 'https://www.google.com/maps/d/embed?mid=1iCcN9cZLQzZrZZl5toLD8B5jaAOjVqY'
+// The real road-traced route drawn on the styled (beige/black) map at the
+// bottom of the page — extracted from Jerry's Google My Maps KML
+// (mid=1iCcN9cZLQzZrZZl5toLD8B5jaAOjVqY, "Sunday Silhouette Route- 2026") and
+// downsampled from 6,233 points to a smooth 180-point polyline (Laval → Rawdon
+// → Saint-Côme → Café Marius → Petinos). Regenerate from the KML if the route
+// is re-drawn. Compact [lat,lng] pairs.
+const ROUTE_PATH = [[45.55850,-73.79292],[45.57034,-73.75964],[45.57786,-73.74774],[45.59294,-73.71548],[45.60674,-73.69358],[45.62210,-73.66312],[45.64014,-73.65033],[45.65596,-73.64549],[45.66351,-73.64863],[45.67183,-73.65002],[45.68513,-73.64977],[45.69561,-73.65122],[45.70631,-73.65075],[45.70960,-73.63784],[45.71528,-73.62232],[45.72265,-73.61031],[45.72898,-73.60508],[45.73394,-73.60116],[45.73993,-73.59644],[45.74567,-73.59192],[45.75084,-73.58783],[45.75595,-73.58382],[45.76015,-73.58050],[45.76546,-73.57760],[45.77198,-73.57527],[45.77921,-73.57338],[45.78455,-73.57617],[45.79964,-73.58589],[45.83338,-73.61622],[45.84389,-73.62820],[45.84808,-73.64077],[45.85321,-73.64977],[45.86267,-73.64950],[45.87369,-73.64891],[45.88011,-73.65402],[45.89427,-73.66002],[45.91461,-73.67748],[45.93921,-73.69868],[45.94841,-73.70271],[45.95802,-73.70678],[45.96926,-73.71613],[45.98751,-73.72009],[46.00100,-73.72177],[46.01229,-73.71201],[46.02733,-73.71252],[46.03318,-73.70381],[46.04478,-73.69700],[46.05402,-73.69444],[46.07204,-73.68744],[46.07852,-73.68323],[46.08575,-73.68325],[46.09203,-73.68799],[46.10418,-73.68191],[46.11572,-73.68739],[46.12627,-73.68786],[46.13355,-73.68141],[46.14709,-73.68604],[46.16135,-73.69122],[46.17943,-73.70052],[46.19057,-73.69804],[46.20002,-73.69478],[46.20369,-73.69413],[46.21039,-73.71027],[46.21930,-73.71730],[46.22415,-73.71518],[46.22592,-73.71880],[46.23880,-73.72444],[46.24435,-73.72466],[46.25217,-73.72542],[46.25698,-73.72482],[46.26503,-73.72486],[46.27706,-73.73058],[46.28675,-73.74459],[46.27808,-73.76254],[46.27069,-73.77182],[46.27114,-73.78069],[46.27534,-73.78514],[46.28363,-73.79744],[46.28247,-73.80258],[46.28302,-73.82279],[46.28188,-73.83456],[46.27963,-73.84592],[46.27592,-73.84805],[46.27270,-73.85878],[46.26873,-73.87596],[46.26690,-73.88370],[46.26163,-73.89357],[46.25666,-73.89989],[46.25521,-73.90642],[46.25593,-73.91675],[46.25869,-73.92339],[46.26239,-73.92543],[46.26301,-73.93262],[46.26328,-73.93872],[46.26156,-73.94987],[46.26284,-73.95348],[46.26538,-73.95675],[46.26580,-73.96734],[46.26596,-73.97139],[46.26435,-73.97690],[46.26653,-73.98339],[46.26760,-73.98920],[46.26710,-73.99380],[46.26716,-74.00546],[46.26442,-74.00890],[46.26098,-74.00910],[46.25668,-74.00951],[46.25461,-74.01583],[46.25104,-74.02058],[46.24977,-74.02476],[46.24706,-74.03066],[46.24610,-74.03510],[46.24517,-74.03970],[46.24196,-74.03943],[46.23630,-74.04752],[46.22988,-74.05162],[46.23368,-74.06820],[46.24241,-74.08592],[46.24943,-74.10177],[46.24829,-74.11534],[46.26381,-74.14111],[46.27980,-74.16432],[46.30389,-74.20028],[46.31773,-74.22051],[46.30263,-74.20123],[46.29424,-74.21244],[46.27635,-74.22638],[46.25818,-74.23455],[46.24745,-74.23989],[46.24108,-74.24052],[46.23400,-74.24335],[46.22947,-74.24777],[46.22302,-74.24863],[46.21507,-74.24210],[46.20531,-74.23720],[46.19665,-74.23951],[46.17332,-74.24621],[46.15854,-74.25040],[46.14675,-74.25386],[46.14240,-74.26830],[46.12557,-74.27998],[46.11821,-74.28918],[46.10306,-74.28984],[46.09176,-74.28547],[46.08294,-74.28761],[46.07187,-74.28451],[46.06205,-74.29094],[46.06296,-74.29102],[46.06083,-74.27808],[46.04554,-74.26617],[46.03441,-74.26849],[46.02711,-74.26176],[46.02436,-74.24387],[46.02140,-74.23546],[46.01423,-74.23420],[46.00021,-74.22630],[45.99005,-74.21759],[45.98825,-74.21051],[45.98991,-74.20158],[45.98996,-74.19289],[45.98543,-74.18438],[45.97994,-74.17630],[45.98032,-74.17039],[45.97961,-74.16369],[45.97572,-74.15965],[45.97147,-74.15425],[45.96863,-74.15196],[45.96249,-74.14519],[45.96065,-74.13974],[45.95840,-74.13111],[45.95397,-74.12756],[45.94880,-74.12531],[45.93814,-74.13211],[45.93444,-74.14234],[45.92359,-74.14791],[45.91411,-74.15063],[45.90601,-74.14271],[45.89995,-74.14378],[45.89065,-74.15408],[45.89092,-74.15378]]
 
 // Resolves a translatable field — either a plain string (untranslated, e.g.
 // a proper noun) or an {en, fr} pair — against the current language.
@@ -79,12 +80,12 @@ const CAR_FACTS = {
 }
 
 const DRIVE_BULLETS = [
-  { emoji: '📸', text: { en: "Arrive on time — we'll take the half hour between meetup and departure for a quick pre-trip briefing, a look at everyone's cars, and some talking before we roll out together at 8:00 AM sharp.", fr: "Arrivez à l'heure — nous prendrons la demi-heure entre le rassemblement et le départ pour un court briefing avant le départ, un coup d'œil aux voitures et pour discuter, avant de partir ensemble à 8 h précises." } },
-  { emoji: '🛣️', text: { en: "We meet at 7:30 AM at Starbucks in Laval — departure is 8:00 AM sharp, so don't be late. From there the convoy heads north into Lanaudière through Rawdon, then deeper into cottage country through Saint-Côme — backroads the whole way.", fr: "Rendez-vous à 7 h 30 au Starbucks à Laval — départ à 8 h précises, alors ne soyez pas en retard. De là, le convoi file vers le nord en Lanaudière par Rawdon, puis plus profondément dans les chalets par Saint-Côme — des routes secondaires tout du long." } },
-  { emoji: '☕', text: { en: 'A coffee stop at Café Marius in Saint-Donat-de-Montcalm, covered by Canvas Routes, breaks up the drive right in the middle of the loop.', fr: 'Un arrêt café chez Café Marius à Saint-Donat-de-Montcalm, couvert par Canvas Routes, casse la route en plein milieu de la boucle.' } },
-  { emoji: '🏁', text: { en: 'From Saint-Donat, the convoy heads west into the Laurentians toward Saint-Sauveur — the last real stretch of backroads before things open up again near home.', fr: "De Saint-Donat, le convoi file vers l'ouest dans les Laurentides en direction de Saint-Sauveur — le dernier vrai tronçon de routes secondaires avant que ça s'ouvre de nouveau près de la maison." } },
-  { emoji: '🥐', text: { en: 'Brunch at Petinos Saint-Sauveur closes the morning, covered by Canvas Routes.', fr: 'Le brunch chez Petinos Saint-Sauveur clôture la matinée, couvert par Canvas Routes.' } },
-  { emoji: '🕛', text: { en: "Back on the road by around noon — a short, genuinely great morning drive, not a full-day production.", fr: "De retour sur la route vers midi — une courte et vraiment belle balade matinale, pas une production d'une journée complète." } },
+  { emoji: '⏰', text: { en: "Arrive on time. We'll use the half hour between meetup and departure for a quick pre-trip briefing, a look around everyone's cars, and some coffee and conversation — then we roll out together at 8:00 AM sharp.", fr: "Arrivez à l'heure. Nous profiterons de la demi-heure entre le rassemblement et le départ pour un court briefing, un tour des voitures et un café en discutant — puis nous partons ensemble à 8 h précises." } },
+  { emoji: '🛣️', text: { en: "From Laval, the convoy heads north into Lanaudière through Rawdon, then deeper into cottage country by Saint-Côme — backroads the whole way.", fr: "De Laval, le convoi file vers le nord en Lanaudière par Rawdon, puis plus profondément vers les chalets par Saint-Côme — sur des routes secondaires tout du long." } },
+  { emoji: '☕', text: { en: "Halfway through the loop, we break for coffee at Café Marius in Saint-Donat-de-Montcalm — covered by Canvas Routes.", fr: "À mi-chemin de la boucle, on fait une pause café chez Café Marius à Saint-Donat-de-Montcalm — couvert par Canvas Routes." } },
+  { emoji: '🏁', text: { en: "From Saint-Donat, we turn west into the Laurentians toward Saint-Sauveur — the last real stretch of backroads before the roads open up again near home.", fr: "De Saint-Donat, on vire vers l'ouest dans les Laurentides en direction de Saint-Sauveur — le dernier vrai tronçon de routes secondaires avant que les routes s'ouvrent de nouveau près de la maison." } },
+  { emoji: '🥐', text: { en: "Brunch at Petinos in Saint-Sauveur closes out the morning — also covered by Canvas Routes.", fr: "Le brunch chez Petinos à Saint-Sauveur clôt la matinée — aussi couvert par Canvas Routes." } },
+  { emoji: '🕛', text: { en: "You'll be back on the road by around noon — a short, genuinely great morning drive, not a full-day production.", fr: "Vous serez de retour sur la route vers midi — une courte et vraiment belle balade matinale, pas une production d'une journée entière." } },
 ]
 
 const CONVOY_RULES = [
@@ -248,10 +249,10 @@ function ModalImage({ src, alt }) {
   )
 }
 
-// Draws straight geodesic lines between the confirmed stop markers — this is
-// NOT a traced road route (no real routing data available yet for this
-// page), just an honest reference map. See the STOPS comment above.
-function RouteMap({ stops, lang = 'en' }) {
+// Styled (beige/black) reference map. When `routePath` is provided it draws
+// the real road-traced route (from Jerry's My Maps KML — see ROUTE_PATH);
+// otherwise it falls back to straight geodesic lines between the stop markers.
+function RouteMap({ stops, routePath = null, lang = 'en' }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
   const boundsRef = useRef(null)
@@ -271,8 +272,10 @@ function RouteMap({ stops, lang = 'en' }) {
         const google = window.google
         if (!google?.maps) { setStatus('error'); return }
 
+        const routeLatLngs = (routePath || []).map(p => ({ lat: p[0], lng: p[1] }))
         const bounds = new google.maps.LatLngBounds()
         stops.forEach(s => bounds.extend({ lat: s.lat, lng: s.lng }))
+        routeLatLngs.forEach(p => bounds.extend(p))
         boundsRef.current = bounds
 
         const map = new google.maps.Map(containerRef.current, {
@@ -299,12 +302,12 @@ function RouteMap({ stops, lang = 'en' }) {
         map.addListener('zoom_changed', () => { if (settled) setMoved(true) })
 
         new google.maps.Polyline({
-          path: stops.map(s => ({ lat: s.lat, lng: s.lng })),
-          geodesic: true,
+          path: routeLatLngs.length ? routeLatLngs : stops.map(s => ({ lat: s.lat, lng: s.lng })),
+          geodesic: !routeLatLngs.length,
           strokeColor: '#0F1E14',
-          strokeOpacity: 0.55,
-          strokeWeight: 3,
-          icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '14px' }],
+          strokeOpacity: routeLatLngs.length ? 0.9 : 0.55,
+          strokeWeight: routeLatLngs.length ? 4 : 3,
+          ...(routeLatLngs.length ? {} : { icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 3 }, offset: '0', repeat: '14px' }] }),
           map,
         })
 
@@ -1044,12 +1047,7 @@ export default function SundaySilhouetteItineraryPage() {
             </ol>
           </div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-            <iframe
-              title="Sunday Silhouette route"
-              src={MYMAPS_EMBED}
-              style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
-              loading="lazy"
-            />
+            <RouteMap key={lang} stops={MAP_STOPS} routePath={ROUTE_PATH} lang={lang} />
           </div>
         </section>
 
