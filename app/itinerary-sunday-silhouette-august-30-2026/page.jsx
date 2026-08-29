@@ -14,8 +14,8 @@ const ROUTE_SLUG = 'sunday-silhouette-2026'
 // Sud Autoroute 440, Laval, QC H7T 2Z8), confirmed via
 // https://maps.app.goo.gl/dj4LKV6nTD6GwnVD8. Full confirmed route (Laval →
 // Rawdon → Saint-Côme → Café Marius, Saint-Donat-de-Montcalm → Petinos,
-// Saint-Sauveur) locked in by Jerry via
-// https://maps.app.goo.gl/vQMQdBm7M1VTJ1dJ7 — see ROUTE_LINK below.
+// Saint-Sauveur) locked in by Jerry via his shared Google Maps route
+// — see ROUTE_LINK below.
 // Rawdon and Saint-Côme are town-center geocoded estimates (waypoints
 // through the towns, not one exact address) — good enough for a reference
 // pin, not independently verified for turn-by-turn navigation. Café Marius
@@ -34,7 +34,15 @@ const MAP_STOPS = STOPS.filter(s => s.lat != null && s.lng != null)
 // Jerry's actual confirmed-route share link (Laval → Rawdon → Saint-Côme →
 // Café Marius → Petinos) — used directly instead of a synthesized
 // /maps/dir/ chain now that every stop is real, not a placeholder.
-const ROUTE_LINK = 'https://maps.app.goo.gl/vQMQdBm7M1VTJ1dJ7'
+// Updated 2026-08-29 to Jerry's latest shared route.
+const ROUTE_LINK = 'https://maps.app.goo.gl/aCzC4aoS9edUGgqe6?g_st=ic'
+
+// Google My Maps embed for the visual map at the bottom of the page — Jerry's
+// actual drawn route with every waypoint. The `/maps/d/edit?mid=…` share link
+// becomes `/maps/d/embed?mid=…` for iframing; the My Map must be shared as
+// "Anyone with the link" (or public) for this to render for attendees.
+// www.google.com is already allowlisted in vercel.json's CSP frame-src.
+const MYMAPS_EMBED = 'https://www.google.com/maps/d/embed?mid=1iCcN9cZLQzZrZZl5toLD8B5jaAOjVqY'
 
 // Resolves a translatable field — either a plain string (untranslated, e.g.
 // a proper noun) or an {en, fr} pair — against the current language.
@@ -98,7 +106,7 @@ const UI = {
     navQuick: "Best run on your passenger's phone — how-to below.",
     navHowLabel: 'Using the Route',
     navSteps: [
-      { lead: 'Open the route', body: '— tap the "Open Route in Google Maps" link. The full route opens with every stop already loaded; hit Start to begin turn-by-turn navigation.' },
+      { lead: 'Open the route', body: '— tap the green button above. The full route opens with every stop already loaded; hit Start to begin turn-by-turn navigation.' },
       { lead: 'Riding with a passenger?', body: 'Run the navigation on their phone. As the driver, keep your own phone free — we coordinate the group over WhatsApp, not a convoy app.' },
       { lead: 'At each waypoint,', body: "when Maps announces you've reached a stop, just tap Continue and keep driving with the group — don't pull over. We only stop together at the planned coffee and brunch stops." },
     ],
@@ -110,7 +118,8 @@ const UI = {
     tapPhoto: '👇 Tap a photo to learn more about the car',
     groupLabel: n => `Group ${n}`, ungrouped: 'Ungrouped', groupLead: 'Group Lead',
     mapLabel: 'Map',
-    openRoute: 'Open Route in Google Maps →',
+    openRoute: 'Open the Route in Google Maps',
+    openRouteSub: 'Tap to start turn-by-turn navigation',
     modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
     heroTags: ['Laurentian Backroads', '~220km Drive', 'Coffee + Brunch'],
     countdownUnits: ['Days', 'Hrs', 'Min', 'Sec'],
@@ -122,7 +131,7 @@ const UI = {
     navQuick: 'Idéalement sur le téléphone du passager — voir plus bas.',
     navHowLabel: "Utiliser l'itinéraire",
     navSteps: [
-      { lead: "Ouvrez l'itinéraire", body: "— touchez le lien « Ouvrir l'itinéraire dans Google Maps ». La route complète s'ouvre avec tous les arrêts déjà chargés; appuyez sur Démarrer pour lancer la navigation." },
+      { lead: "Ouvrez l'itinéraire", body: "— touchez le bouton vert ci-dessus. La route complète s'ouvre avec tous les arrêts déjà chargés; appuyez sur Démarrer pour lancer la navigation." },
       { lead: 'Un passager à bord ?', body: 'Lancez la navigation sur son téléphone. Comme conducteur, gardez le vôtre libre — on coordonne le groupe sur WhatsApp, pas une appli de convoi.' },
       { lead: 'À chaque arrêt,', body: "quand Maps annonce que vous êtes arrivé à un point, touchez simplement Continuer et poursuivez avec le groupe — ne vous arrêtez pas. On s'arrête ensemble seulement aux arrêts café et brunch prévus." },
     ],
@@ -134,7 +143,8 @@ const UI = {
     tapPhoto: '👇 Touchez une photo pour en savoir plus sur la voiture',
     groupLabel: n => `Groupe ${n}`, ungrouped: 'Sans groupe', groupLead: 'Chef de groupe',
     mapLabel: 'Carte',
-    openRoute: "Ouvrir l'itinéraire dans Google Maps →",
+    openRoute: "Ouvrir l'itinéraire dans Google Maps",
+    openRouteSub: 'Touchez pour lancer la navigation',
     modalEyebrow: 'Canvas Routes · Sunday Silhouette 2026',
     heroTags: ['Routes secondaires laurentiennes', '~220 km de route', 'Café + brunch'],
     countdownUnits: ['Jours', 'Hres', 'Min', 'Sec'],
@@ -723,6 +733,12 @@ export default function SundaySilhouetteItineraryPage() {
         .map-wrap { height: 320px; }
         @media (min-width: 640px) { .map-wrap { height: 480px; } }
 
+        .route-cta { transition: transform 0.15s ease, box-shadow 0.25s ease; }
+        .route-cta:active { transform: scale(0.99); }
+        @media (hover: hover) { .route-cta:hover { box-shadow: 0 10px 30px rgba(15,30,20,0.34); } }
+        .route-cta .route-cta-pin { animation: route-cta-pin-pulse 2.4s ease-in-out infinite; }
+        @keyframes route-cta-pin-pulse { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+
         .scroll-reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .scroll-reveal.revealed { opacity: 1; transform: translateY(0); }
         .scroll-reveal .itin-stop { opacity: 0; transform: translateY(12px); transition: opacity 0.5s ease, transform 0.5s ease; }
@@ -994,16 +1010,28 @@ export default function SundaySilhouetteItineraryPage() {
 
         {/* Map */}
         <section className="scroll-reveal" style={{ padding: '2rem 0' }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-            <h2 style={{ ...SECTION_LABEL, marginBottom: 0 }}>{t.mapLabel}</h2>
-            <a
-              href={ROUTE_LINK}
-              target="_blank" rel="noreferrer"
-              style={{ display: 'inline-block', padding: '6px 0', margin: '-6px 0', fontSize: '11px', letterSpacing: '0.06em', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}
-            >
-              {t.openRoute}
-            </a>
-          </div>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '1rem' }}>{t.mapLabel}</h2>
+
+          {/* Prominent Google Maps route CTA — the primary action of this section */}
+          <a
+            href={ROUTE_LINK}
+            target="_blank" rel="noreferrer"
+            className="route-cta"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', width: '100%', boxSizing: 'border-box', padding: '1.05rem 1.2rem', marginBottom: '1rem', background: '#0F1E14', border: '0.5px solid rgba(197,168,130,0.35)', boxShadow: '0 6px 22px rgba(15,30,20,0.22)', textDecoration: 'none' }}
+          >
+            <span className="route-cta-pin" style={{ flexShrink: 0, display: 'inline-flex' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                <circle cx="12" cy="10" r="3" />
+              </svg>
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span style={{ display: 'block', fontSize: '15px', fontWeight: '700', letterSpacing: '0.01em', color: '#F5F1EC', lineHeight: 1.3 }}>{t.openRoute}</span>
+              <span style={{ display: 'block', fontSize: '12px', color: 'rgba(245,241,236,0.62)', marginTop: '3px', lineHeight: 1.4 }}>{t.openRouteSub}</span>
+            </span>
+            <span style={{ flexShrink: 0, color: '#c5a882', fontSize: '20px', lineHeight: 1 }}>→</span>
+          </a>
+
           {/* How to use the Google Maps route */}
           <div style={{ background: '#F5F1EC', border: '0.5px solid rgba(0,0,0,0.1)', borderLeft: '3px solid #c5a882', padding: '1.1rem 1.25rem', marginBottom: '1rem' }}>
             <h3 style={{ ...SECTION_LABEL, marginBottom: '0.75rem', color: '#0F1E14', fontWeight: '600' }}>{t.navHowLabel}</h3>
@@ -1016,7 +1044,12 @@ export default function SundaySilhouetteItineraryPage() {
             </ol>
           </div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
-            <RouteMap key={lang} stops={MAP_STOPS} lang={lang} />
+            <iframe
+              title="Sunday Silhouette route"
+              src={MYMAPS_EMBED}
+              style={{ width: '100%', height: '100%', border: 0, display: 'block' }}
+              loading="lazy"
+            />
           </div>
         </section>
 
