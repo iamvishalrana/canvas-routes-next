@@ -823,15 +823,20 @@ export default function SundaySilhouetteItineraryPage() {
         <div className="itin-hero-bg" style={{ position: 'absolute', inset: 0, backgroundImage: 'url(/laurentian-cars-morning-mirrored.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.52) 0%, rgba(15,30,20,0.88) 100%)' }} />
         <div style={{
-          position: 'fixed', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 100, display: 'flex', background: '#0F1E14', boxShadow: '0 2px 12px rgba(0,0,0,0.25)',
+          position: 'fixed', top: 'calc(1rem + env(safe-area-inset-top))', right: 'calc(1rem + env(safe-area-inset-right))', zIndex: 100,
+          display: 'inline-flex', padding: '3px', borderRadius: '999px',
+          background: 'rgba(15,30,20,0.9)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+          border: '0.5px solid rgba(197,168,130,0.35)', boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
           opacity: toggleHidden ? 0 : 1, transform: toggleHidden ? 'translateY(-12px)' : 'translateY(0)', pointerEvents: toggleHidden ? 'none' : 'auto', transition: 'opacity 0.25s ease, transform 0.25s ease',
         }}>
           {['en', 'fr'].map(l => (
             <button
               key={l}
               onClick={() => setLang(l)}
+              aria-pressed={lang === l}
+              aria-label={l === 'en' ? 'English' : 'Français'}
               className={lang === l ? 'lang-toggle-btn' : undefined}
-              style={{ padding: '0.45rem 0.75rem', minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: lang === l ? '#c5a882' : 'none', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(197,168,130,0.55)', fontWeight: lang === l ? '700' : '400', fontFamily: 'sans-serif', transition: 'all 0.15s ease', WebkitTapHighlightColor: 'transparent' }}
+              style={{ minWidth: '44px', minHeight: '40px', padding: '0 0.7rem', borderRadius: '999px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: lang === l ? '#c5a882' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.14em', textTransform: 'uppercase', color: lang === l ? '#0F1E14' : 'rgba(245,241,236,0.6)', fontWeight: lang === l ? '700' : '500', fontFamily: 'sans-serif', transition: 'background 0.2s ease, color 0.2s ease', WebkitTapHighlightColor: 'transparent' }}
             >
               {l.toUpperCase()}
             </button>
@@ -1013,21 +1018,21 @@ export default function SundaySilhouetteItineraryPage() {
         </section>
 
         {/* Photography credit — between Who's Coming and the route/map */}
-        <section className="scroll-reveal" style={{ padding: '1.75rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', textAlign: 'center' }}>
-          <h2 style={{ ...SECTION_LABEL, marginBottom: '0.6rem' }}>{t.photoLabel}</h2>
+        <section className="scroll-reveal" style={{ padding: '1.5rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '0.45rem' }}>{t.photoLabel}</h2>
           <a
             href="https://www.instagram.com/patougignac"
             target="_blank" rel="noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '16px', color: '#1a1a1a', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)', fontWeight: '700', letterSpacing: '0.01em' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '13px', color: '#1a1a1a', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)', fontWeight: '600', letterSpacing: '0.01em' }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="2" width="20" height="20" rx="5" />
               <circle cx="12" cy="12" r="4" />
               <circle cx="17.5" cy="6.5" r="0.6" fill="#c5a882" />
             </svg>
             @patougignac
           </a>
-          <p style={{ fontSize: '12px', color: '#999', marginTop: '0.4rem', marginBottom: 0 }}>{t.photoSub}</p>
+          <p style={{ fontSize: '11px', color: '#999', marginTop: '0.3rem', marginBottom: 0 }}>{t.photoSub}</p>
         </section>
 
         {/* Map */}
