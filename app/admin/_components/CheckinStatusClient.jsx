@@ -689,8 +689,11 @@ export default function CheckinStatusClient({ eventId }) {
                             {p.trip_details.passengers_list?.map((pp, i) => (
                               <span key={i}>{i === 0 ? 'Driver' : `Passenger ${i + 1}`}: {pp.name}, age {pp.age || '—'}<br /></span>
                             ))}
-                            {p.trip_details.dietary && <>Dietary: {p.trip_details.dietary}<br /></>}
-                            {p.trip_details.whatsapp && <>WhatsApp: {p.trip_details.whatsapp}<br /></>}
+                            <>Dietary: {p.trip_details.dietary || '—'}<br /></>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>
+                              WhatsApp: {p.trip_details.whatsapp || '—'}
+                              {p.trip_details.whatsapp && <CopyBtn value={p.trip_details.whatsapp} />}
+                            </span><br />
                             {p.trip_details.completed_at && (
                               <span style={{ color: '#aaa' }}>Submitted {new Date(p.trip_details.completed_at).toLocaleString('en-CA', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Toronto' })}</span>
                             )}

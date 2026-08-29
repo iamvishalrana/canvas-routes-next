@@ -38,6 +38,10 @@ export async function POST(request, { params }) {
       return Response.json({ error: 'Please provide a valid age (1–120) for each passenger.' }, { status: 400 })
     }
   }
+  // WhatsApp is mandatory (2026-08-30) so everyone can be reached in the group chat.
+  if (!whatsapp?.toString().trim() || whatsapp.replace(/\D/g, '').length < 7) {
+    return Response.json({ error: 'A valid WhatsApp number is required.' }, { status: 400 })
+  }
 
   const registrant = await findEventRegistrant(admin, eventId, event.name, email)
   if (!registrant) return Response.json({ error: 'No matching registration found.' }, { status: 404 })

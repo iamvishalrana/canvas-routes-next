@@ -50,6 +50,7 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
       const ageNum = parseInt(p.age)
       if (!p.age.toString().trim() || isNaN(ageNum) || ageNum < 1 || ageNum > 120) errs[`p_${i}_age`] = true
     })
+    if (!whatsapp.trim() || whatsapp.replace(/\D/g, '').length < 7) errs.whatsapp = true
     setFieldErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -157,8 +158,11 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>{t.whatsappLabel}</label>
-          <input type="tel" autoComplete="tel" inputMode="tel" className="wtetci-input" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder={t.whatsappPlaceholder} style={inp} />
+          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: fieldErrors.whatsapp ? '#93333E' : '#999', marginBottom: '0.5rem' }}>{t.whatsappLabel} <span style={{ color: '#93333E' }}>*</span></label>
+          <input type="tel" autoComplete="tel" inputMode="tel" className="wtetci-input" value={whatsapp}
+            onChange={e => { setWhatsapp(e.target.value); setFieldErrors(prev => { const n = { ...prev }; delete n.whatsapp; return n }) }}
+            placeholder={t.whatsappPlaceholder} style={{ ...inp, ...(fieldErrors.whatsapp ? { borderColor: '#93333E' } : {}) }} />
+          {fieldErrors.whatsapp && <p style={{ fontSize: '12px', color: '#93333E', margin: '0.4rem 0 0' }}>{t.whatsappErr}</p>}
           <p style={{ fontSize: '12px', color: '#888', margin: '0.5rem 0 0', lineHeight: '1.6' }}>{t.whatsappHint}</p>
         </div>
 
