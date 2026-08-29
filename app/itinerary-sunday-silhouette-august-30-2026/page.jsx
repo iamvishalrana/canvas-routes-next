@@ -16,16 +16,15 @@ const ROUTE_SLUG = 'sunday-silhouette-2026'
 // Rawdon → Saint-Côme → Café Marius, Saint-Donat-de-Montcalm → Petinos,
 // Saint-Sauveur) locked in by Jerry via his shared Google Maps route
 // — see ROUTE_LINK below.
-// Rawdon and Saint-Côme are town-center geocoded estimates (waypoints
-// through the towns, not one exact address) — good enough for a reference
-// pin, not independently verified for turn-by-turn navigation. Café Marius
-// and Petinos both now have confirmed street-level coordinates (Café Marius:
-// Rue Principale, Saint-Donat-de-Montcalm; Petinos: 75 Avenue de la Gare,
-// Saint-Sauveur).
+// Rawdon is a town-center geocoded estimate (a waypoint through the town,
+// not one exact address) — good enough for a reference pin. Esso Saint-Côme
+// (1101 Rue Principale — the quick stretch stop), Café Marius (Rue
+// Principale, Saint-Donat-de-Montcalm), and Petinos (75 Avenue de la Gare,
+// Saint-Sauveur) all have confirmed street-level coordinates.
 const STOPS = [
   { label: 'Starbucks — Autoroute 440, Back Parking', note: { en: '7:30 AM · Laval · Departure 8:00 AM sharp', fr: '7 h 30 · Laval · Départ à 8 h précises' }, tag: { en: 'Meetup & Departure', fr: 'Rendez-vous et départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
   { label: 'Rawdon', note: { en: 'Into Lanaudière — the first real stretch of backroads', fr: 'Direction Lanaudière — le premier vrai tronçon de routes secondaires' }, href: 'https://www.google.com/maps/search/?api=1&query=Rawdon,+QC', lat: 46.0470, lng: -73.7181 },
-  { label: 'Saint-Côme', note: { en: 'Deeper into cottage country, quiet roads the whole way', fr: 'Plus profondément dans les chalets, des routes tranquilles tout du long' }, href: 'https://www.google.com/maps/search/?api=1&query=Saint-Côme,+QC', lat: 46.2710370, lng: -73.7714770 },
+  { label: 'Esso — Saint-Côme', note: { en: 'A quick stop to stretch your legs and take a breather before the next run of backroads.', fr: 'Un court arrêt pour vous dégourdir les jambes et souffler un peu avant le prochain tronçon de routes secondaires.' }, tag: { en: 'Quick Stop', fr: 'Arrêt rapide' }, href: 'https://www.google.com/maps/search/?api=1&query=Esso+1101+Rue+Principale+Saint-Côme+QC+J0K+2B0', lat: 46.276626, lng: -73.765967 },
   { label: 'Café Marius', note: { en: 'Coffee stop in Saint-Donat-de-Montcalm — covered by Canvas Routes', fr: 'Arrêt café à Saint-Donat-de-Montcalm — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Café+Marius+Rue+Principale+Saint-Donat-de-Montcalm+QC', lat: 46.3107848, lng: -74.2103737 },
   { label: 'Petinos Saint-Sauveur', note: { en: 'Brunch in Saint-Sauveur — covered by Canvas Routes', fr: 'Brunch à Saint-Sauveur — couvert par Canvas Routes' }, tag: { en: 'Brunch', fr: 'Brunch' }, end: true, href: 'https://www.google.com/maps/search/?api=1&query=Petinos+75+Avenue+de+la+Gare+Saint-Sauveur+QC', lat: 45.8908004, lng: -74.1535634 },
 ]
