@@ -884,7 +884,7 @@ export default function SundaySilhouetteItineraryPage() {
               </a>
               <CopyButton text="514-437-3437" label={t.copyNumber} copiedLabel={t.copied} />
             </div>
-            <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 130px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
+            <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>{t.navLabel}</h2>
               <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700', letterSpacing: '0.01em', margin: '0 0 5px' }}>Google Maps</p>
               <a
@@ -895,11 +895,6 @@ export default function SundaySilhouetteItineraryPage() {
                 {t.navOpen}
               </a>
               <p style={{ fontSize: '11px', color: '#999', marginTop: '5px', lineHeight: '1.5', marginBottom: 0 }}>{t.navQuick}</p>
-            </div>
-            <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>{t.photoLabel}</h2>
-              <a href="https://www.instagram.com/patougignac" target="_blank" rel="noreferrer" style={{ fontSize: '14px', color: '#1a1a1a', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)', lineHeight: '1.4', fontWeight: '700', display: 'block' }}>@patougignac</a>
-              <p style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>{t.photoSub}</p>
             </div>
           </div>
         </div>
@@ -1015,6 +1010,24 @@ export default function SundaySilhouetteItineraryPage() {
           ) : (
             <CarGrid cars={allParticipants} onSelect={setSelectedCar} groupLeadLabel={t.groupLead} />
           )}
+        </section>
+
+        {/* Photography credit — between Who's Coming and the route/map */}
+        <section className="scroll-reveal" style={{ padding: '1.75rem 0', borderBottom: '0.5px solid rgba(0,0,0,0.1)', textAlign: 'center' }}>
+          <h2 style={{ ...SECTION_LABEL, marginBottom: '0.6rem' }}>{t.photoLabel}</h2>
+          <a
+            href="https://www.instagram.com/patougignac"
+            target="_blank" rel="noreferrer"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', fontSize: '16px', color: '#1a1a1a', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)', fontWeight: '700', letterSpacing: '0.01em' }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c5a882" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5" />
+              <circle cx="12" cy="12" r="4" />
+              <circle cx="17.5" cy="6.5" r="0.6" fill="#c5a882" />
+            </svg>
+            @patougignac
+          </a>
+          <p style={{ fontSize: '12px', color: '#999', marginTop: '0.4rem', marginBottom: 0 }}>{t.photoSub}</p>
         </section>
 
         {/* Map */}
