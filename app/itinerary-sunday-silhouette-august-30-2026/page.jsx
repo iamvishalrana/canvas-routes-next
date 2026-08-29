@@ -22,7 +22,7 @@ const ROUTE_SLUG = 'sunday-silhouette-2026'
 // Principale, Saint-Donat-de-Montcalm), and Petinos (75 Avenue de la Gare,
 // Saint-Sauveur) all have confirmed street-level coordinates.
 const STOPS = [
-  { label: 'Starbucks — Autoroute 440, Back Parking', note: { en: '7:30 AM · Laval · Departure 8:00 AM sharp', fr: '7 h 30 · Laval · Départ à 8 h précises' }, tag: { en: 'Meetup & Departure', fr: 'Rendez-vous et départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
+  { label: 'Starbucks — Autoroute 440, Front Parking', note: { en: '7:30 AM · Front lot, right outside Uniprix (beside Starbucks) · Departure 8:00 AM sharp', fr: '7 h 30 · Stationnement avant, juste devant Uniprix (à côté du Starbucks) · Départ à 8 h précises' }, tag: { en: 'Meetup & Departure', fr: 'Rendez-vous et départ' }, start: true, href: 'https://www.google.com/maps/search/?api=1&query=4630+Desserte+Sud+Autoroute+440+Laval+QC', lat: 45.5586062, lng: -73.7921953 },
   { label: 'Rawdon', note: { en: 'Into Lanaudière — the first real stretch of backroads', fr: 'Direction Lanaudière — le premier vrai tronçon de routes secondaires' }, href: 'https://www.google.com/maps/search/?api=1&query=Rawdon,+QC', lat: 46.0470, lng: -73.7181 },
   { label: 'Esso — Saint-Côme', note: { en: 'A quick stop to stretch your legs and take a breather before the next run of backroads.', fr: 'Un court arrêt pour vous dégourdir les jambes et souffler un peu avant le prochain tronçon de routes secondaires.' }, tag: { en: 'Quick Stop', fr: 'Arrêt rapide' }, href: 'https://www.google.com/maps/search/?api=1&query=Esso+1101+Rue+Principale+Saint-Côme+QC+J0K+2B0', lat: 46.276626, lng: -73.765967 },
   { label: 'Café Marius', note: { en: 'Coffee stop in Saint-Donat-de-Montcalm — covered by Canvas Routes', fr: 'Arrêt café à Saint-Donat-de-Montcalm — couvert par Canvas Routes' }, tag: { en: 'Coffee Stop', fr: 'Arrêt café' }, href: 'https://www.google.com/maps/search/?api=1&query=Café+Marius+Rue+Principale+Saint-Donat-de-Montcalm+QC', lat: 46.3107848, lng: -74.2103737 },
@@ -103,6 +103,7 @@ const UI = {
     meetupLabel: 'Meetup', meetupLine: 'Meetup — 7:30 AM · Laval, QC', departure: 'Departure 8:00 AM sharp',
     contactLabel: 'Contact', navLabel: 'Navigation',
     navOpen: 'Open route →',
+    photoLabel: 'Photography', photoSub: 'Follow for photos from the day',
     navQuick: "Run it on your passenger's phone if you have one — see the steps below.",
     navHowLabel: 'Using the Route',
     navSteps: [
@@ -128,6 +129,7 @@ const UI = {
     meetupLabel: 'Rendez-vous', meetupLine: 'Rendez-vous — 7 h 30 · Laval, QC', departure: 'Départ à 8 h précises',
     contactLabel: 'Contact', navLabel: 'Navigation',
     navOpen: "Ouvrir l'itinéraire →",
+    photoLabel: 'Photographie', photoSub: 'Suivez pour les photos de la journée',
     navQuick: 'Lancez-le sur le téléphone du passager si vous en avez un — étapes ci-dessous.',
     navHowLabel: "Utiliser l'itinéraire",
     navSteps: [
@@ -882,7 +884,7 @@ export default function SundaySilhouetteItineraryPage() {
               </a>
               <CopyButton text="514-437-3437" label={t.copyNumber} copiedLabel={t.copied} />
             </div>
-            <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
+            <div className="quick-info-item" style={{ padding: '1.1rem 1rem 1.1rem 0', flex: '1 1 130px', borderRight: '0.5px solid rgba(0,0,0,0.1)', marginRight: '1rem' }}>
               <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>{t.navLabel}</h2>
               <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700', letterSpacing: '0.01em', margin: '0 0 5px' }}>Google Maps</p>
               <a
@@ -893,6 +895,11 @@ export default function SundaySilhouetteItineraryPage() {
                 {t.navOpen}
               </a>
               <p style={{ fontSize: '11px', color: '#999', marginTop: '5px', lineHeight: '1.5', marginBottom: 0 }}>{t.navQuick}</p>
+            </div>
+            <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>{t.photoLabel}</h2>
+              <a href="https://www.instagram.com/patougignac" target="_blank" rel="noreferrer" style={{ fontSize: '14px', color: '#1a1a1a', textDecoration: 'underline', textUnderlineOffset: '3px', textDecorationColor: 'rgba(0,0,0,0.22)', lineHeight: '1.4', fontWeight: '700', display: 'block' }}>@patougignac</a>
+              <p style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>{t.photoSub}</p>
             </div>
           </div>
         </div>
