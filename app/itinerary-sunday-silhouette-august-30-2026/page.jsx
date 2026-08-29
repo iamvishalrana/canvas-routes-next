@@ -84,7 +84,7 @@ const DRIVE_BULLETS = [
   { emoji: '☕', text: { en: "Halfway through the loop, we break for coffee at Café Marius in Saint-Donat-de-Montcalm — covered by Canvas Routes.", fr: "À mi-chemin de la boucle, on fait une pause café chez Café Marius à Saint-Donat-de-Montcalm — couvert par Canvas Routes." } },
   { emoji: '🏁', text: { en: "From Saint-Donat, we turn west into the Laurentians toward Saint-Sauveur — the last real stretch of backroads before the roads open up.", fr: "De Saint-Donat, on vire vers l'ouest dans les Laurentides en direction de Saint-Sauveur — le dernier vrai tronçon de routes secondaires avant que les routes s'ouvrent." } },
   { emoji: '🥐', text: { en: "Brunch at Petinos in Saint-Sauveur closes out the morning — also covered by Canvas Routes.", fr: "Le brunch chez Petinos à Saint-Sauveur clôt la matinée — aussi couvert par Canvas Routes." } },
-  { emoji: '🕛', text: { en: "We'll roll into Petinos around noon — and once brunch is done, so is the morning. You'll head home with the memories of a curvy, genuinely fun drive.", fr: "On arrive chez Petinos vers midi — et une fois le brunch terminé, la matinée aussi. Vous repartez avec les souvenirs d'une balade sinueuse et vraiment amusante." } },
+  { emoji: '📸', text: { en: "We'll roll into Petinos around noon — time for a group photo and to swap stories about the fun, curvy drive we just had.", fr: "On arrive chez Petinos vers midi — le temps d'une photo de groupe et de reparler de la route sinueuse et amusante qu'on vient de faire." } },
 ]
 
 const CONVOY_RULES = [
