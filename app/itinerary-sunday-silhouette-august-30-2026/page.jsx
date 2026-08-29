@@ -607,10 +607,12 @@ export default function SundaySilhouetteItineraryPage() {
         && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
         && (!hasCarPhoto || !!data.carPhoto)
 
-      // Remember the email (not a blanket "authed" flag) so a return visit
-      // auto-verifies the same person against the current server state.
-      try { localStorage.setItem('ss_itinerary_email', entered) } catch {}
       if (allDone) {
+        // Remember the email ONLY now that check-in is complete and they've
+        // reached the itinerary — a not-yet-complete visitor is never
+        // remembered, so closing the check-in routes them back through it
+        // (email gate → check-in) rather than skipping straight in.
+        try { localStorage.setItem('ss_itinerary_email', entered) } catch {}
         setAuthed(true)
       } else {
         // Includes the email in the return URL too, so coming back auto-submits

@@ -130,7 +130,6 @@ function CheckinContent() {
         return
       }
       setData({ ...d, email: targetEmail })
-      try { localStorage.setItem(`checkin_email_${eventId}`, targetEmail) } catch {}
       setStatus('found')
     } catch (err) {
       captureException(err, { context: 'generic-checkin-lookup-network' })
@@ -200,6 +199,18 @@ function CheckinContent() {
     autoSubmitted.current = true
     setData(null); setEmail(''); setStatus('gate'); setError(null)
   }
+
+  // Remember the email ONLY once check-in is fully complete — that's the point
+  // where skipping the gate next time is earned. Someone who opens the page,
+  // sees it's incomplete, and closes it is never remembered, so reopening
+  // shows the email gate again instead of jumping back into a half-done
+  // check-in. (The normal flow still carries the email in via the ?email link
+  // from the itinerary, so this only governs direct/return visits.)
+  useEffect(() => {
+    if (allDone && data?.email) {
+      try { localStorage.setItem(`checkin_email_${eventId}`, data.email) } catch {}
+    }
+  }, [allDone, data?.email, eventId])
 
   return (
     <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
