@@ -257,6 +257,7 @@ function CheckinContent() {
           {hasWaiver && (
             <div id="checkin-section-waiver">
               <CheckinWaiverSection
+                key={passengersList.length}
                 waiverText={data.waiverText}
                 waiverTextFr={data.waiverTextFr}
                 identifier={identifier}
