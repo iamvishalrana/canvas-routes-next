@@ -93,8 +93,15 @@ const CONVOY_RULES = [
 const UI = {
   en: {
     meetupLabel: 'Meetup', meetupLine: 'Meetup — 7:30 AM · Laval, QC', departure: 'Departure 8:00 AM sharp',
-    contactLabel: 'Contact', convoyAppLabel: 'Convoy App',
-    convoyAppBody: 'See the whole convoy live on the map and never lose the group — download it now, before August 30.',
+    contactLabel: 'Contact', navLabel: 'Navigation',
+    navOpen: 'Open route →',
+    navQuick: "Best run on your passenger's phone — how-to below.",
+    navHowLabel: 'Using the Route',
+    navSteps: [
+      { lead: 'Open the route', body: '— tap the "Open Route in Google Maps" link. The full route opens with every stop already loaded; hit Start to begin turn-by-turn navigation.' },
+      { lead: 'Riding with a passenger?', body: 'Run the navigation on their phone. As the driver, keep your own phone free — we coordinate the group over WhatsApp, not a convoy app.' },
+      { lead: 'At each waypoint,', body: "when Maps announces you've reached a stop, just tap Continue and keep driving with the group — don't pull over. We only stop together at the planned coffee and brunch stops." },
+    ],
     copyNumber: 'Copy number', copied: '✓ Copied',
     convoyRulesLabel: 'Convoy Rules', rulesClose: '▲ Close', rulesRead: '▼ Read',
     itineraryLabel: 'Itinerary', itineraryHint: 'Tap a stop to open in Maps',
@@ -110,8 +117,15 @@ const UI = {
   },
   fr: {
     meetupLabel: 'Rendez-vous', meetupLine: 'Rendez-vous — 7 h 30 · Laval, QC', departure: 'Départ à 8 h précises',
-    contactLabel: 'Contact', convoyAppLabel: 'Appli de convoi',
-    convoyAppBody: 'Voyez tout le convoi en direct sur la carte et ne perdez jamais le groupe — téléchargez-la maintenant, avant le 30 août.',
+    contactLabel: 'Contact', navLabel: 'Navigation',
+    navOpen: "Ouvrir l'itinéraire →",
+    navQuick: 'Idéalement sur le téléphone du passager — voir plus bas.',
+    navHowLabel: "Utiliser l'itinéraire",
+    navSteps: [
+      { lead: "Ouvrez l'itinéraire", body: "— touchez le lien « Ouvrir l'itinéraire dans Google Maps ». La route complète s'ouvre avec tous les arrêts déjà chargés; appuyez sur Démarrer pour lancer la navigation." },
+      { lead: 'Un passager à bord ?', body: 'Lancez la navigation sur son téléphone. Comme conducteur, gardez le vôtre libre — on coordonne le groupe sur WhatsApp, pas une appli de convoi.' },
+      { lead: 'À chaque arrêt,', body: "quand Maps annonce que vous êtes arrivé à un point, touchez simplement Continuer et poursuivez avec le groupe — ne vous arrêtez pas. On s'arrête ensemble seulement aux arrêts café et brunch prévus." },
+    ],
     copyNumber: 'Copier le numéro', copied: '✓ Copié',
     convoyRulesLabel: 'Règles du convoi', rulesClose: '▲ Fermer', rulesRead: '▼ Lire',
     itineraryLabel: 'Itinéraire', itineraryHint: "Touchez un arrêt pour l'ouvrir dans Maps",
@@ -844,25 +858,16 @@ export default function SundaySilhouetteItineraryPage() {
               <CopyButton text="514-437-3437" label={t.copyNumber} copiedLabel={t.copied} />
             </div>
             <div className="quick-info-item" style={{ padding: '1.1rem 0', flex: '1 1 130px' }}>
-              <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>{t.convoyAppLabel}</h2>
-              <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700', letterSpacing: '0.01em', margin: '0 0 5px' }}>Velox</p>
-              <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <a
-                  href="https://apps.apple.com/ca/app/velox-drive-convoy-explore/id6754770506"
-                  target="_blank" rel="noreferrer"
-                  style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', fontWeight: '700' }}
-                >
-                  iOS →
-                </a>
-                <a
-                  href="https://play.google.com/store/apps/details?id=com.jaamways.velox"
-                  target="_blank" rel="noreferrer"
-                  style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', fontWeight: '700' }}
-                >
-                  Android →
-                </a>
-              </div>
-              <p style={{ fontSize: '11px', color: '#999', marginTop: '3px', lineHeight: '1.5', marginBottom: 0 }}>{t.convoyAppBody}</p>
+              <h2 style={{ ...SECTION_LABEL, marginBottom: '3px' }}>{t.navLabel}</h2>
+              <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700', letterSpacing: '0.01em', margin: '0 0 5px' }}>Google Maps</p>
+              <a
+                href={ROUTE_LINK}
+                target="_blank" rel="noreferrer"
+                style={{ fontSize: '13px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', lineHeight: '1.4', fontWeight: '700' }}
+              >
+                {t.navOpen}
+              </a>
+              <p style={{ fontSize: '11px', color: '#999', marginTop: '5px', lineHeight: '1.5', marginBottom: 0 }}>{t.navQuick}</p>
             </div>
           </div>
         </div>
@@ -991,6 +996,17 @@ export default function SundaySilhouetteItineraryPage() {
             >
               {t.openRoute}
             </a>
+          </div>
+          {/* How to use the Google Maps route */}
+          <div style={{ background: '#F5F1EC', border: '0.5px solid rgba(0,0,0,0.1)', borderLeft: '3px solid #c5a882', padding: '1.1rem 1.25rem', marginBottom: '1rem' }}>
+            <h3 style={{ ...SECTION_LABEL, marginBottom: '0.75rem', color: '#0F1E14', fontWeight: '600' }}>{t.navHowLabel}</h3>
+            <ol style={{ margin: 0, paddingLeft: '1.15rem' }}>
+              {t.navSteps.map((s, i) => (
+                <li key={i} style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.65', marginBottom: i < t.navSteps.length - 1 ? '0.6rem' : 0, paddingLeft: '0.25rem' }}>
+                  <strong style={{ color: '#0F1E14' }}>{s.lead}</strong> {s.body}
+                </li>
+              ))}
+            </ol>
           </div>
           <div className="map-wrap" style={{ overflow: 'hidden', border: '0.5px solid rgba(0,0,0,0.1)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)' }}>
             <RouteMap key={lang} stops={MAP_STOPS} lang={lang} />
