@@ -5,7 +5,6 @@ import PageLoader from '../../components/PageLoader'
 import { captureException } from '../../lib/sentry'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 
-const PASSWORD = 'SUNDAY'
 const ROUTE_SLUG = 'sunday-silhouette-2026'
 
 // Only real venues so this one array can drive both the itinerary timeline
@@ -512,8 +511,11 @@ export default function SundaySilhouetteItineraryPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const urlPw = params.get('pw')
-    if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
+    // Entry is gated on a completed check-in (signed waiver + trip details +
+    // car photo) looked up by the registered email — there is no password or
+    // preview bypass, so no one reaches the itinerary without signing. The
+    // localStorage key is versioned (_v2) so any auth granted under the old
+    // password bypass is invalidated and must re-verify through the email gate.
     // Some in-app browsers (Instagram/Facebook WebViews with restrictive
     // storage settings) throw on localStorage access instead of just
     // returning null — unguarded, that throw aborts this effect before
@@ -521,7 +523,7 @@ export default function SundaySilhouetteItineraryPage() {
     // its `if (!checked) return null` blank screen. Same failure class as
     // the messageHandlers crash the layout.jsx polyfill guards against.
     let storedAuth = null
-    try { storedAuth = localStorage.getItem('ss_itinerary_auth') } catch {}
+    try { storedAuth = localStorage.getItem('ss_itinerary_auth_v2') } catch {}
     if (storedAuth === '1') { setAuthed(true); setChecked(true); return }
     setChecked(true)
 
@@ -537,11 +539,6 @@ export default function SundaySilhouetteItineraryPage() {
     e?.preventDefault()
     setErrMsg(null)
     const entered = normalizeEmail(emailOverride ?? email)
-    if (entered === PASSWORD.toLowerCase()) {
-      try { localStorage.setItem('ss_itinerary_auth', '1') } catch {}
-      setAuthed(true)
-      return
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
       setErrMsg('Please enter a valid email address.')
       return
@@ -580,7 +577,7 @@ export default function SundaySilhouetteItineraryPage() {
         && (!hasCarPhoto || !!data.carPhoto)
 
       if (allDone) {
-        try { localStorage.setItem('ss_itinerary_auth', '1') } catch {}
+        try { localStorage.setItem('ss_itinerary_auth_v2', '1') } catch {}
         setAuthed(true)
       } else {
         // Includes the email in the return URL too, so coming back auto-submits
