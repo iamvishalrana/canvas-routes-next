@@ -527,29 +527,36 @@ export default function SundaySilhouetteItineraryPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     // Entry is gated on a completed check-in (signed waiver + trip details +
-    // car photo) looked up by the registered email. The one bypass is the
-    // shared crew password — via ?pw= or typed into the email box — which
-    // skips the check-in gate and goes straight to the itinerary, for the
-    // team who don't register/check in themselves. The localStorage key is
-    // versioned (_v2) so any auth granted under the old SUNDAY password is
-    // invalidated and re-verifies against the current one.
+    // car photo), verified PER-EMAIL against the server on every load. There
+    // is deliberately no blanket "this browser is authed" flag: opening the
+    // page with a different registrant's email must always re-check THAT
+    // email's status, never silently reuse a previous visitor's access.
+    //
+    // The one bypass is the shared crew password (?pw= or typed into the email
+    // box) for the team who don't register/check in themselves — that one IS
+    // cached (ss_itinerary_pw), since it isn't tied to any registration.
+    // Some in-app browsers (Instagram/Facebook WebViews) throw on localStorage
+    // access instead of returning null, so every read/write is guarded — an
+    // unguarded throw here would abort before setChecked(true) and strand the
+    // page on its `if (!checked) return null` blank screen.
+    let pwCached = null
+    try { pwCached = localStorage.getItem('ss_itinerary_pw') } catch {}
     const urlPw = params.get('pw')
-    if (urlPw?.trim().toLowerCase() === PASSWORD.toLowerCase()) { setAuthed(true); setChecked(true); return }
-    // Some in-app browsers (Instagram/Facebook WebViews with restrictive
-    // storage settings) throw on localStorage access instead of just
-    // returning null — unguarded, that throw aborts this effect before
-    // setChecked(true) below ever runs, permanently stranding the page on
-    // its `if (!checked) return null` blank screen. Same failure class as
-    // the messageHandlers crash the layout.jsx polyfill guards against.
-    let storedAuth = null
-    try { storedAuth = localStorage.getItem('ss_itinerary_auth_v2') } catch {}
-    if (storedAuth === '1') { setAuthed(true); setChecked(true); return }
+    if ((urlPw && urlPw.trim().toLowerCase() === PASSWORD.toLowerCase()) || pwCached === '1') {
+      setAuthed(true); setChecked(true); return
+    }
     setChecked(true)
 
+    // Auto-verify a param'd or previously-used email so returning visitors
+    // don't retype it — but it's always re-checked server-side, so a
+    // not-yet-complete registrant is still routed to check-in.
     const urlEmail = params.get('email')
-    if (urlEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(urlEmail)) {
-      setEmail(urlEmail)
-      submit(null, urlEmail)
+    let storedEmail = null
+    try { storedEmail = localStorage.getItem('ss_itinerary_email') } catch {}
+    const candidate = urlEmail || storedEmail
+    if (candidate && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) {
+      setEmail(candidate)
+      submit(null, candidate)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -559,7 +566,7 @@ export default function SundaySilhouetteItineraryPage() {
     setErrMsg(null)
     const entered = normalizeEmail(emailOverride ?? email)
     if (entered === PASSWORD.toLowerCase()) {
-      try { localStorage.setItem('ss_itinerary_auth_v2', '1') } catch {}
+      try { localStorage.setItem('ss_itinerary_pw', '1') } catch {}
       setAuthed(true)
       return
     }
@@ -600,8 +607,10 @@ export default function SundaySilhouetteItineraryPage() {
         && (!hasLunch || (data.lunch?.length > 0 && data.lunch.length === passengersList.length))
         && (!hasCarPhoto || !!data.carPhoto)
 
+      // Remember the email (not a blanket "authed" flag) so a return visit
+      // auto-verifies the same person against the current server state.
+      try { localStorage.setItem('ss_itinerary_email', entered) } catch {}
       if (allDone) {
-        try { localStorage.setItem('ss_itinerary_auth_v2', '1') } catch {}
         setAuthed(true)
       } else {
         // Includes the email in the return URL too, so coming back auto-submits

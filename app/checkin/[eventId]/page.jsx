@@ -93,11 +93,19 @@ function CheckinContent() {
   const autoSubmitted = useRef(false)
   const scrolledToIncomplete = useRef(false)
   useEffect(() => {
+    if (autoSubmitted.current) return
+    // Prefer an email passed in the link; otherwise reuse the one saved on this
+    // device from a previous check-in, so a returning visitor doesn't retype it
+    // every time. It's always re-verified server-side below, so nothing is
+    // trusted from storage beyond skipping the manual gate.
     const prefillEmail = searchParams.get('email')
-    if (autoSubmitted.current || !prefillEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefillEmail)) return
+    let storedEmail = null
+    try { storedEmail = localStorage.getItem(`checkin_email_${eventId}`) } catch {}
+    const candidate = prefillEmail || storedEmail
+    if (!candidate || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) return
     autoSubmitted.current = true
-    setEmail(prefillEmail)
-    verify(null, prefillEmail)
+    setEmail(candidate)
+    verify(null, candidate)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -122,6 +130,7 @@ function CheckinContent() {
         return
       }
       setData({ ...d, email: targetEmail })
+      try { localStorage.setItem(`checkin_email_${eventId}`, targetEmail) } catch {}
       setStatus('found')
     } catch (err) {
       captureException(err, { context: 'generic-checkin-lookup-network' })
@@ -169,11 +178,28 @@ function CheckinContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, data])
 
-  // Optional "come from" page (e.g. an itinerary page that redirected here
-  // to finish an incomplete check-in) — only ever a same-site relative path,
-  // never trust it as an arbitrary redirect target from a query param.
-  const rawReturnTo = searchParams.get('returnTo')
-  const returnTo = rawReturnTo && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : null
+  // Optional "come from" page (e.g. an itinerary page that redirected here to
+  // finish an incomplete check-in) — only ever a same-site relative path,
+  // never trust it as an arbitrary redirect target. Persisted per-event so a
+  // return visit still offers the itinerary link even without the query param.
+  const returnToParam = searchParams.get('returnTo')
+  const [returnTo, setReturnTo] = useState(null)
+  useEffect(() => {
+    const valid = v => (v && v.startsWith('/') && !v.startsWith('//')) ? v : null
+    const fromParam = valid(returnToParam)
+    try {
+      if (fromParam) { localStorage.setItem(`checkin_return_${eventId}`, fromParam); setReturnTo(fromParam) }
+      else { setReturnTo(valid(localStorage.getItem(`checkin_return_${eventId}`))) }
+    } catch { setReturnTo(fromParam) }
+  }, [returnToParam, eventId])
+
+  // "Not you?" — clear the remembered email and go back to the gate, so a
+  // shared device or a wrong auto-loaded email can be corrected.
+  function switchEmail() {
+    try { localStorage.removeItem(`checkin_email_${eventId}`) } catch {}
+    autoSubmitted.current = true
+    setData(null); setEmail(''); setStatus('gate'); setError(null)
+  }
 
   return (
     <main style={{ maxWidth: '680px', margin: '0 auto', padding: '7rem 1.5rem 6rem' }}>
@@ -222,10 +248,15 @@ function CheckinContent() {
               {allDone ? t.allDoneMsg : t.incompleteMsg}
             </p>
             {allDone && returnTo && (
-              <a href={returnTo} style={{ display: 'inline-block', fontSize: '12px', color: '#0F1E14', textDecoration: 'underline', textUnderlineOffset: '3px', fontWeight: '600' }}>
-                {t.returnLabel}
+              <a href={returnTo} className="wtetci-cta wtetci-btn-primary" style={{ display: 'inline-block', padding: '0.85rem 1.75rem', background: '#0F1E14', color: '#F5F1EC', fontSize: '11px', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: '700', textDecoration: 'none' }}>
+                {t.itineraryCtaLabel}
               </a>
             )}
+            <div style={{ marginTop: '1rem' }}>
+              <button type="button" onClick={switchEmail} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '11px', color: '#aaa', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter), sans-serif' }}>
+                {t.notYouLabel}
+              </button>
+            </div>
           </div>
 
           {!allDone && (
@@ -296,6 +327,18 @@ function CheckinContent() {
                 carPhoto={data.carPhoto}
                 onSaved={carPhoto => setData(prev => ({ ...prev, carPhoto }))}
               />
+            </div>
+          )}
+
+          {/* Clear next step once everything is done: head to the itinerary.
+              Sits at the bottom so it's right where the last section finishes. */}
+          {allDone && returnTo && (
+            <div className="wtetci-fade-up" style={{ marginTop: '2.5rem', padding: '2rem 1.75rem', background: '#0F1E14', textAlign: 'center' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.7rem' }}>{t.allDoneCtaEyebrow}</div>
+              <p style={{ fontSize: '14px', color: 'rgba(245,241,236,0.85)', lineHeight: '1.7', margin: '0 auto 1.5rem', maxWidth: '400px' }}>{t.allDoneCtaBody}</p>
+              <a href={returnTo} className="wtetci-cta wtetci-btn-primary" style={{ display: 'inline-block', padding: '1rem 2.5rem', background: '#c5a882', color: '#0F1E14', fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: '700', textDecoration: 'none' }}>
+                {t.itineraryCtaLabel}
+              </a>
             </div>
           )}
         </>
