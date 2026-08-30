@@ -755,6 +755,36 @@ export default function EventsClient() {
     }
   }
 
+  // Re-sends the exact confirmation email an accepted registrant already got
+  // (the review route always emails buildAcceptedHtml on 'accept', and a
+  // re-accept is idempotent on review_status). For the /meet review flow
+  // (Cars & Coffee etc.) — the button only shows once someone is accepted.
+  async function resendConfirmation(eventId, r) {
+    if (!(await confirm({
+      title: 'Resend confirmation email?',
+      message: 'This re-sends the same confirmation email they received when they were accepted.',
+      details: <><strong>{r.name || '—'}</strong> · {r.email}</>,
+      confirmLabel: 'Yes, resend',
+    }))) return
+    const key = `${eventId}::${r.email}`
+    setReviewingRegistrant(p => ({ ...p, [key]: true }))
+    setReviewResult(p => ({ ...p, [key]: null }))
+    try {
+      const res = await fetch(`/api/admin/events/${eventId}/registrants/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: r.email, decision: 'accept' }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setReviewResult(p => ({ ...p, [key]: { error: d.error || 'Failed to resend.' } })); return }
+      setReviewResult(p => ({ ...p, [key]: { resent: true } }))
+    } catch {
+      setReviewResult(p => ({ ...p, [key]: { error: 'Network error.' } }))
+    } finally {
+      setReviewingRegistrant(p => ({ ...p, [key]: false }))
+    }
+  }
+
   async function sendEmailToRegistrants(eventId) {
     const registrants = registrantsData[eventId] || []
     const emails = [...new Set(registrants.map(r => r.email).filter(e => e && e !== '—'))]
@@ -1500,6 +1530,9 @@ export default function EventsClient() {
                               const reviewRes = reviewResult[indivKey]
                               const liveReviewStatus = reviewRes?.reviewStatus || r.reviewStatus
                               const canReview = r.email && r.email !== '—' && liveReviewStatus === 'pending'
+                              // Accepted review-flow registrants (Cars & Coffee etc.) can have
+                              // the same confirmation email re-sent.
+                              const canResendConfirm = r.email && r.email !== '—' && liveReviewStatus === 'accepted'
                               // The Invite/Resend confirm-email flow (rsvp_tokens-based) is a
                               // different, older mechanism than the Accept/Decline review flow
                               // above — Accept already sends its own confirmation email, so any
@@ -1564,6 +1597,10 @@ export default function EventsClient() {
                                                 <DangerBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'decline')}>{reviewing ? '…' : 'Decline'}</DangerBtn>
                                               </>
                                             )}
+                                            {canResendConfirm && !reviewRes?.resent && (
+                                              <GhostBtn small disabled={reviewing} onClick={() => resendConfirmation(item.id, r)}>{reviewing ? '…' : 'Resend confirmation'}</GhostBtn>
+                                            )}
+                                            {reviewRes?.resent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
                                             {canSend && !result?.sent && (
                                               <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
                                             )}
@@ -1600,6 +1637,10 @@ export default function EventsClient() {
                                               <DangerBtn small disabled={reviewing} onClick={() => reviewRegistrant(item.id, r, 'decline')}>{reviewing ? '…' : 'Decline'}</DangerBtn>
                                             </div>
                                           )}
+                                          {canResendConfirm && !reviewRes?.resent && (
+                                            <GhostBtn small disabled={reviewing} onClick={() => resendConfirmation(item.id, r)}>{reviewing ? '…' : 'Resend confirmation'}</GhostBtn>
+                                          )}
+                                          {reviewRes?.resent && <span style={{ fontSize: '10px', color: '#3B6B2F' }}>✓ Sent</span>}
                                           {reviewRes?.error && <span style={{ fontSize: '10px', color: '#93333E' }}>{reviewRes.error}</span>}
                                           {canSend && !result?.sent && (
                                             <GhostBtn small disabled={sending} onClick={() => sendConfirmEmail(item.id, r)}>{sending ? '…' : r.inviteSent ? 'Resend' : 'Invite'}</GhostBtn>
