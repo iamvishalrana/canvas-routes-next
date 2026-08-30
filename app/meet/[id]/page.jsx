@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { listEventRegistrants } from '../../../lib/eventCheckinShared.js'
+import { normalizeEventName } from '../../../lib/eventMeta'
 import MeetRegisterForm from './MeetRegisterForm'
 
 async function getEvent(id) {
@@ -29,15 +30,21 @@ async function getSpotsLeft(ev) {
 export async function generateMetadata({ params }) {
   const { id } = await params
   const ev = await getEvent(id)
-  if (!ev) return { title: 'Event — Canvas Routes' }
-  const title = `${ev.name} — Canvas Routes`
+  if (!ev) return { title: 'Event' }
+  // normalizeEventName maps a short/glued DB name to its clean canonical (e.g.
+  // "Cars & Coffee- September 5" → "Cars & Coffee — September 5, 2026").
+  const name = normalizeEventName(ev.name)
+  // Bare string so the root layout's "%s | Canvas Routes" template adds the
+  // brand exactly once — appending "— Canvas Routes" here doubled it into
+  // "… — Canvas Routes | Canvas Routes".
   const description = ev.description?.trim()
-    || `Register for ${ev.name}${ev.date_display ? ` on ${ev.date_display}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Free to attend.`
+    || `Register for ${name}${ev.date_display ? ` on ${ev.date_display}` : ''}${ev.location ? ` at ${ev.location}` : ''}. Free to attend.`
+  const ogTitle = `${name} | Canvas Routes`
   return {
-    title,
+    title: name,
     description,
-    openGraph: { title, description, images: ev.photo_url ? [{ url: ev.photo_url }] : undefined },
-    twitter: { card: 'summary_large_image', title, description },
+    openGraph: { title: ogTitle, description, images: ev.photo_url ? [{ url: ev.photo_url }] : undefined },
+    twitter: { card: 'summary_large_image', title: ogTitle, description },
   }
 }
 
