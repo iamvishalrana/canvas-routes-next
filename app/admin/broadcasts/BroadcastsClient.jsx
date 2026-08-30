@@ -215,32 +215,35 @@ function ChipInput({ chips, onAdd, onRemove }) {
   )
 }
 
-// Search members by name/email and add their email as a chip — same
-// search-by-name-or-email pattern as MemberSearchSelect (app/admin/photos/PhotosClient.jsx)
-// and ContactSearchSelect, adapted for multi-add instead of single-select.
-// Sits above the free-text ChipInput so an admin can find a member without
-// knowing their exact email, while still being able to paste/type raw
-// addresses (non-members, past applicants) below.
-function MemberEmailSearch({ members, addedEmails, onAdd }) {
+// Search everyone we know — members, past applicants, AND contacts — by name
+// or email and add their email as a chip. The list is merged and de-duplicated
+// by email (see the load effect), with a small source tag so the admin can see
+// who they're adding. Sits above the free-text ChipInput so an admin can find
+// someone without knowing their exact email, while still pasting/typing raw
+// addresses below.
+function RecipientSearch({ people, addedEmails, onAdd }) {
   const [search, setSearch] = useState('')
   const q = search.trim().toLowerCase()
   const added = new Set(addedEmails)
   const filtered = q
-    ? members.filter(m => m.email && !added.has(m.email.toLowerCase())
-        && (m.name?.toLowerCase().includes(q) || m.email.toLowerCase().includes(q))).slice(0, 8)
+    ? people.filter(p => p.email && !added.has(p.email.toLowerCase())
+        && (p.name?.toLowerCase().includes(q) || p.email.toLowerCase().includes(q))).slice(0, 8)
     : []
   return (
     <div style={{ position: 'relative' }}>
       <input value={search} onChange={e => setSearch(e.target.value)}
-        placeholder="Search members by name or email…"
+        placeholder="Search members, applicants & contacts…"
         style={{ width: '100%', padding: '0.5rem 0.75rem', border: '0.5px solid rgba(0,0,0,0.15)', background: '#fff', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', borderRadius: '8px', boxSizing: 'border-box' }} />
       {filtered.length > 0 && (
         <div style={{ position: 'absolute', zIndex: 20, top: '100%', left: 0, right: 0, marginTop: '4px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', boxShadow: '0 6px 20px rgba(0,0,0,0.12)', maxHeight: '220px', overflowY: 'auto' }}>
-          {filtered.map(m => (
-            <button key={m.id} type="button" onClick={() => { onAdd(m.email.toLowerCase()); setSearch('') }}
+          {filtered.map(p => (
+            <button key={p.email} type="button" onClick={() => { onAdd(p.email.toLowerCase()); setSearch('') }}
               style={{ display: 'block', width: '100%', textAlign: 'left', padding: '0.55rem 0.75rem', background: 'none', border: 'none', borderBottom: '0.5px solid rgba(0,0,0,0.05)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-              <div style={{ fontSize: '12px', color: '#1a1a1a' }}>{m.name || '(no name)'}</div>
-              <div style={{ fontSize: '10px', color: '#999' }}>{m.email}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '12px', color: '#1a1a1a' }}>{p.name || '(no name)'}</span>
+                {p.source && <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#aaa', flexShrink: 0 }}>{p.source}</span>}
+              </div>
+              <div style={{ fontSize: '10px', color: '#999' }}>{p.email}</div>
             </button>
           ))}
         </div>
@@ -407,7 +410,7 @@ export default function BroadcastsClient() {
   const [audience, setAudience]                 = useState('specific_emails')
   const [fromEmail, setFromEmail]               = useState('jerry@canvasroutes.com')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
-  const [members, setMembers]                   = useState([])          // for the specific-emails search-select
+  const [people, setPeople]                     = useState([])          // members + applicants + contacts, for the specific-emails search-select
   const [extraEmails, setExtraEmails]           = useState([])          // one list — treated as include OR exclude per emailMode
   const [emailMode, setEmailMode]               = useState(null)        // null | 'exclude' | 'include' — field greyed until one is picked
   const [subject, setSubject]                   = useState('')
@@ -449,11 +452,26 @@ export default function BroadcastsClient() {
 
   // For the "Specific Emails" search-select — loaded once, independent of
   // audience/tab so it's ready the moment an admin switches to that mode.
+  // Pulls from members, applications, AND contacts so any known person can be
+  // found by name, merged and de-duplicated by email (members win the source
+  // label, then applicants, then contacts).
   useEffect(() => {
-    fetch('/api/admin/members')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => setMembers(Array.isArray(data) ? data.map(m => ({ id: m.id, name: m.name, email: m.email })) : []))
-      .catch(() => {})
+    Promise.all([
+      fetch('/api/admin/members').then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch('/api/admin/applications').then(r => r.ok ? r.json() : []).catch(() => []),
+      fetch('/api/admin/contacts').then(r => r.ok ? r.json() : []).catch(() => []),
+    ]).then(([mem, apps, contacts]) => {
+      const byEmail = new Map()
+      const add = (name, email, source) => {
+        const e = (email || '').toLowerCase().trim()
+        if (!e || byEmail.has(e)) return
+        byEmail.set(e, { id: e, name: name || '', email: e, source })
+      }
+      ;(Array.isArray(mem) ? mem : []).forEach(m => add(m.name, m.email, 'member'))
+      ;(Array.isArray(apps) ? apps : []).forEach(a => add(a.name, a.email, 'applicant'))
+      ;(Array.isArray(contacts) ? contacts : []).forEach(c => add(c.name, c.email, 'contact'))
+      setPeople([...byEmail.values()])
+    }).catch(() => {})
   }, [])
 
   const editor = useEditor({
@@ -1287,8 +1305,8 @@ export default function BroadcastsClient() {
                     {/* 1. Chip email input */}
                     {audience === 'specific_emails' && (
                       <div style={{ marginTop: '0.5rem' }}>
-                        <MemberEmailSearch
-                          members={members}
+                        <RecipientSearch
+                          people={people}
                           addedEmails={chipEmails}
                           onAdd={email => setChipEmails(prev => prev.includes(email) ? prev : [...prev, email])}
                         />
