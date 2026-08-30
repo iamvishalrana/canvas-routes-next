@@ -40,17 +40,18 @@ const FALLBACK_MODEL = 'claude-sonnet-5'
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
 const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exactly these keys:
-{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"total":number|null,"currency":string|null,"vendor_tax_id":string|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
+{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"other_charges":number|null,"total":number|null,"currency":string|null,"vendor_tax_id":string|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
 
 Rules:
 - The receipt or invoice may be printed in French (common for Québec merchants) or English — read and extract accurately from either language, and don't let unfamiliar French wording lower your confidence. Common French terms you'll see: "Facture"/"Reçu" (invoice/receipt), "Sous-total" (subtotal), "Pourboire"/"Service" (tip), "Total"/"Montant total" (total), "TPS" (GST/federal tax), "TVQ" (QST/provincial tax), "Date", "Espèces"/"Comptant" (cash), "Débit" (debit), "Crédit" (credit). Write "vendor" and "notes" in whichever language is clearer/shorter — don't force a translation.
 - "is_receipt" = true ONLY if the image is clearly a purchase receipt, invoice, bill, or order confirmation showing amounts paid or payable. If it is anything else — an article, a menu, a screenshot, a random document, a photo, a business card — set is_receipt to false and EVERY other key to null. Never guess values from something that is not a receipt.
 - "vendor" = the business/merchant name.
 - "date" = the transaction date in YYYY-MM-DD. If the year is missing, infer the most likely recent year.
-- "amount" = the PRE-TAX subtotal (goods/services before taxes). If only a grand total is shown with no tax lines, set "amount" to that total and leave "gst" and "qst" null.
+- "amount" = the PRE-TAX subtotal of the goods/services (the "Sous-total" line — before any extra fees and before taxes). If only a grand total is shown with no tax lines, set "amount" to that total and leave "gst", "qst" and "other_charges" null.
 - "gst" = the Canadian federal GST / TPS / HST-federal amount (~5%) only — always null on a US receipt (there is no GST). "qst" = the QST / TVQ / PST / HST-provincial amount, OR a US state sales tax amount (Vermont/Maine/New York have one; New Hampshire has none). If a single combined Canadian tax line is shown (e.g. HST) and you can't split it, put the whole amount in "gst" and leave "qst" null; for a single US state sales tax line, put it in "qst" instead (never "gst").
 - "tip" = the tip / gratuity / "Pourboire" / "Service" amount added on top of the taxed subtotal, if any (common on a restaurant's card/payment receipt but usually absent on the itemized bill). null if there is no tip line.
-- "total" = the grand total actually paid (this INCLUDES the tip when one is present).
+- "other_charges" = the NET of any charges that are not the subtotal, taxes, or tip — e.g. delivery/shipping, service or booking fees, environmental / eco / recycling fees ("frais environnementaux", tire or battery levies), bottle deposits ("consigne"), surcharges — MINUS any discounts, coupons, rebates, or credits ("rabais", "remise"). Fees count positive, discounts negative. Use null if there are none or they cancel out. Never put gst/qst/tip in here. This exists so the identity holds: amount + other_charges + gst + qst + tip = total.
+- "total" = the grand total actually paid (this INCLUDES taxes, any other_charges, and the tip when present).
 - "currency" = the 3-letter ISO code of the amounts shown (e.g. "USD", "EUR", "GBP") if the receipt is clearly NOT Canadian dollars; otherwise "CAD". Default "CAD" when unsure.
 - "vendor_tax_id" = the vendor's tax registration number if printed — a GST/HST number (9 digits + "RT" + 4 digits, e.g. "123456789 RT0001") or a QST/TVQ number (10 digits + "TQ" + 4 digits). Return it as printed, or null if not shown.
 - "category" MUST be exactly one of: ${CATEGORIES.join(', ')}. Pick the best fit, or null if unclear.
@@ -59,7 +60,10 @@ Rules:
 - "notes" = a short (max ~90 chars) plain-text OVERVIEW of the purchase — what it was, at a glance — NOT a list of the line items on the receipt. Never enumerate individual items/quantities/prices; give the gist a reader would want at a glance instead. Good: "Fuel fill-up", "Team lunch, 4 people", "Office supplies", "Car detailing". Bad (too itemized, don't do this): "42.1L Premium + car wash $8", "2x Burger, 1x Fries, 2x Poutine, 4x Soda", "Pens, paper, tape, stapler". If the receipt is a single specific purchase (one part, one tool), name that briefly instead. null if there's nothing worth summarizing beyond the vendor name.
 - Use null for anything not clearly present. All numbers must be plain decimals with no currency symbols (e.g. 12.34).`
 
-function toNum(v) {
+const round2 = (n) => Math.round(n * 100) / 100
+
+// Parse a money value from the model to a finite 2-decimal number (or null).
+function parseAmount(v) {
   if (v == null) return null
   let n
   if (typeof v === 'number') {
@@ -82,10 +86,20 @@ function toNum(v) {
     n = parseFloat(s)
   }
   if (!Number.isFinite(n)) return null
-  // Expense amounts are always positive and sane — a negative or absurd value
-  // means the model misread something; better to leave the field blank
-  if (n < 0 || n > 1000000) return null
-  return Math.round(n * 100) / 100
+  if (Math.abs(n) > 1000000) return null // absurd = misread
+  return round2(n)
+}
+
+// Subtotal / taxes / tip / total are always positive — a negative here means a
+// misread, so blank it.
+function toNum(v) {
+  const n = parseAmount(v)
+  return n == null || n < 0 ? null : n
+}
+
+// "other_charges" keeps its sign: fees are positive, discounts/credits negative.
+function toSignedNum(v) {
+  return parseAmount(v)
 }
 
 function sanitizeDate(v) {
@@ -135,7 +149,7 @@ export async function POST(request) {
   const runModel = async (model) => {
     const response = await anthropic.messages.create({
       model,
-      max_tokens: 400,
+      max_tokens: 500,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: [mediaBlock, { type: 'text', text: EXTRACT_PROMPT }] }],
     })
@@ -153,24 +167,36 @@ export async function POST(request) {
     }
   }
   const usableParse = (p) => p && (p.is_receipt === false || toNum(p.amount) != null || toNum(p.total) != null)
+  // Do the numbers add up? subtotal + fees + taxes + tip should equal total.
+  // Only meaningful when both a subtotal and a total were read; otherwise we
+  // can derive the missing side later, so there's nothing to reconcile against.
+  const reconciles = (p) => {
+    const a = toNum(p.amount), t = toNum(p.total)
+    if (a == null || t == null) return true
+    const sum = a + (toNum(p.gst) || 0) + (toNum(p.qst) || 0) + (toNum(p.tip) || 0) + (toSignedNum(p.other_charges) || 0)
+    return Math.abs(sum - t) <= 0.02
+  }
 
   try {
     let parsed = await runModel(PRIMARY_MODEL)
 
     // A parse failure (still null after the lenient extraction above) is
     // usually a transient formatting slip, not a hard-to-read image — worth
-    // one more cheap-model attempt before paying for the stronger model. Skip
-    // straight to escalation for a valid-but-unusable parse (no amount could
-    // be found) — that's much more likely a genuine image-legibility issue,
-    // which the stronger model is actually better at.
+    // one more cheap-model attempt before paying for the stronger model.
     if (!parsed) parsed = await runModel(PRIMARY_MODEL)
 
-    // Escalate to the stronger model only when the cheap pass(es) still
-    // couldn't produce a usable answer. A confident is_receipt:false is
-    // trusted as-is (no escalation) so non-receipt uploads stay cheap.
-    if (!usableParse(parsed)) {
+    // Escalate to the stronger model when the cheap pass(es) either couldn't
+    // produce a usable answer OR produced numbers that don't reconcile
+    // (subtotal + fees + taxes + tip ≠ total) — a mismatch on a real receipt
+    // usually means a misread of a busy/complex layout, which the stronger
+    // model reads better. A confident is_receipt:false is trusted as-is
+    // (no escalation) so non-receipt uploads stay cheap.
+    const needsEscalation = !usableParse(parsed) || (parsed.is_receipt !== false && !reconciles(parsed))
+    if (needsEscalation) {
       const retry = await runModel(FALLBACK_MODEL)
-      if (retry) parsed = retry
+      // Prefer the retry when the cheap pass was unusable, or when the retry
+      // actually reconciles (and so is the more trustworthy read).
+      if (retry && usableParse(retry) && (!usableParse(parsed) || reconciles(retry))) parsed = retry
     }
 
     if (!parsed) return Response.json({ error: 'Could not read that receipt. Enter the details manually.' }, { status: 422 })
@@ -187,6 +213,7 @@ export async function POST(request) {
     const gst = toNum(parsed.gst)
     const qst = toNum(parsed.qst)
     const tip = toNum(parsed.tip)
+    const other_charges = toSignedNum(parsed.other_charges)
     const total = toNum(parsed.total)
     const payment_method = PAYMENT_METHODS.includes(parsed.payment_method) ? parsed.payment_method : null
     const province = (typeof parsed.province === 'string' && PROVINCES.includes(parsed.province.toUpperCase())) ? parsed.province.toUpperCase() : null
@@ -200,24 +227,35 @@ export async function POST(request) {
       return Response.json({ error: 'No amounts could be read from that image. Enter the details manually.' }, { status: 422 })
     }
 
-    // Flag when subtotal + taxes + tip don't reconcile with the printed total so
-    // the client can tell the admin to double-check instead of silently trusting
-    // it. Deliberately does NOT require gst/qst/tip to be non-null first — a
-    // receipt where the model read a subtotal and a different grand total but
-    // couldn't make out ANY tax/tip line (illegible tax section, unusual
-    // layout) is exactly the clearest "these numbers don't add up" case, and
-    // used to be silently waved through because that gate excluded it. This
-    // can't create a new false positive: when the model legitimately has no
-    // tax lines to report, it's instructed to set amount = total (see the
-    // "only a grand total is shown" rule above), so amount and total already
-    // match and no mismatch is raised.
-    const mismatch = amount != null && total != null
-      ? Math.abs(amount + (gst || 0) + (qst || 0) + (tip || 0) - total) > 0.02
-      : false
+    const otherVal = other_charges || 0
+    // Fill in a missing subtotal or total from the parts we did read, so the
+    // form comes back complete even when only one side was legible. Nothing is
+    // invented — these are exact arithmetic from the fields the model returned.
+    let outAmount = amount
+    let outTotal = total
+    if (outTotal == null && outAmount != null) {
+      outTotal = round2(outAmount + (gst || 0) + (qst || 0) + (tip || 0) + otherVal)
+    } else if (outAmount == null && outTotal != null) {
+      const derived = round2(outTotal - (gst || 0) - (qst || 0) - (tip || 0) - otherVal)
+      outAmount = derived >= 0 ? derived : null
+    }
+
+    // Reconciliation residual: how far subtotal + fees + taxes + tip is from the
+    // printed total. Surfaced (not just a boolean) so the admin sees exactly how
+    // much is unaccounted for and can decide whether it matters. With
+    // other_charges now captured, ordinary fee-laden receipts (delivery, eco/
+    // tire levies, deposits, discounts) reconcile instead of false-flagging.
+    let residual = null
+    let mismatch = false
+    if (outAmount != null && outTotal != null) {
+      residual = round2(outAmount + (gst || 0) + (qst || 0) + (tip || 0) + otherVal - outTotal)
+      mismatch = Math.abs(residual) > 0.02
+    }
 
     return Response.json({
       vendor: typeof parsed.vendor === 'string' ? parsed.vendor.slice(0, 100) : null,
-      date, amount, gst, qst, tip, total, currency, vendor_tax_id, category, payment_method, province, notes, mismatch,
+      date, amount: outAmount, gst, qst, tip, other_charges, total: outTotal,
+      currency, vendor_tax_id, category, payment_method, province, notes, mismatch, residual,
     })
   } catch (err) {
     captureException(err, { context: 'expenses-scan-receipt' })

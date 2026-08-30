@@ -884,7 +884,7 @@ export default function ExpensesClient() {
                   ? `Payment receipt total is ${fmt(tipAdded)} higher than the invoice — treating the difference as a tip (couldn't find a separate tip line). Total updated to ${fmt(total)} — double-check before saving.`
                   : `Payment receipt adds a ${fmt(tipAdded)} tip — total updated to ${fmt(total)}. ✓` }
               : data.mismatch
-                ? { type: 'warn', text: "Scanned, but the numbers on this receipt don't add up (subtotal + taxes ≠ total). Double-check the amounts before saving." }
+                ? { type: 'warn', text: `Scanned, but the numbers don't fully add up${data.residual != null ? ` (off by ${fmt(Math.abs(data.residual))})` : ''} — double-check the amounts before saving.` }
                 : isSubsequent
                   ? { type: 'ok', text: 'Second document scanned & attached — it matches the first. ✓' }
                   : { type: 'ok', text: `Scanned ✓ ${data.vendor || 'receipt'}${data.total != null ? ` — ${fmt(data.total)}` : ''}. Review the fields before saving.` })
