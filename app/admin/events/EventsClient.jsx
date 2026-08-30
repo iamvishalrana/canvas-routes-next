@@ -48,7 +48,7 @@ function RsvpAnswers({ answers }) {
   const ARRIVAL = { opening: 'Arrives at opening', first_hour: 'Arrives within first hour', later: 'Arrives later' }
   const chips = [
     answers.dietary && answers.dietary,
-    answers.whatsapp != null && `WhatsApp: ${answers.whatsapp ? 'Yes' : 'No'}`,
+    answers.whatsapp != null && `WhatsApp group: ${answers.whatsapp ? 'Yes' : 'No'}`,
     answers.passengers != null && (answers.passengers <= 1 ? 'Solo' : `${answers.passengers} people`),
     answers.bringing_guest != null && (answers.bringing_guest ? 'Bringing a guest' : 'No guest'),
     answers.car_paint && answers.car_paint,

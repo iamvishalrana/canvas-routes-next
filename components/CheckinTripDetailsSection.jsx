@@ -51,6 +51,7 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
       if (!p.age.toString().trim() || isNaN(ageNum) || ageNum < 1 || ageNum > 120) errs[`p_${i}_age`] = true
     })
     if (!whatsapp.trim() || whatsapp.replace(/\D/g, '').length < 7) errs.whatsapp = true
+    if (!dietary.trim()) errs.dietary = true
     setFieldErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -153,8 +154,11 @@ export default function CheckinTripDetailsSection({ identifier, alreadyCompleted
         </div>
 
         <div>
-          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#999', marginBottom: '0.5rem' }}>{t.dietaryLabel}</label>
-          <input type="text" className="wtetci-input" value={dietary} onChange={e => setDietary(e.target.value)} placeholder={t.dietaryPlaceholder} style={inp} />
+          <label style={{ display: 'block', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: fieldErrors.dietary ? '#93333E' : '#999', marginBottom: '0.5rem' }}>{t.dietaryLabel} <span style={{ color: '#93333E' }}>*</span></label>
+          <input type="text" className="wtetci-input" value={dietary}
+            onChange={e => { setDietary(e.target.value); setFieldErrors(prev => { const n = { ...prev }; delete n.dietary; return n }) }}
+            placeholder={t.dietaryPlaceholder} style={{ ...inp, ...(fieldErrors.dietary ? { borderColor: '#93333E' } : {}) }} />
+          {fieldErrors.dietary && <p style={{ fontSize: '12px', color: '#93333E', margin: '0.4rem 0 0' }}>{t.dietaryErr}</p>}
         </div>
 
         <div>

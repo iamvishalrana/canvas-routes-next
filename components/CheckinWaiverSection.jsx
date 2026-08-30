@@ -51,6 +51,7 @@ export default function CheckinWaiverSection({ waiverText, waiverTextFr, identif
     setError(null)
     if (!agreed) { setError(t.waiverErrAgree); return }
     if (!fullName.trim()) { setError(t.waiverErrName); return }
+    if (!vehicleYear.trim() || !vehicleMake.trim() || !vehicleModel.trim()) { setError(t.vehicleErr); return }
     if (!emergencyName.trim() || !emergencyPhone.trim()) { setError(t.waiverErrEmergency); return }
     if (hasPassengers) {
       for (const p of passengers) {

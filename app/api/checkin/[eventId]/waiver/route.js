@@ -24,6 +24,10 @@ export async function POST(request, { params }) {
   if (agreed !== true) return Response.json({ error: 'You must agree to the waiver terms.' }, { status: 400 })
   if (!fullName?.trim() || fullName.trim().length < 2) return Response.json({ error: 'Please type your full legal name as signature.' }, { status: 400 })
   if (fullName.trim().length > 150) return Response.json({ error: 'Name too long.' }, { status: 400 })
+  // Vehicle is mandatory (2026-08-30) — all check-in fields are required, especially for routes.
+  if (!vehicleYear?.trim() || !vehicleMake?.trim() || !vehicleModel?.trim()) {
+    return Response.json({ error: 'Vehicle year, make, and model are required.' }, { status: 400 })
+  }
   if (!emergencyContactName?.trim()) return Response.json({ error: 'Emergency contact name is required.' }, { status: 400 })
   if (!emergencyContactPhone?.trim() || emergencyContactPhone.replace(/\D/g, '').length < 7) {
     return Response.json({ error: 'A valid emergency contact phone number is required.' }, { status: 400 })

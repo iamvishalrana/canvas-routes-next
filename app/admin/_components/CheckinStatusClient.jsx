@@ -691,7 +691,7 @@ export default function CheckinStatusClient({ eventId }) {
                             ))}
                             <>Dietary: {p.trip_details.dietary || '—'}<br /></>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>
-                              WhatsApp: {p.trip_details.whatsapp || '—'}
+                              WhatsApp number: {p.trip_details.whatsapp || '—'}
                               {p.trip_details.whatsapp && <CopyBtn value={p.trip_details.whatsapp} />}
                             </span><br />
                             {p.trip_details.completed_at && (

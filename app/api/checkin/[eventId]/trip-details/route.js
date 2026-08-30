@@ -38,9 +38,14 @@ export async function POST(request, { params }) {
       return Response.json({ error: 'Please provide a valid age (1–120) for each passenger.' }, { status: 400 })
     }
   }
-  // WhatsApp is mandatory (2026-08-30) so everyone can be reached in the group chat.
+  // All check-in fields are mandatory (2026-08-30), especially for routes:
+  // WhatsApp so everyone can be reached in the group chat, and an explicit
+  // dietary answer ("None" if no restrictions) so nothing is left ambiguous.
   if (!whatsapp?.toString().trim() || whatsapp.replace(/\D/g, '').length < 7) {
     return Response.json({ error: 'A valid WhatsApp number is required.' }, { status: 400 })
+  }
+  if (!dietary?.toString().trim()) {
+    return Response.json({ error: 'Please answer the dietary question (type "None" if no restrictions).' }, { status: 400 })
   }
 
   const registrant = await findEventRegistrant(admin, eventId, event.name, email)
