@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo, Fragment } from 'react'
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { ExportButton } from '../_components/ExportModal'
 import { CopyBtn, DateRangeMenu } from '../_components/shared'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -19,6 +19,19 @@ const DATE_PRESETS = [
   { key: 'last_30', label: 'Last 30 days', range: () => { const n = new Date(); const s = new Date(n.getTime() - 29 * 86400000); return { from: mtlYmd(s), to: mtlYmd(n) } } },
   { key: 'ytd', label: 'Year to date', range: () => { const n = new Date(); return { from: `${mtlYmd(n).slice(0, 4)}-01-01`, to: mtlYmd(n) } } },
   { key: 'all', label: 'All time', range: () => ({ from: '', to: '' }) },
+]
+
+const METHOD_FILTERS = [
+  { key: 'all', label: 'All methods' },
+  { key: 'card', label: 'Card' },
+  { key: 'etransfer', label: 'E-transfer' },
+]
+
+const MEMBER_FILTERS = [
+  { key: 'all', label: 'All' },
+  { key: 'member', label: 'Members' },
+  { key: 'nonmember', label: 'Non-members' },
+  { key: 'unknown', label: 'Unknown' },
 ]
 
 // Date range is compared against the Montreal calendar date of each payment
@@ -275,15 +288,52 @@ function StatTile({ label, value, color = '#1a1a1a', sub }) {
   )
 }
 
-function ChartCard({ title, note, children }) {
+function ChartCard({ title, note, info, children }) {
   return (
     <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.07)', borderRadius: '12px', padding: '1.25rem 1.25rem 1.4rem', boxShadow: '0 2px 12px rgba(15,30,20,0.06)' }}>
-      <div style={{ ...SECTION_LABEL, marginBottom: note ? '0.35rem' : '1.1rem' }}>{title}</div>
+      <div style={{ ...SECTION_LABEL, marginBottom: note ? '0.35rem' : '1.1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+        {title}{info && <InfoTip text={info} label={`About ${title}`} />}
+      </div>
       {note && <div style={{ fontSize: '10px', color: '#bbb', marginBottom: '1.1rem' }}>{note}</div>}
       {children}
     </div>
   )
 }
+
+// Clickable table header for the sortable lists below — click toggles
+// asc/desc on that column, switching sort key resets to the given default
+// direction (desc for numbers, asc for text) since that's the more useful
+// first click for each.
+function SortTH({ label, sortKey, sort, onSort, align }) {
+  const active = sort.key === sortKey
+  return (
+    <th style={{ ...TH, textAlign: align || 'left', cursor: 'pointer', userSelect: 'none', color: active ? '#8A6535' : TH.color }}
+      onClick={() => onSort(sortKey)}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', justifyContent: align === 'right' ? 'flex-end' : 'flex-start', width: '100%' }}>
+        {label}
+        <span style={{ fontSize: '8px', opacity: active ? 1 : 0.3 }}>{active ? (sort.dir === 'asc' ? '▲' : '▼') : '⇅'}</span>
+      </span>
+    </th>
+  )
+}
+
+function nextSort(current, key, defaultDir = 'desc') {
+  return current.key === key ? { key, dir: current.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: defaultDir }
+}
+
+function sortBy(arr, sort) {
+  const { key, dir } = sort
+  const mul = dir === 'asc' ? 1 : -1
+  return [...arr].sort((a, b) => {
+    const av = typeof a[key] === 'string' ? a[key].toLowerCase() : (a[key] ?? 0)
+    const bv = typeof b[key] === 'string' ? b[key].toLowerCase() : (b[key] ?? 0)
+    if (av < bv) return -1 * mul
+    if (av > bv) return 1 * mul
+    return 0
+  })
+}
+
+const SEARCH_INPUT = { fontSize: '12px', padding: '0.45rem 0.7rem', borderRadius: '8px', border: '0.5px solid rgba(0,0,0,0.12)', outline: 'none', fontFamily: 'var(--font-inter),sans-serif', width: '100%', maxWidth: '220px', background: '#fff', color: '#1a1a1a' }
 
 // Small "i" info button with a tap-toggled popover — mobile-friendly (tap, not
 // hover). Explains a metric or section in plain language. stopPropagation so
@@ -513,22 +563,22 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
           {/* Charts */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: (agg.coupons.length || trendByMonth.length > 1) ? '1.5rem' : 0 }}>
             {showMemberChart && (
-              <ChartCard title="Members vs Non-members">
+              <ChartCard title="Members vs Non-members" info="How this segment's ex-tax revenue splits between members and non-members. Hover a slice or legend row for exact numbers.">
                 <Donut data={memberData} centerTop={fmt(agg.net)} centerBottom="net" />
               </ChartCard>
             )}
             {showMethodChart && (
-              <ChartCard title="Payment Method">
+              <ChartCard title="Payment Method" info="Card vs e-transfer for this segment. E-transfers carry no Stripe fee.">
                 <Donut data={methodData} centerTop={fmt(agg.net)} centerBottom="net" />
               </ChartCard>
             )}
             {trendByMonth.length > 1 && (
-              <ChartCard title="Revenue Over Time" note="Net revenue by month">
+              <ChartCard title="Revenue Over Time" note="Net revenue by month" info="Ex-tax revenue for this segment, grouped by calendar month (Montreal time).">
                 <RevenueBarList data={trendByMonth} color="#3B6B2F" />
               </ChartCard>
             )}
             {showTaxChart && (
-              <ChartCard title="Revenue Composition" note={agg.withTax.length < payments.length ? `Tax breakdown for ${agg.withTax.length} of ${payments.length} payments with a receipt` : 'Subtotal + taxes = amount charged'}>
+              <ChartCard title="Revenue Composition" note={agg.withTax.length < payments.length ? `Tax breakdown for ${agg.withTax.length} of ${payments.length} payments with a receipt` : 'Subtotal + taxes = amount charged'} info="How the amount charged splits into pre-tax revenue, GST and QST. Payments from before GST/QST launched (July 19, 2026) never charged tax, so they're excluded from this chart.">
                 <Donut data={taxData} centerTop={fmt(agg.subtotal + agg.gst + agg.qst)} centerBottom="w/ tax" />
               </ChartCard>
             )}
@@ -592,6 +642,12 @@ function DetailModal({ title, filenameBase, payments, onClose }) {
                     <div style={{ fontSize: '13px', color: '#3B6B2F', fontVariantNumeric: 'tabular-nums' }}>{fmt(exTaxOf(p))}</div>
                     {p.refunded > 0 && <div style={{ fontSize: '10px', color: '#93333E', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.refunded)} refunded</div>}
                     {p.fee > 0 && <div style={{ fontSize: '10px', color: '#999', fontVariantNumeric: 'tabular-nums' }}>−{fmt(p.fee)} Stripe fee</div>}
+                    {p.email && (
+                      <a href={`/admin/applications?q=${encodeURIComponent(p.email)}`}
+                        style={{ fontSize: '10px', color: '#8A6535', textDecoration: 'underline', textUnderlineOffset: '2px', display: 'inline-block', marginTop: '3px' }}>
+                        View application →
+                      </a>
+                    )}
                   </div>
                 </div>
                 )
@@ -611,22 +667,42 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [showAllMembers, setShowAllMembers] = useState(false)
+  const [methodFilter, setMethodFilter] = useState('all') // 'all' | 'card' | 'etransfer'
+  const [memberFilter, setMemberFilter] = useState('all') // 'all' | 'member' | 'nonmember' | 'unknown'
+  const [typeSort, setTypeSort] = useState({ key: 'revenue', dir: 'desc' })
+  const [memberSort, setMemberSort] = useState({ key: 'revenue', dir: 'desc' })
+  const [memberSearch, setMemberSearch] = useState('')
+  const [paymentSearch, setPaymentSearch] = useState('')
+  const pendingRef = useRef(null)
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check(); window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
 
+  // Method/member filters apply on top of the date range — reused by
+  // revenueDelta below so the previous-period comparison stays apples-to-apples.
+  const passesMethodMember = p => {
+    if (methodFilter === 'card' && p.manual) return false
+    if (methodFilter === 'etransfer' && !p.manual) return false
+    if (memberFilter === 'member' && p.isMember !== true) return false
+    if (memberFilter === 'nonmember' && p.isMember !== false) return false
+    if (memberFilter === 'unknown' && p.isMember != null) return false
+    return true
+  }
+
   const filteredPayments = useMemo(() => {
-    if (!dateFrom && !dateTo) return payments
+    if (!dateFrom && !dateTo && methodFilter === 'all' && memberFilter === 'all') return payments
     return payments.filter(p => {
-      if (!p.date) return false
-      const key = montrealDateKey(p.date)
-      if (dateFrom && key < dateFrom) return false
-      if (dateTo && key > dateTo) return false
-      return true
+      if (dateFrom || dateTo) {
+        if (!p.date) return false
+        const key = montrealDateKey(p.date)
+        if (dateFrom && key < dateFrom) return false
+        if (dateTo && key > dateTo) return false
+      }
+      return passesMethodMember(p)
     })
-  }, [payments, dateFrom, dateTo])
+  }, [payments, dateFrom, dateTo, methodFilter, memberFilter])
 
   const totalPaid = filteredPayments.length
 
@@ -677,11 +753,12 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       if (!p.date) continue
       const k = montrealDateKey(p.date)
       if (k < prevFromKey || k > prevToKey) continue
+      if (!passesMethodMember(p)) continue
       prev += exTaxOf(p)
     }
     if (prev <= 0) return null
     return { pct: ((totalRevenue - prev) / prev) * 100, up: totalRevenue >= prev, prev }
-  }, [payments, dateFrom, dateTo, totalRevenue])
+  }, [payments, dateFrom, dateTo, totalRevenue, methodFilter, memberFilter])
 
   const byType = useMemo(() => {
     const map = new Map()
@@ -694,6 +771,12 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
     }
     return Array.from(map.values())
   }, [filteredPayments])
+
+  // byType above stays in first-seen order (needed for the routesRevenue/
+  // innerCircleRevenue/etc. lookups below to be order-independent anyway) —
+  // this is the sorted view the table actually renders, click a header to
+  // change key/direction.
+  const sortedByType = useMemo(() => sortBy(byType, typeSort), [byType, typeSort])
 
   const byMonth = useMemo(() => {
     const map = new Map()
@@ -715,12 +798,16 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       })
   }, [filteredPayments])
 
-  // Sorted newest-first — capped only when unfiltered (all-time) to keep the
-  // page light; once a date range narrows things down, show everything in it.
+  // Sorted newest-first — capped only when unfiltered (all-time, no search) to
+  // keep the page light; once a date range or search narrows things down,
+  // show everything that matches.
   const recentPayments = useMemo(() => {
-    const sorted = [...filteredPayments].sort((a, b) => new Date(b.date) - new Date(a.date))
-    return (dateFrom || dateTo) ? sorted : sorted.slice(0, 10)
-  }, [filteredPayments, dateFrom, dateTo])
+    let arr = filteredPayments
+    const q = paymentSearch.trim().toLowerCase()
+    if (q) arr = arr.filter(p => p.name?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q) || p.type?.toLowerCase().includes(q))
+    const sorted = [...arr].sort((a, b) => new Date(b.date) - new Date(a.date))
+    return (dateFrom || dateTo || q) ? sorted : sorted.slice(0, 10)
+  }, [filteredPayments, dateFrom, dateTo, paymentSearch])
 
   // Chronological order (oldest→newest) for the trend chart — `byMonth` above
   // is newest-first because that reads better as a table.
@@ -746,6 +833,16 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
     }
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue)
   }, [filteredPayments])
+
+  // Search + sort applied on top of topMembers for the table below — kept
+  // separate from topMembers itself so the "show more" cap and modal
+  // drill-downs still see the full, revenue-ordered list.
+  const visibleTopMembers = useMemo(() => {
+    let arr = topMembers
+    const q = memberSearch.trim().toLowerCase()
+    if (q) arr = arr.filter(m => m.name?.toLowerCase().includes(q) || m.email?.toLowerCase().includes(q))
+    return sortBy(arr, memberSort)
+  }, [topMembers, memberSearch, memberSort])
 
   // On-page revenue splits (ex-tax) — the same member/method breakdowns the
   // drill-down modal shows, surfaced at the top level for the whole range so
@@ -784,30 +881,44 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   // independent of whatever historical range is selected above.
   const pendingTotal = pendingPayments.reduce((s, p) => s + p.amount, 0)
 
-  const routesRevenue = byType.find(t => t.key === 'membership_routes')?.revenue ?? 0
-  const innerCircleRevenue = byType.find(t => t.key === 'membership_inner_circle')?.revenue ?? 0
-  const roadTripRevenue = byType.filter(t => t.key?.startsWith('road_trip')).reduce((sum, t) => sum + (t.revenue ?? 0), 0)
-  const eventRevenue = byType.find(t => t.key === 'event_registration')?.revenue ?? 0
+  const routesTypes = byType.filter(t => t.key === 'membership_routes')
+  const innerCircleTypes = byType.filter(t => t.key === 'membership_inner_circle')
+  const roadTripTypes = byType.filter(t => t.key?.startsWith('road_trip'))
+  const eventTypes = byType.filter(t => t.key === 'event_registration')
+  const routesRevenue = routesTypes.reduce((s, t) => s + (t.revenue ?? 0), 0)
+  const innerCircleRevenue = innerCircleTypes.reduce((s, t) => s + (t.revenue ?? 0), 0)
+  const roadTripRevenue = roadTripTypes.reduce((sum, t) => sum + (t.revenue ?? 0), 0)
+  const eventRevenue = eventTypes.reduce((s, t) => s + (t.revenue ?? 0), 0)
+
+  // Opens the full drill-down modal scoped to one or more payment-type keys —
+  // used by the "by type" stat tiles below so they're not just numbers, they
+  // jump straight to the same modal a row in "By Payment Type" would open.
+  const openTypeDetail = (title, keys) => setDetail({
+    title, filenameBase: `revenue-${keys[0] || 'type'}`,
+    payments: filteredPayments.filter(p => keys.includes(p.typeKey || 'unknown')),
+  })
+  const openAllDetail = () => setDetail({ title: 'All Revenue', filenameBase: 'revenue-all', payments: filteredPayments })
+  const scrollToPending = () => pendingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
   const stats = [
     // "Total Revenue" is the true ex-tax figure — GST/QST collected on the
     // government's behalf is backed out (see exTaxOf()), not counted as if it
     // were earned. "Collected" below is the old tax-inclusive number, kept
     // only for reconciling against what Stripe/the bank actually shows.
-    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: revenueDelta ? 'ex-tax · vs previous period' : 'ex-tax · refunds excluded', delta: revenueDelta, info: 'The real amount you earned: the pre-tax subtotal of every completed payment, with refunds removed. GST/QST collected for the government is not counted here.' },
-    { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false },
+    { label: 'Total Revenue', value: fmt(totalRevenue), color: '#3B6B2F', big: true, sub: revenueDelta ? 'ex-tax · vs previous period' : 'ex-tax · refunds excluded', delta: revenueDelta, info: 'The real amount you earned: the pre-tax subtotal of every completed payment, with refunds removed. GST/QST collected for the government is not counted here.', onClick: totalPaid ? openAllDetail : undefined },
+    { label: 'Total Transactions', value: totalPaid, color: '#1a1a1a', big: false, info: 'How many completed, non-refunded-in-full payments fall in the selected range and filters — one per successful charge.', onClick: totalPaid ? openAllDetail : undefined },
     { label: 'Avg. Payment', value: fmt(totalPaid ? totalRevenue / totalPaid : 0), color: '#1a1a1a', big: false, sub: 'ex-tax per transaction' },
     { label: 'Collected (incl. tax)', value: fmt(totalCollected), color: '#1a1a1a', big: false, sub: 'before Stripe fees', info: 'Everything that actually hit your Stripe balance, taxes included, before Stripe fees. Use it to reconcile against your bank — it is not your earnings.' },
     ...(totalTaxCollected > 0 ? [{ label: 'Tax Collected', value: fmt(totalTaxCollected), color: '#1a1a1a', big: false, sub: 'GST + QST, owed to gov’t', info: 'GST + QST charged on top of your prices. This is owed to Revenu Québec / the CRA — not money you keep.' }] : []),
     ...(feePayments.length ? [
-      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: '2.9% + $0.30/txn', info: 'Stripe’s standard card fee — 2.9% of each charge plus $0.30 per transaction — applied to every card payment. E-transfers have no fee.' },
+      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: '2.9% + $0.30/txn', info: 'Stripe’s standard card fee — 2.9% of each charge plus $0.30 per transaction — applied to every card payment. E-transfers have no fee.', onClick: () => setDetail({ title: 'Stripe Processing Fees', filenameBase: 'stripe-fees', payments: feePayments }) },
       { label: 'Net After Fees', value: fmt(netAfterFees), color: '#3B6B2F', big: false, sub: 'ex-tax, what you actually keep', info: 'Your true take-home for the range: ex-tax revenue minus Stripe fees.' },
     ] : []),
-    { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
-    { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false },
-    { label: 'Route Revenue', value: fmt(roadTripRevenue), color: '#1a1a1a', big: false },
-    { label: 'Event Revenue', value: fmt(eventRevenue), color: '#1a1a1a', big: false },
-    ...(pendingPayments.length ? [{ label: 'Pending Holds', value: fmt(pendingTotal), color: '#8A6535', big: false }] : []),
+    { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false, info: 'Ex-tax revenue from Members-tier route payments specifically (payment type "membership_routes").', onClick: routesRevenue ? () => openTypeDetail('Routes Member Revenue', ['membership_routes']) : undefined },
+    { label: 'Inner Circle Revenue', value: fmt(innerCircleRevenue), color: '#1a1a1a', big: false, info: 'Ex-tax revenue from Inner Circle membership tier payments.', onClick: innerCircleRevenue ? () => openTypeDetail('Inner Circle Revenue', ['membership_inner_circle']) : undefined },
+    { label: 'Route Revenue', value: fmt(roadTripRevenue), color: '#1a1a1a', big: false, info: 'Ex-tax revenue from every paid route combined — WTET, Hello to Montebello, Sunday Silhouette, and any future route (any payment type starting with "road_trip").', onClick: roadTripRevenue ? () => openTypeDetail('Route Revenue', roadTripTypes.map(t => t.key)) : undefined },
+    { label: 'Event Revenue', value: fmt(eventRevenue), color: '#1a1a1a', big: false, info: 'Ex-tax revenue from paid meet/event registrations (payment type "event_registration").', onClick: eventRevenue ? () => openTypeDetail('Event Revenue', ['event_registration']) : undefined },
+    ...(pendingPayments.length ? [{ label: 'Pending Holds', value: fmt(pendingTotal), color: '#8A6535', big: false, info: 'Card holds that are authorized but not yet captured — committed but not counted in revenue until captured. Click to jump to the list below.', onClick: scrollToPending }] : []),
   ]
 
   return (
@@ -851,6 +962,30 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
             )
           })}
         </div>
+        {/* Method + member-status filters — apply on top of the date range to
+            every figure, chart and table on the page. */}
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.6rem' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '0.15rem' }}>Method</span>
+          {METHOD_FILTERS.map(f => (
+            <button key={f.key} type="button" onClick={() => setMethodFilter(f.key)}
+              style={{ padding: '0.3rem 0.7rem', minHeight: '28px', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', fontSize: '11px', letterSpacing: '0.02em', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
+                border: methodFilter === f.key ? '0.5px solid #8A6535' : '0.5px solid rgba(0,0,0,0.15)',
+                background: methodFilter === f.key ? '#8A6535' : '#fff', color: methodFilter === f.key ? '#F5F1EC' : '#666' }}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '0.15rem' }}>Member Status</span>
+          {MEMBER_FILTERS.map(f => (
+            <button key={f.key} type="button" onClick={() => setMemberFilter(f.key)}
+              style={{ padding: '0.3rem 0.7rem', minHeight: '28px', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', fontSize: '11px', letterSpacing: '0.02em', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
+                border: memberFilter === f.key ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.15)',
+                background: memberFilter === f.key ? '#3B6B2F' : '#fff', color: memberFilter === f.key ? '#F5F1EC' : '#666' }}>
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {stripeError && (
@@ -862,7 +997,8 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2.5rem' }}>
         {stats.map(s => (
-          <div key={s.label} style={{ ...CARD, padding: '1.25rem 1.5rem' }}>
+          <div key={s.label} onClick={s.onClick} className={s.onClick ? 'rev-type-row' : undefined}
+            style={{ ...CARD, padding: '1.25rem 1.5rem', cursor: s.onClick ? 'pointer' : 'default' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
               <div style={{ fontSize: s.big ? '1.7rem' : '1.5rem', fontWeight: '400', color: s.color, lineHeight: 1.1, fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", letterSpacing: '0.03em', wordBreak: 'break-word' }}>{s.value}</div>
               {s.delta && (
@@ -885,12 +1021,12 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       {(memberSplit.show || methodSplit.show) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           {memberSplit.show && (
-            <ChartCard title="Revenue by Member Status" note="Net in range — after tax & Stripe fees">
+            <ChartCard title="Revenue by Member Status" note="Net in range — after tax & Stripe fees" info="Every payment in the current filters split by whether the buyer was a member, non-member, or unknown at the time. Hover a slice or legend row for exact numbers.">
               <Donut data={memberSplit.data} centerTop={fmt(netAfterFees)} centerBottom="net" />
             </ChartCard>
           )}
           {methodSplit.show && (
-            <ChartCard title="Revenue by Payment Method" note="Card vs e-transfer — net after tax & fees">
+            <ChartCard title="Revenue by Payment Method" note="Card vs e-transfer — net after tax & fees" info="Card payments carry a Stripe fee (2.9% + $0.30); e-transfers don't. Both are shown net of tax and fees here.">
               <Donut data={methodSplit.data} centerTop={fmt(netAfterFees)} centerBottom="net" />
             </ChartCard>
           )}
@@ -901,7 +1037,10 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
         {/* Monthly breakdown */}
         <div style={{ ...CARD }}>
           <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
-            <div style={SECTION_LABEL}>Monthly Breakdown</div>
+            <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              Monthly Breakdown
+              <InfoTip text="Ex-tax revenue grouped by calendar month (Montreal time), newest first. 'vs Prev' compares each month to the one before it — blank for the oldest month or when the prior month earned $0." />
+            </div>
           </div>
           <div style={{ fontSize: '10px', color: '#bbb', padding: '0 1.5rem 0.6rem' }}>Tap a month for a full breakdown</div>
           {monthChartData.length > 1 && (
@@ -970,14 +1109,14 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
-                    <th style={TH}>Type</th>
-                    <th style={{ ...TH, textAlign: 'right' }}>Count</th>
-                    <th style={{ ...TH, textAlign: 'right' }}>Revenue</th>
+                    <SortTH label="Type" sortKey="label" sort={typeSort} onSort={key => setTypeSort(s => nextSort(s, key, 'asc'))} />
+                    <SortTH label="Count" sortKey="count" sort={typeSort} onSort={key => setTypeSort(s => nextSort(s, key))} align="right" />
+                    <SortTH label="Revenue" sortKey="revenue" sort={typeSort} onSort={key => setTypeSort(s => nextSort(s, key))} align="right" />
                     <th style={{ ...TH, width: '20px' }}></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {byType.map(t => (
+                  {sortedByType.map(t => (
                     <tr key={t.key} className="rev-type-row" style={{ cursor: 'pointer' }}
                       onClick={() => setDetail({ title: t.label, filenameBase: `revenue-${t.key}`, payments: filteredPayments.filter(p => (p.typeKey || 'unknown') === t.key) })}>
                       <td style={{ ...TD, fontWeight: '400' }}>{t.label}</td>
@@ -1003,24 +1142,29 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
               Top Members
               <InfoTip text="Everyone ranked by total ex-tax spend in the selected range, across every payment type — not just one route or month. Keyed by email, so a person's payments stay merged even if a name is missing." />
             </div>
-            <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.2rem' }}>Tap a member for their full payment history</div>
+            <div style={{ fontSize: '10px', color: '#bbb', marginTop: '-0.6rem', marginBottom: '0.6rem' }}>Tap a member for their full payment history</div>
+            {topMembers.length > 0 && (
+              <input type="text" placeholder="Search members…" value={memberSearch} onChange={e => setMemberSearch(e.target.value)} style={SEARCH_INPUT} />
+            )}
           </div>
           {topMembers.length === 0 ? (
             <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No data yet.</div>
+          ) : visibleTopMembers.length === 0 ? (
+            <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No members match &ldquo;{memberSearch}&rdquo;.</div>
           ) : (
             <>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={TH}>Member</th>
-                      <th style={{ ...TH, textAlign: 'right' }}>Txns</th>
-                      <th style={{ ...TH, textAlign: 'right' }}>Revenue</th>
+                      <SortTH label="Member" sortKey="name" sort={memberSort} onSort={key => setMemberSort(s => nextSort(s, key, 'asc'))} />
+                      <SortTH label="Txns" sortKey="count" sort={memberSort} onSort={key => setMemberSort(s => nextSort(s, key))} align="right" />
+                      <SortTH label="Revenue" sortKey="revenue" sort={memberSort} onSort={key => setMemberSort(s => nextSort(s, key))} align="right" />
                       <th style={{ ...TH, width: '20px' }}></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(showAllMembers ? topMembers.slice(0, 50) : topMembers.slice(0, 10)).map((m, i) => (
+                    {(showAllMembers ? visibleTopMembers.slice(0, 50) : visibleTopMembers.slice(0, 10)).map((m, i) => (
                       <tr key={m.email} className="rev-type-row" style={{ cursor: 'pointer' }}
                         onClick={() => setDetail({ title: m.name, filenameBase: `revenue-member-${m.email.replace(/[^a-z0-9]+/gi, '-')}`, payments: m.payments })}>
                         <td style={{ ...TD, maxWidth: '220px' }}>
@@ -1045,11 +1189,11 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
                   </tbody>
                 </table>
               </div>
-              {topMembers.length > 10 && (
+              {visibleTopMembers.length > 10 && (
                 <div style={{ padding: '0.75rem 1.5rem 1.1rem' }}>
                   <button type="button" onClick={() => setShowAllMembers(v => !v)}
                     style={{ background: 'none', border: 'none', color: '#8A6535', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: '2px', fontFamily: 'var(--font-inter),sans-serif', padding: 0 }}>
-                    {showAllMembers ? 'Show top 10' : `Show more (${Math.min(topMembers.length, 50)} of ${topMembers.length})`}
+                    {showAllMembers ? 'Show top 10' : `Show more (${Math.min(visibleTopMembers.length, 50)} of ${visibleTopMembers.length})`}
                   </button>
                 </div>
               )}
@@ -1110,7 +1254,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       {/* Pending / authorized holds — money committed but not yet captured.
           Kept visually and numerically separate from realized revenue above. */}
       {pendingPayments.length > 0 && (
-        <div style={{ ...CARD, marginBottom: '2rem' }}>
+        <div ref={pendingRef} style={{ ...CARD, marginBottom: '2rem' }}>
           <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
             <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
               Pending / Authorized Holds
@@ -1160,10 +1304,20 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
       {/* Recent payments */}
       <div style={{ ...CARD }}>
         <div style={{ padding: '1.25rem 1.5rem 0.75rem' }}>
-          <div style={SECTION_LABEL}>{(dateFrom || dateTo) ? `Payments In Range (${recentPayments.length})` : 'Recent Payments'}</div>
+          <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            {(dateFrom || dateTo || paymentSearch.trim()) ? `Payments In Range (${recentPayments.length})` : 'Recent Payments'}
+            <InfoTip text="Every completed payment matching the current filters, newest first. Unfiltered and unsearched, this list is capped to the last 10 — pick a date range or search to see everything. Tap a row for the full breakdown." />
+          </div>
+          {filteredPayments.length > 0 && (
+            <div style={{ marginTop: '0.6rem' }}>
+              <input type="text" placeholder="Search name, email, type…" value={paymentSearch} onChange={e => setPaymentSearch(e.target.value)} style={SEARCH_INPUT} />
+            </div>
+          )}
         </div>
         {recentPayments.length === 0 ? (
-          <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>No payments yet.</div>
+          <div style={{ padding: '1rem 1.5rem 1.5rem', fontSize: '12px', color: '#ccc' }}>
+            {paymentSearch.trim() ? `No payments match "${paymentSearch}".` : 'No payments yet.'}
+          </div>
         ) : isMobile ? (
           /* Cards on mobile — a five-column table only side-scrolls at 390px */
           <div style={{ padding: '0 1rem 1rem' }}>
