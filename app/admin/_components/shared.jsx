@@ -149,6 +149,11 @@ export function KebabMenu({ items }) {
 // <FilterMenu value={filter} onChange={setFilter} options={[{ id: 'all', label: 'All' }, ...]} />
 export function FilterMenu({ options, value, onChange, compact, placeholder = 'Filter' }) {
   const [open, setOpen] = useState(false)
+  // Left-anchored by default, but a button sitting near the right edge of a
+  // narrow screen (common once several of these sit in one wrapped row) would
+  // push a left-anchored panel off-screen — flip to right-anchored instead
+  // when there isn't room, checked fresh each time the menu opens.
+  const [align, setAlign] = useState('left')
   const rootRef = useRef(null)
   useEffect(() => {
     if (!open) return
@@ -160,15 +165,22 @@ export function FilterMenu({ options, value, onChange, compact, placeholder = 'F
   }, [open])
   const current = options.find(o => o.id === value)
   const isFiltered = value !== (options[0]?.id ?? 'all')
+  function toggle() {
+    if (!open && rootRef.current) {
+      const rect = rootRef.current.getBoundingClientRect()
+      setAlign(rect.left + 210 > window.innerWidth - 8 ? 'right' : 'left')
+    }
+    setOpen(v => !v)
+  }
   return (
     <div ref={rootRef} style={{ position: 'relative' }}>
-      <button type="button" onClick={() => setOpen(v => !v)}
+      <button type="button" onClick={toggle}
         style={{ fontSize: compact ? '9px' : '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: compact ? '3px 8px' : '5px 11px', minHeight: compact ? '24px' : '30px', borderRadius: '99px', border: `0.5px solid ${isFiltered ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: isFiltered ? '#0F1E14' : 'transparent', color: isFiltered ? '#F5F1EC' : '#666', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', display: 'inline-flex', alignItems: 'center', gap: '5px', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
         {current?.label || placeholder}
         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transition: 'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9" /></svg>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, minWidth: '210px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', [align]: 0, zIndex: 30, minWidth: '210px', maxWidth: 'calc(100vw - 1.5rem)', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
           {options.map((o, i) => (
             <button key={o.id} type="button" onClick={() => { onChange(o.id); setOpen(false) }}
               style={{ display: 'block', width: '100%', textAlign: 'left', minHeight: '40px', padding: '0.6rem 0.9rem', background: value === o.id ? 'rgba(15,30,20,0.05)' : 'none', border: 'none', borderBottom: i < options.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', fontSize: '12px', color: value === o.id ? '#0F1E14' : '#444', fontWeight: value === o.id ? '600' : '400', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
@@ -192,6 +204,9 @@ export function FilterMenu({ options, value, onChange, compact, placeholder = 'F
 // assumes two independent setters are safe to call back to back.
 export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, onToChange, onClear, maxDate }) {
   const [open, setOpen] = useState(false)
+  // Same right-edge flip as FilterMenu — this popover is wider (240px) and
+  // sits in the same filter rows, so it's at least as likely to overflow.
+  const [align, setAlign] = useState('left')
   const rootRef = useRef(null)
   useEffect(() => {
     if (!open) return
@@ -203,15 +218,22 @@ export function DateRangeMenu({ label = 'Date range', from, to, onFromChange, on
   }, [open])
   const active = !!(from || to)
   const rangeInp = { padding: '0.5rem 0.55rem', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', fontSize: '12px', fontFamily: 'var(--font-inter),sans-serif', width: '116px' }
+  function toggle() {
+    if (!open && rootRef.current) {
+      const rect = rootRef.current.getBoundingClientRect()
+      setAlign(rect.left + 240 > window.innerWidth - 8 ? 'right' : 'left')
+    }
+    setOpen(v => !v)
+  }
   return (
     <div ref={rootRef} style={{ position: 'relative', flexShrink: 0 }}>
-      <button type="button" onClick={() => setOpen(v => !v)} aria-label={label}
+      <button type="button" onClick={toggle} aria-label={label}
         title={active ? `${label}: ${from || '…'} – ${to || '…'}` : label}
         style={{ width: '34px', height: '34px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '99px', border: `0.5px solid ${active ? 'rgba(15,30,20,0.5)' : 'rgba(0,0,0,0.15)'}`, background: active ? '#0F1E14' : 'transparent', color: active ? '#F5F1EC' : '#666', cursor: 'pointer', padding: 0, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
       </button>
       {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, zIndex: 30, background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '240px' }}>
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', [align]: 0, zIndex: 30, background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '10px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem', minWidth: '240px', maxWidth: 'calc(100vw - 1.5rem)' }}>
           <div style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#999', fontFamily: 'var(--font-inter),sans-serif' }}>{label}</div>
           <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
             <input type="date" value={from} max={to || maxDate || undefined} onChange={e => onFromChange(e.target.value)} aria-label={`${label} from`} style={rangeInp} />
