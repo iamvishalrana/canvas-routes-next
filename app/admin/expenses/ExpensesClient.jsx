@@ -226,6 +226,53 @@ async function deleteReceiptByUrl(url) {
   }).catch(() => {})
 }
 
+// Compares a scan's raw fields against whatever's already on a form — either
+// the Add-form draft (a possible "second document" like invoice + card slip)
+// or an existing SAVED expense being edited (scan-and-attach after the fact).
+// Produces the same "differs from what's on file" / "this looks like a tip"
+// signals the Add flow's notice and merge logic build on. Pure (no React
+// state) so both flows share one implementation instead of two copies of
+// this same delicate reconciliation.
+function reconcileScan({ data, total, isSubsequent, curVendor, curDate, curPaid, curTip, curPaymentMethod }) {
+  const sTotal = total != null ? round2(total) : null
+  const scanTip = data.tip != null ? round2(data.tip) : null
+
+  // Non-total diffs first — if the vendor/date/tender don't match, this is
+  // probably a genuinely different purchase, not a tip-only difference, so
+  // the higher-total-means-tip fallback below must not fire.
+  const otherDiffs = []
+  if (isSubsequent) {
+    if (data.vendor && curVendor && !vendorsMatch(data.vendor, curVendor)) otherDiffs.push(`vendor “${data.vendor}” vs “${curVendor}”`)
+    if (data.date && curDate && data.date !== curDate) otherDiffs.push(`date ${data.date} vs ${curDate}`)
+    if (data.payment_method && curPaymentMethod && data.payment_method !== curPaymentMethod) otherDiffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[curPaymentMethod] || curPaymentMethod}`)
+  }
+
+  // Restaurant flow: the first document is the itemized bill (subtotal +
+  // tax); a later payment receipt often adds a TIP on top. See two cases in
+  // the inline comment this was extracted from (runScan, Add-form flow).
+  let tipAdded = null
+  let tipGuessed = false
+  if (isSubsequent && curTip === 0 && sTotal != null) {
+    if (scanTip != null && scanTip > 0) {
+      tipAdded = scanTip
+    } else if (!otherDiffs.length && curPaid > 0 && sTotal > curPaid) {
+      tipAdded = round2(sTotal - curPaid)
+      tipGuessed = true
+    }
+  }
+
+  const diffs = [...otherDiffs]
+  if (isSubsequent && tipAdded == null) {
+    // Compare amounts NET of tip on both sides, so a tip-only difference
+    // doesn't read as a mismatch.
+    const scanPreTip = (sTotal != null ? sTotal : 0) - (scanTip || 0)
+    const curPreTip = curPaid - curTip
+    if (sTotal != null && curPaid > 0 && Math.abs(scanPreTip - curPreTip) > 0.01) diffs.push(`total ${fmt(scanPreTip)} vs ${fmt(curPreTip)}`)
+  }
+
+  return { sTotal, scanTip, otherDiffs, diffs, tipAdded, tipGuessed }
+}
+
 export default function ExpensesClient() {
   const [expenses, setExpenses]         = useState([])
   const [loading, setLoading]           = useState(true)
@@ -306,6 +353,12 @@ export default function ExpensesClient() {
   const [dragActive, setDragActive] = useState(false)
   const runScanRef = useRef(null) // always points at the latest runScan for the DnD listeners
   const editFileRef = useRef(null)
+  const editScanRef = useRef(null) // OCR-scan (not blind-attach) input for the edit panel
+  const [editScanning, setEditScanning]   = useState(false)
+  const [editScanNotice, setEditScanNotice] = useState(null) // { type: 'ok'|'warn', text } — mirrors scanNotice, scoped to the edit panel
+  // Separate from the Add-form's lowConfidenceFields — both panels can be
+  // open at once, and a scan in one must never highlight fields in the other.
+  const [editLowConfidenceFields, setEditLowConfidenceFields] = useState(new Set())
   // Tracks an uploaded-but-not-yet-saved receipt so it can be deleted from
   // Storage if it's replaced, removed, or the form/edit is abandoned before
   // saving — see deleteReceiptByUrl above.
@@ -684,6 +737,8 @@ export default function ExpensesClient() {
       original_amount: expense.original_amount != null ? String(expense.original_amount) : '',
       notes:          expense.notes        || '',
     })
+    setEditScanNotice(null)
+    setEditLowConfidenceFields(new Set())
   }
 
   function cancelEdit() {
@@ -693,6 +748,8 @@ export default function ExpensesClient() {
     editAttachments.filter(a => a.isNew).forEach(a => deleteReceiptByUrl(a.url))
     setEditAttachments([])
     setEditingId(null); setEditErr(null)
+    setEditScanNotice(null)
+    setEditLowConfidenceFields(new Set())
   }
 
   // Remove one attachment from the edit panel. An unsaved (just-uploaded) one is
@@ -782,6 +839,8 @@ export default function ExpensesClient() {
       setEditAttachments([])
       setExpenses(prev => prev.map(e => e.id === id ? data : e))
       setEditingId(null)
+      setEditScanNotice(null)
+      setEditLowConfidenceFields(new Set())
     } catch { setEditErr('Network error.') }
     finally { setEditSaving(false) }
   }
@@ -831,6 +890,104 @@ export default function ExpensesClient() {
     } finally { setEditUploading(false) }
   }
 
+  // Scan-and-attach for an ALREADY-SAVED expense — e.g. a card slip that
+  // arrives days after the itemized bill was logged. Unlike handleEditFileChange
+  // above (blind attach, no OCR), this reads the receipt and reconciles it
+  // against what's already on editForm via the same reconcileScan() the
+  // Add-form's runScan uses, then fills blanks (never clobbers a value the
+  // admin already has). Always "isSubsequent" — there's no "first scan" case
+  // here, the expense already exists.
+  async function handleEditScan(e) {
+    const file = e.target.files?.[0]
+    if (editScanRef.current) editScanRef.current.value = ''
+    if (!file) return
+    setEditScanning(true); setEditErr(null); setEditScanNotice(null)
+
+    const uploadPath = slugify(editForm.event_name || 'General') + (editForm.expense_date ? `/${editForm.expense_date}` : '')
+    const uploadPromise = uploadReceipt(file, uploadPath).then(url => ({ ok: true, url }), () => ({ ok: false }))
+    const settleUpload = async () => {
+      const up = await uploadPromise
+      if (up.ok) setEditAttachments(prev => [...prev, { url: up.url, isNew: true }])
+      else setEditScanNotice(prev => prev ? { ...prev, text: `${prev.text} (Also: the receipt image itself couldn't be attached — use "Attach" instead.)` } : { type: 'warn', text: 'The receipt image couldn’t be attached — use "Attach" to add it manually.' })
+      return up.ok
+    }
+
+    try {
+      let scanFile = file
+      if (file.type === 'application/pdf') {
+        if (file.size > 4 * 1024 * 1024) {
+          setEditErr('PDF is too large to scan (max 4 MB) — attaching it below for you to fill in manually.')
+          await settleUpload()
+          return
+        }
+      } else {
+        scanFile = await compressImageClient(await convertHeicIfNeeded(file), { maxEdge: 1400, quality: 0.72 })
+      }
+      const sfd = new FormData()
+      sfd.append('file', scanFile)
+      const res = await fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setEditErr(data.error || (res.status === 413 ? 'That file is too large to scan.' : 'Scan failed.'))
+        await settleUpload()
+        return
+      }
+
+      const total = data.total != null ? data.total
+        : (data.amount != null ? round2((data.amount || 0) + (data.gst || 0) + (data.qst || 0) + (data.tip || 0)) : null)
+      const isForeign = !!(data.currency && data.currency !== 'CAD')
+      const curTip = parseFloat(editForm.tip) || 0
+      // editForm.amount is the SUBTOTAL (pre-tax) — unlike the Add-form's
+      // `paid`, which is the grand total. Reconstruct the grand total here so
+      // it compares against the scan's total on the same basis.
+      const curPaid = round2((parseFloat(editForm.amount) || 0) + (parseFloat(editForm.gst_amount) || 0) + (parseFloat(editForm.qst_amount) || 0) + curTip)
+
+      const { diffs, tipAdded, tipGuessed } = reconcileScan({
+        data, total, isSubsequent: true,
+        curVendor: editForm.vendor, curDate: editForm.expense_date, curPaid, curTip, curPaymentMethod: editForm.payment_method,
+      })
+
+      setEditScanNotice(
+        isForeign
+          ? { type: 'ok', text: `Scanned a ${data.currency} receipt — original total ${fmt(total)} ${data.currency} recorded. Enter the CAD amount your card was charged before saving.` }
+          : diffs.length
+            ? { type: 'warn', text: `This scan differs from what's already saved — ${diffs.join(' · ')}. Existing fields were kept; adjust manually if this scan is the correct source.` }
+            : tipAdded != null
+              ? { type: 'ok', text: tipGuessed
+                  ? `This receipt's total is ${fmt(tipAdded)} higher than what's saved — treating the difference as a tip (couldn't find a separate tip line). Double-check before saving.`
+                  : `This receipt adds a ${fmt(tipAdded)} tip. ✓` }
+              : data.mismatch
+                ? { type: 'warn', text: `Scanned, but the numbers don't fully add up${data.residual != null ? ` (off by ${fmt(Math.abs(data.residual))})` : ''} — double-check before saving.` }
+                : { type: 'ok', text: `Scanned & attached ✓${data.vendor ? ` ${data.vendor}` : ''}${total != null ? ` — ${fmt(total)}` : ''}. Review before saving.` }
+      )
+
+      const vHist = vendorHistoryMap.get(normalizeVendorName(editForm.vendor || data.vendor))
+      setEditForm(p => ({
+        ...p,
+        vendor:          p.vendor         || data.vendor   || '',
+        expense_date:    p.expense_date   || data.date     || '',
+        category:        p.category       || data.category || vHist?.category || '',
+        amount:          isForeign ? p.amount : (p.amount || (data.amount != null ? String(data.amount) : '')),
+        gst_amount:      isForeign ? p.gst_amount : (p.gst_amount || (data.gst != null ? String(data.gst) : '')),
+        qst_amount:      isForeign ? p.qst_amount : (p.qst_amount || (data.qst != null ? String(data.qst) : '')),
+        tip:             isForeign ? p.tip : (tipAdded != null ? String(tipAdded) : (p.tip || (data.tip != null ? String(data.tip) : p.tip))),
+        payment_method:  p.payment_method || data.payment_method || vHist?.payment_method || '',
+        vendor_tax_id:   p.vendor_tax_id  || data.vendor_tax_id || '',
+        currency:        (p.currency && p.currency !== 'CAD') ? p.currency : (data.currency || p.currency || 'CAD'),
+        original_amount: isForeign ? (p.original_amount || (total != null ? String(total) : '')) : p.original_amount,
+        province:        data.province || p.province,
+        notes:           p.notes || data.notes || '',
+      }))
+      applyEditLowConfidence(data.low_confidence, { union: true })
+      await settleUpload()
+    } catch {
+      setEditErr('Scan failed.')
+      await settleUpload()
+    } finally {
+      setEditScanning(false)
+    }
+  }
+
   // Scan a receipt photo: Claude vision extracts the fields, we prefill the empty
   // ones (never clobber what the admin already typed), then attach the same file.
   async function handleScan(e) {
@@ -839,19 +996,26 @@ export default function ExpensesClient() {
 
   // Fields the scan wasn't sure about stop being flagged the moment the admin
   // actually looks at and edits them — called from that field's own onChange.
-  function clearLowConfidence(key) {
-    setLowConfidenceFields(prev => {
+  // Generic over which set (Add-form vs. edit-panel — kept as two separate
+  // pieces of state so a scan in one never highlights fields in the other).
+  function clearLowConfidenceIn(setter, key) {
+    setter(prev => {
       if (!prev.has(key)) return prev
       const next = new Set(prev); next.delete(key); return next
     })
   }
   // Applies the low_confidence keys from a scan response to the tracked set.
-  // `union` merges into what's already flagged (second document / added page,
-  // which build on existing data); a fresh first scan replaces it outright.
-  function applyLowConfidence(rawKeys, { union = false } = {}) {
+  // `union` merges into what's already flagged (second document / added page/
+  // edit-panel scan, which all build on existing data); a fresh first scan
+  // replaces it outright.
+  function applyLowConfidenceIn(setter, rawKeys, { union = false } = {}) {
     const mapped = new Set((rawKeys || []).map(k => LOW_CONFIDENCE_FIELD_MAP[k]).filter(Boolean))
-    setLowConfidenceFields(prev => union ? new Set([...prev, ...mapped]) : mapped)
+    setter(prev => union ? new Set([...prev, ...mapped]) : mapped)
   }
+  const clearLowConfidence = key => clearLowConfidenceIn(setLowConfidenceFields, key)
+  const applyLowConfidence = (rawKeys, opts) => applyLowConfidenceIn(setLowConfidenceFields, rawKeys, opts)
+  const clearEditLowConfidence = key => clearLowConfidenceIn(setEditLowConfidenceFields, key)
+  const applyEditLowConfidence = (rawKeys, opts) => applyLowConfidenceIn(setEditLowConfidenceFields, rawKeys, opts)
 
   // Core scan pipeline — shared by the Scan button (file input) and desktop
   // drag-and-drop (drop a receipt anywhere on the page). Opens the add form so
@@ -1033,46 +1197,10 @@ export default function ExpensesClient() {
       const curTip = parseFloat(form.tip) || 0
       const curPaid = parseFloat(form.paid) || 0
 
-      // Non-total diffs first — if the vendor/date/tender don't match, this is
-      // probably a genuinely different purchase, not a tip-only difference, so
-      // the higher-total-means-tip fallback below must not fire.
-      const otherDiffs = []
-      if (isSubsequent) {
-        if (data.vendor && form.vendor && !vendorsMatch(data.vendor, form.vendor)) otherDiffs.push(`vendor “${data.vendor}” vs “${form.vendor}”`)
-        if (data.date && form.expense_date && data.date !== form.expense_date) otherDiffs.push(`date ${data.date} vs ${form.expense_date}`)
-        if (data.payment_method && form.payment_method && data.payment_method !== form.payment_method) otherDiffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[form.payment_method] || form.payment_method}`)
-      }
-
-      // Restaurant flow: the first document is the itemized bill (subtotal +
-      // tax); the later payment receipt often adds a TIP on top. Two cases:
-      //  1. The model read an explicit tip line ("Pourboire"/"Tip"/"Service") —
-      //     use that value directly.
-      //  2. The payment slip only prints a single total with no line items to
-      //     key off (common on card terminal slips), so the model can't tell
-      //     tip from anything else — in that case, if this scan's total is
-      //     simply higher than what's already on the form and nothing else
-      //     about it looks like a different purchase, treat the extra as a
-      //     tip instead of hard-erroring as a mismatch. A tip guess the admin
-      //     can correct beats blocking every restaurant receipt with a card tip.
-      let tipAdded = null
-      let tipGuessed = false
-      if (isSubsequent && curTip === 0 && sTotal != null) {
-        if (scanTip != null && scanTip > 0) {
-          tipAdded = scanTip
-        } else if (!otherDiffs.length && curPaid > 0 && sTotal > curPaid) {
-          tipAdded = round2(sTotal - curPaid)
-          tipGuessed = true
-        }
-      }
-
-      const diffs = [...otherDiffs]
-      if (isSubsequent && tipAdded == null) {
-        // Compare amounts NET of tip on both sides, so a tip-only difference
-        // doesn't read as a mismatch.
-        const scanPreTip = (sTotal != null ? sTotal : 0) - (scanTip || 0)
-        const curPreTip = curPaid - curTip
-        if (sTotal != null && curPaid > 0 && Math.abs(scanPreTip - curPreTip) > 0.01) diffs.push(`total ${fmt(scanPreTip)} vs ${fmt(curPreTip)}`)
-      }
+      const { otherDiffs, diffs, tipAdded, tipGuessed } = reconcileScan({
+        data, total, isSubsequent,
+        curVendor: form.vendor, curDate: form.expense_date, curPaid, curTip, curPaymentMethod: form.payment_method,
+      })
 
       // Foreign-currency receipt (US car parts, etc.): we DON'T drop the foreign
       // amounts into the CAD fields — the CAD figure is whatever the card was
@@ -2461,11 +2589,19 @@ export default function ExpensesClient() {
                           {/* Edit panel — full width, not inside the row scroller */}
                           {isEditing && (
                             <div className="exp-edit-panel" style={{ padding: '1rem 1.1rem 1.1rem', borderTop: '0.5px solid rgba(197,168,130,0.2)', background: 'rgba(197,168,130,0.04)', borderLeft: '2px solid #c5a882' }}>
+                              {editScanNotice && (
+                                <div style={{ fontSize: '12px', lineHeight: 1.55, padding: '0.65rem 0.85rem', marginBottom: '0.75rem', borderRadius: '8px', animation: 'expFadeUp 0.3s ease both',
+                                  background: editScanNotice.type === 'warn' ? 'rgba(147,51,62,0.06)' : 'rgba(59,107,47,0.07)',
+                                  border: editScanNotice.type === 'warn' ? '0.5px solid rgba(147,51,62,0.3)' : '0.5px solid rgba(59,107,47,0.25)',
+                                  color: editScanNotice.type === 'warn' ? '#93333E' : '#3B6B2F' }}>
+                                  {editScanNotice.text}
+                                </div>
+                              )}
                               <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
                                 <div>
                                   <L>Date</L>
-                                  <input type="date" style={inp} value={editForm.expense_date} max={today} required
-                                    onChange={e => setEditForm(p => ({ ...p, expense_date: e.target.value }))} />
+                                  <input type="date" style={withLowConfidence(inp, 'expense_date', editLowConfidenceFields)} value={editForm.expense_date} max={today} required
+                                    onChange={e => { clearEditLowConfidence('expense_date'); setEditForm(p => ({ ...p, expense_date: e.target.value })) }} />
                                 </div>
                                 <div>
                                   <L>Event / Label</L>
@@ -2474,13 +2610,13 @@ export default function ExpensesClient() {
                                 </div>
                                 <div>
                                   <L>Vendor</L>
-                                  <input style={inp} value={editForm.vendor} placeholder="—" list="exp-vendor-names"
-                                    onChange={e => setEditForm(p => ({ ...p, vendor: e.target.value }))} maxLength={100} />
+                                  <input style={withLowConfidence(inp, 'vendor', editLowConfidenceFields)} value={editForm.vendor} placeholder="—" list="exp-vendor-names"
+                                    onChange={e => { clearEditLowConfidence('vendor'); setEditForm(p => ({ ...p, vendor: e.target.value })) }} maxLength={100} />
                                 </div>
                                 <div>
                                   <L>Category</L>
                                   <div style={{ position: 'relative' }}>
-                                    <select style={sel} value={editForm.category} onChange={e => setEditForm(p => ({ ...p, category: e.target.value }))}>
+                                    <select style={withLowConfidence(sel, 'category', editLowConfidenceFields)} value={editForm.category} onChange={e => { clearEditLowConfidence('category'); setEditForm(p => ({ ...p, category: e.target.value })) }}>
                                       <option value="">—</option>
                                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
@@ -2490,7 +2626,7 @@ export default function ExpensesClient() {
                                 <div>
                                   <L>Payment</L>
                                   <div style={{ position: 'relative' }}>
-                                    <select style={sel} value={editForm.payment_method} onChange={e => setEditForm(p => ({ ...p, payment_method: e.target.value }))}>
+                                    <select style={withLowConfidence(sel, 'payment_method', editLowConfidenceFields)} value={editForm.payment_method} onChange={e => { clearEditLowConfidence('payment_method'); setEditForm(p => ({ ...p, payment_method: e.target.value })) }}>
                                       <option value="">—</option>
                                       {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
                                     </select>
@@ -2500,7 +2636,7 @@ export default function ExpensesClient() {
                                 <div>
                                   <L>Province</L>
                                   <div style={{ position: 'relative' }}>
-                                    <select style={sel} value={editForm.province} onChange={e => setEditForm(p => ({ ...p, province: e.target.value }))}>
+                                    <select style={withLowConfidence(sel, 'province', editLowConfidenceFields)} value={editForm.province} onChange={e => { clearEditLowConfidence('province'); setEditForm(p => ({ ...p, province: e.target.value })) }}>
                                       {PROVINCES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                     </select>
                                     <SelectChevron />
@@ -2508,28 +2644,28 @@ export default function ExpensesClient() {
                                 </div>
                                 <div>
                                   <L>Subtotal ($)</L>
-                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.amount} placeholder="0.00"
-                                    onChange={e => setEditForm(p => ({ ...p, amount: e.target.value }))} />
+                                  <input style={withLowConfidence(inp, 'paid', editLowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.amount} placeholder="0.00"
+                                    onChange={e => { clearEditLowConfidence('paid'); setEditForm(p => ({ ...p, amount: e.target.value })) }} />
                                 </div>
                                 <div>
                                   <L>GST ($)</L>
-                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.gst_amount} placeholder="0.00"
-                                    onChange={e => setEditForm(p => ({ ...p, gst_amount: e.target.value }))} />
+                                  <input style={withLowConfidence(inp, 'gst_amount', editLowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.gst_amount} placeholder="0.00"
+                                    onChange={e => { clearEditLowConfidence('gst_amount'); setEditForm(p => ({ ...p, gst_amount: e.target.value })) }} />
                                 </div>
                                 <div>
                                   <L>{provLabelOf(editForm.province)} ($)</L>
-                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.qst_amount} placeholder="0.00"
-                                    onChange={e => setEditForm(p => ({ ...p, qst_amount: e.target.value }))} />
+                                  <input style={withLowConfidence(inp, 'qst_amount', editLowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.qst_amount} placeholder="0.00"
+                                    onChange={e => { clearEditLowConfidence('qst_amount'); setEditForm(p => ({ ...p, qst_amount: e.target.value })) }} />
                                 </div>
                                 <div>
                                   <L>Tip ($)</L>
-                                  <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.tip || ''} placeholder="0.00"
-                                    onChange={e => setEditForm(p => ({ ...p, tip: e.target.value }))} />
+                                  <input style={withLowConfidence(inp, 'tip', editLowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={editForm.tip || ''} placeholder="0.00"
+                                    onChange={e => { clearEditLowConfidence('tip'); setEditForm(p => ({ ...p, tip: e.target.value })) }} />
                                 </div>
                                 <div>
                                   <L>Currency</L>
                                   <div style={{ position: 'relative' }}>
-                                    <select style={sel} value={editForm.currency || 'CAD'} onChange={e => setEditForm(p => ({ ...p, currency: e.target.value }))}>
+                                    <select style={withLowConfidence(sel, 'currency', editLowConfidenceFields)} value={editForm.currency || 'CAD'} onChange={e => { clearEditLowConfidence('currency'); setEditForm(p => ({ ...p, currency: e.target.value })) }}>
                                       {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
                                     </select>
                                     <SelectChevron />
@@ -2544,14 +2680,14 @@ export default function ExpensesClient() {
                                 )}
                                 <div>
                                   <L>Vendor tax #</L>
-                                  <input style={inp} value={editForm.vendor_tax_id || ''} placeholder="—" maxLength={40}
-                                    onChange={e => setEditForm(p => ({ ...p, vendor_tax_id: e.target.value }))} />
+                                  <input style={withLowConfidence(inp, 'vendor_tax_id', editLowConfidenceFields)} value={editForm.vendor_tax_id || ''} placeholder="—" maxLength={40}
+                                    onChange={e => { clearEditLowConfidence('vendor_tax_id'); setEditForm(p => ({ ...p, vendor_tax_id: e.target.value })) }} />
                                 </div>
                               </div>
                               <div style={{ marginBottom: '0.6rem' }}>
                                 <L>Notes</L>
-                                <input style={inp} value={editForm.notes || ''} placeholder="—"
-                                  onChange={e => setEditForm(p => ({ ...p, notes: e.target.value }))} maxLength={1000} />
+                                <input style={withLowConfidence(inp, 'notes', editLowConfidenceFields)} value={editForm.notes || ''} placeholder="—"
+                                  onChange={e => { clearEditLowConfidence('notes'); setEditForm(p => ({ ...p, notes: e.target.value })) }} maxLength={1000} />
                               </div>
                               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <button onClick={() => saveEdit(expense.id)} disabled={editSaving || editUploading} className="exp-tap"
@@ -2562,6 +2698,12 @@ export default function ExpensesClient() {
                                 <button type="button" onClick={applyEditTax}
                                   style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   Auto tax ({editForm.province})
+                                </button>
+                                <input ref={editScanRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf" style={{ display: 'none' }} onChange={handleEditScan} />
+                                <button type="button" onClick={() => editScanRef.current?.click()} disabled={editScanning}
+                                  title="Read a receipt and reconcile it against these fields — for a card slip that arrives after the fact"
+                                  style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: editScanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  {editScanning ? 'Scanning…' : '⎙ Scan'}
                                 </button>
                                 <input ref={editFileRef} type="file" accept="image/*,.pdf" multiple style={{ display: 'none' }} onChange={handleEditFileChange} />
                                 <button type="button" onClick={() => editFileRef.current?.click()} disabled={editUploading}
