@@ -3,6 +3,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { captureMessage } from '../../../../../lib/sentry.js'
 import { attendanceKey } from '../../../../../lib/eventMeta.js'
 import { JERRY_EMAIL } from '../../../../../lib/jerryRegistrant.js'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 export async function PATCH(request, { params }) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -10,15 +11,37 @@ export async function PATCH(request, { params }) {
   if (!id) return Response.json({ error: 'Missing id' }, { status: 400 })
   const body = await request.json()
   const supabase = createAdminClient()
+
+  // Fetched up front (rather than after the update, as before) so we know the
+  // OLD email — needed to validate/dedupe a new one and to find the linked
+  // member + event_registrations rows that must follow an email change.
+  const { data: appBefore, error: fetchErr } = await supabase.from('applications').select('email, registrations').eq('id', id).maybeSingle()
+  if (fetchErr || !appBefore) return Response.json({ error: 'Application not found' }, { status: 404 })
+  const oldEmail = appBefore.email?.toLowerCase().trim()
+
+  // applications.email is UNIQUE NOT NULL — validate shape and uniqueness
+  // before touching the row, so a bad edit fails cleanly instead of a raw DB
+  // constraint error.
+  let newEmail
+  if ('email' in body) {
+    newEmail = body.email?.trim().toLowerCase()
+    if (!newEmail || !isValidEmail(newEmail)) return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
+    if (newEmail !== oldEmail) {
+      const { data: dupe } = await supabase.from('applications').select('id').eq('email', newEmail).neq('id', id).maybeSingle()
+      if (dupe) return Response.json({ error: 'That email is already used by another application.' }, { status: 400 })
+    }
+  }
+
   const ALLOWED = ['name', 'car_year', 'car_make', 'car_model', 'car_paint', 'phone', 'instagram',
                    'dob_month', 'dob_day', 'dob_year', 'source', 'more', 'registrations', 'reregistered_at', 'admin_notes', 'notes', 'seen_at']
   const update = Object.fromEntries(Object.entries(body).filter(([k]) => ALLOWED.includes(k)))
+  if (newEmail && newEmail !== oldEmail) update.email = newEmail
   if (Object.keys(update).length === 0) return Response.json({ error: 'No valid fields to update' }, { status: 400 })
   const { error } = await supabase.from('applications').update(update).eq('id', id)
   if (error) return Response.json({ error: process.env.NODE_ENV === 'development' ? error.message : 'Database error' }, { status: 500 })
 
-  // Sync shared fields to members table
-  const { data: app } = await supabase.from('applications').select('email, registrations').eq('id', id).single()
+  // Rest of this handler keys off the application's (possibly new) email.
+  const app = { email: newEmail || oldEmail, registrations: appBefore.registrations }
 
   // Per-event registrations[].details is a snapshot of car info taken at
   // registration time, and it takes priority over these flat columns
@@ -88,6 +111,24 @@ export async function PATCH(request, { params }) {
       const { error: attErr } = await supabase.from('members').update({ event_attendance: attendance }).eq('id', member.id)
       if (attErr) captureMessage('Application→member attendance sync failed', { error: attErr.message, appId: id, memberId: member.id })
     }
+  }
+
+  // If email changed and this application is linked to a member (found by the
+  // OLD email), the member's login email, members.email, and any
+  // event_registrations rows must follow — those are keyed by email, not by
+  // this application's id, so they'd otherwise silently point at a dead address.
+  if (newEmail && oldEmail && newEmail !== oldEmail) {
+    const { data: mem } = await supabase.from('members').select('id').eq('email', oldEmail).maybeSingle()
+    if (mem) {
+      const { error: authErr } = await supabase.auth.admin.updateUserById(mem.id, { email: newEmail })
+      if (authErr) captureMessage('Application email edit: auth email sync failed', { error: authErr.message, appId: id, memberId: mem.id })
+      else {
+        const { error: memErr } = await supabase.from('members').update({ email: newEmail }).eq('id', mem.id)
+        if (memErr) captureMessage('Application email edit: members.email sync failed', { error: memErr.message, appId: id, memberId: mem.id })
+      }
+    }
+    const { error: regEmailErr } = await supabase.from('event_registrations').update({ email: newEmail }).eq('email', oldEmail)
+    if (regEmailErr) captureMessage('Application email edit: event_registrations sync failed', { error: regEmailErr.message, oldEmail })
   }
 
   return Response.json({ success: true })

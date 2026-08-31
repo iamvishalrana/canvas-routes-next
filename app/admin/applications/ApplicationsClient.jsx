@@ -11,6 +11,7 @@ import { ExportButton } from '../_components/ExportModal'
 import { useConfirm } from '../_components/ConfirmProvider'
 import ActivityTimeline from '../_components/ActivityTimeline'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 // Montreal calendar date (YYYY-MM-DD) an application was submitted, for the
 // applied-date range filter. en-CA already formats as YYYY-MM-DD.
@@ -193,6 +194,7 @@ export default function ApplicationsClient() {
     const { make: aMake, model: aModel } = parseCarMakeModel(a.car_model)
     setEditAppForm({
       name: a.name || '',
+      email: a.email || '',
       car_year: a.car_year || '',
       car_make: aMake,
       car_model: aModel,
@@ -208,6 +210,7 @@ export default function ApplicationsClient() {
   }
 
   async function saveApp(appId) {
+    if (!isValidEmail(editAppForm.email)) { setSaveAppErr('Please enter a valid email address.'); return }
     setSavingApp(true); setSaveAppErr(null)
     const payload = {
       ...editAppForm,
@@ -845,8 +848,9 @@ export default function ApplicationsClient() {
                   {editingApp === a.id ? (
                     /* ── Edit mode ── */
                     <div>
-                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                         <div><L>Name</L><input style={inp} value={editAppForm.name} onChange={e => setEditAppForm(p => ({ ...p, name: e.target.value }))} /></div>
+                        <div><L>Email</L><input style={inp} type="email" value={editAppForm.email} onChange={e => setEditAppForm(p => ({ ...p, email: e.target.value }))} maxLength={254} /></div>
                         <div><L>Car Year</L><input style={inp} value={editAppForm.car_year} onChange={e => setEditAppForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
                         <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={editAppForm.car_make || ''} onChange={e => setEditAppForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
                         <div><L>Model</L><input style={inp} value={editAppForm.car_model} onChange={e => setEditAppForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>

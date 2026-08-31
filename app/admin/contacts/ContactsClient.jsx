@@ -11,6 +11,7 @@ import {
 import { ExportButton } from '../_components/ExportModal'
 import ActivityTimeline from '../_components/ActivityTimeline'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 // ─── App sources (shared with Applications tab) ───────────────────────────────
 
@@ -236,6 +237,7 @@ export default function ContactsClient() {
     const { make: cMake, model: cModel } = parseCarMakeModel(c.car_model)
     setEditContactForm({
       name: c.name || '',
+      email: c.email || '',
       car_year: c.car_year || '',
       car_make: cMake,
       car_model: cModel,
@@ -251,6 +253,7 @@ export default function ContactsClient() {
   }
 
   async function saveContact(c) {
+    if (!isValidEmail(editContactForm.email)) { setSaveContactErr('Please enter a valid email address.'); return }
     setSavingContact(true); setSaveContactErr(null)
     const payload = {
       ...editContactForm,
@@ -694,8 +697,9 @@ export default function ContactsClient() {
                   {editingContact === c.contact_id ? (
                     /* ── Edit mode ── */
                     <div>
-                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : '1.5fr 1.5fr 90px 1.5fr 1fr 1fr', gap: '0.6rem', marginBottom: '0.6rem' }}>
                         <div><L>Name</L><input style={inp} value={editContactForm.name} onChange={e => setEditContactForm(p => ({ ...p, name: e.target.value }))} /></div>
+                        <div><L>Email</L><input style={inp} type="email" value={editContactForm.email} onChange={e => setEditContactForm(p => ({ ...p, email: e.target.value }))} maxLength={254} /></div>
                         <div><L>Car Year</L><input style={inp} value={editContactForm.car_year} onChange={e => setEditContactForm(p => ({ ...p, car_year: e.target.value }))} placeholder="e.g. 2019" maxLength={10} /></div>
                         <div><L>Make</L><div style={{ position: 'relative' }}><select style={sel} value={editContactForm.car_make || ''} onChange={e => setEditContactForm(p => ({ ...p, car_make: e.target.value }))}><option value="">Select</option>{CAR_MAKES.map(m => <option key={m} value={m}>{m}</option>)}</select><svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg></div></div>
                         <div><L>Model</L><input style={inp} value={editContactForm.car_model} onChange={e => setEditContactForm(p => ({ ...p, car_model: e.target.value }))} placeholder="e.g. M3 Competition" maxLength={80} /></div>
