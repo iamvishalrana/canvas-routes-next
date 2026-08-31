@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
 import { inp, GhostBtn, DangerBtn, CopyBtn, DateRangeMenu } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
@@ -463,7 +464,14 @@ export default function PaymentsClient({ initialRecords = [] }) {
       `}</style>
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
-        <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Payments</h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+          <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Payments</h1>
+          <Link href="/admin/payment-links"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.2rem', background: 'none', color: '#0F1E14', border: '0.5px solid rgba(15,30,20,0.35)', borderRadius: '6px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', textDecoration: 'none', fontFamily: 'var(--font-inter),sans-serif' }}>
+            Payment Links
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 6 15 12 9 18" /></svg>
+          </Link>
+        </div>
       </div>
 
       {loadError && (

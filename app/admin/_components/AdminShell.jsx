@@ -33,7 +33,6 @@ const SECTIONS = [
     id: 'business', label: 'Business',
     items: [
       { href: '/admin/payments',      label: 'Payments'      },
-      { href: '/admin/payment-links', label: 'Payment Links' },
       { href: '/admin/revenue',       label: 'Revenue'       },
       { href: '/admin/expenses',      label: 'Expenses'      },
       { href: '/admin/promo-codes',   label: 'Promo Codes'   },

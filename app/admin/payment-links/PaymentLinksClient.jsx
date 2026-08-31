@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { inp, PrimaryBtn, GhostBtn, CopyBtn, Err, Success, ToggleSwitch } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -90,6 +91,10 @@ export default function PaymentLinksClient() {
 
   return (
     <div style={SECTION}>
+      <Link href="/admin/payments" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#8A6535', textDecoration: 'none', marginBottom: '0.85rem' }}>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+        Payments
+      </Link>
       <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontWeight: 400, fontSize: 'clamp(1.6rem,4vw,2.1rem)', color: '#1a1a1a', marginBottom: '0.35rem' }}>Payment Links</h1>
       <p style={{ fontSize: '13px', color: '#777', lineHeight: 1.6, marginBottom: '1.5rem' }}>
         Create a shareable Stripe checkout for a one-off — merch, a last-minute add-on, a sponsor — without building a page.
