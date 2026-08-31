@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, Fragment } from 'react'
 import { ExportButton } from '../_components/ExportModal'
-import { CopyBtn, DateRangeMenu } from '../_components/shared'
+import { CopyBtn, DateRangeMenu, FilterMenu } from '../_components/shared'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const monthKeyFormatter = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: MONTREAL_TZ })
@@ -13,12 +13,14 @@ const mtlYmd = d => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '
 
 // Quick date-range presets. Each returns { from, to } as Montreal YYYY-MM-DD
 // (empty strings = all-time / no bound), matching the date inputs' format.
+// 'all' listed first — it's the neutral/unfiltered default, which is what
+// FilterMenu's "is this filtered?" styling check assumes options[0] means.
 const DATE_PRESETS = [
+  { key: 'all', label: 'All time', range: () => ({ from: '', to: '' }) },
   { key: 'this_month', label: 'This month', range: () => { const n = new Date(); const p = mtlYmd(n).slice(0, 7); return { from: `${p}-01`, to: mtlYmd(n) } } },
   { key: 'last_month', label: 'Last month', range: () => { const n = new Date(); const first = new Date(n.getFullYear(), n.getMonth(), 1); const lastMonthEnd = new Date(first.getTime() - 86400000); const p = mtlYmd(lastMonthEnd).slice(0, 7); return { from: `${p}-01`, to: mtlYmd(lastMonthEnd) } } },
   { key: 'last_30', label: 'Last 30 days', range: () => { const n = new Date(); const s = new Date(n.getTime() - 29 * 86400000); return { from: mtlYmd(s), to: mtlYmd(n) } } },
   { key: 'ytd', label: 'Year to date', range: () => { const n = new Date(); return { from: `${mtlYmd(n).slice(0, 4)}-01-01`, to: mtlYmd(n) } } },
-  { key: 'all', label: 'All time', range: () => ({ from: '', to: '' }) },
 ]
 
 const METHOD_FILTERS = [
@@ -944,47 +946,20 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
             ])}
           />
         </div>
+        {/* One button per filter GROUP (date preset / method / member status),
+            each expanding into its options, instead of every option being
+            its own always-visible pill — the same FilterMenu pattern already
+            used elsewhere in admin (Applications, Promo Codes, etc.). */}
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '1.1rem' }}>
           <DateRangeMenu label="Date Range" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-        </div>
-        {/* Quick presets — Montreal-day aligned, so they match the filter above */}
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.6rem' }}>
-          {DATE_PRESETS.map(preset => {
-            const r = preset.range()
-            const active = (r.from || '') === (dateFrom || '') && (r.to || '') === (dateTo || '')
-            return (
-              <button key={preset.key} type="button" onClick={() => { setDateFrom(r.from); setDateTo(r.to) }}
-                style={{ padding: '0.35rem 0.8rem', minHeight: '32px', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', fontSize: '11px', letterSpacing: '0.02em', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
-                  border: active ? '0.5px solid #45643c' : '0.5px solid rgba(0,0,0,0.15)',
-                  background: active ? '#45643c' : '#fff', color: active ? '#F5F1EC' : '#666' }}>
-                {preset.label}
-              </button>
-            )
-          })}
-        </div>
-        {/* Method + member-status filters — apply on top of the date range to
-            every figure, chart and table on the page. */}
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.6rem' }}>
-          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '0.15rem' }}>Method</span>
-          {METHOD_FILTERS.map(f => (
-            <button key={f.key} type="button" onClick={() => setMethodFilter(f.key)}
-              style={{ padding: '0.3rem 0.7rem', minHeight: '28px', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', fontSize: '11px', letterSpacing: '0.02em', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
-                border: methodFilter === f.key ? '0.5px solid #8A6535' : '0.5px solid rgba(0,0,0,0.15)',
-                background: methodFilter === f.key ? '#8A6535' : '#fff', color: methodFilter === f.key ? '#F5F1EC' : '#666' }}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-          <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb', marginRight: '0.15rem' }}>Member Status</span>
-          {MEMBER_FILTERS.map(f => (
-            <button key={f.key} type="button" onClick={() => setMemberFilter(f.key)}
-              style={{ padding: '0.3rem 0.7rem', minHeight: '28px', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', fontSize: '11px', letterSpacing: '0.02em', transition: 'all 0.15s', WebkitTapHighlightColor: 'transparent',
-                border: memberFilter === f.key ? '0.5px solid #3B6B2F' : '0.5px solid rgba(0,0,0,0.15)',
-                background: memberFilter === f.key ? '#3B6B2F' : '#fff', color: memberFilter === f.key ? '#F5F1EC' : '#666' }}>
-              {f.label}
-            </button>
-          ))}
+          <FilterMenu
+            placeholder="Custom range"
+            options={DATE_PRESETS.map(p => ({ id: p.key, label: p.label }))}
+            value={DATE_PRESETS.find(p => { const r = p.range(); return (r.from || '') === (dateFrom || '') && (r.to || '') === (dateTo || '') })?.key}
+            onChange={key => { const r = DATE_PRESETS.find(p => p.key === key)?.range(); if (r) { setDateFrom(r.from); setDateTo(r.to) } }}
+          />
+          <FilterMenu options={METHOD_FILTERS.map(f => ({ id: f.key, label: f.label }))} value={methodFilter} onChange={setMethodFilter} />
+          <FilterMenu options={MEMBER_FILTERS.map(f => ({ id: f.key, label: f.label }))} value={memberFilter} onChange={setMemberFilter} />
         </div>
       </div>
 
