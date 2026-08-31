@@ -164,7 +164,9 @@ export default function PersonClient() {
     return (
       <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
         <Link href="/admin/photos/shares" style={{ fontSize: '11px', color: '#999', textDecoration: 'none' }}>← All People</Link>
-        <Err msg={err || 'Not found.'} />
+        {/* Persistent page state, not a transient action error — stays inline
+            rather than using <Err> (which is now a fire-once popup). */}
+        <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{err || 'Not found.'}</div>
       </div>
     )
   }

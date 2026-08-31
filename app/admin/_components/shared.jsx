@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { EVENT_ATTENDANCE_KEYS, EVENT_NAME_ALIASES, normalizeEventName as _normalizeEventName } from '../../../lib/eventMeta.js'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { useErrorToast } from './ErrorToastProvider'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -331,9 +332,25 @@ export function AttendanceToggle({ value, onChange, disabled }) {
   )
 }
 
+// Every admin page's inline "something failed" message goes through this one
+// component (`<Err msg={...} />`, used identically everywhere), which is why
+// it can become a global popup for the whole admin panel just by changing
+// what happens here — no call site needs to change. Renders nothing itself;
+// pushes into the fixed toast stack (ErrorToastProvider, mounted once in
+// AdminShell) instead. The ref guards against re-pushing the same message
+// on every re-render — only a genuinely NEW error value fires a new toast.
 export function Err({ msg }) {
-  if (!msg) return null
-  return <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.6rem', fontFamily: 'var(--font-inter),sans-serif' }}>{msg}</div>
+  const { pushError } = useErrorToast()
+  const lastShown = useRef(null)
+  useEffect(() => {
+    if (msg && msg !== lastShown.current) {
+      pushError(msg)
+      lastShown.current = msg
+    } else if (!msg) {
+      lastShown.current = null
+    }
+  }, [msg, pushError])
+  return null
 }
 
 export function Success({ msg }) {

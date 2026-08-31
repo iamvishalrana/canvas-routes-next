@@ -5,6 +5,7 @@ import Link from 'next/link'
 import GlobalSearch from './GlobalSearch'
 import PullToRefresh from './PullToRefresh'
 import { ConfirmProvider } from './ConfirmProvider'
+import { ErrorToastProvider } from './ErrorToastProvider'
 import { observedBirthdayDay } from '../../../lib/adminBirthdays'
 
 const SECTIONS = [
@@ -358,6 +359,7 @@ export default function AdminShell({ children }) {
 
   return (
     <ConfirmProvider>
+    <ErrorToastProvider>
     <div className="admin-shell" style={{ display: 'flex', minHeight: '100vh', background: '#f5f5f3', fontFamily: 'var(--font-inter),sans-serif' }}>
 
       <button
@@ -429,6 +431,7 @@ export default function AdminShell({ children }) {
         </PullToRefresh>
       </main>
     </div>
+    </ErrorToastProvider>
     </ConfirmProvider>
   )
 }
