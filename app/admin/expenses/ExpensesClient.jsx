@@ -364,6 +364,12 @@ export default function ExpensesClient() {
   // saving — see deleteReceiptByUrl above.
   const [editAttachments, setEditAttachments] = useState([]) // edit panel: [{ url, isNew }]
 
+  // Batch scan: several independent receipts (not pages of one, not a second
+  // document) queued for one-tap review through the normal Add form. Each
+  // item: { id, file, previewUrl, status: 'scanning'|'ok'|'error', data, uploadedUrl, errorMsg }
+  const batchRef = useRef(null)
+  const [batchQueue, setBatchQueue] = useState([])
+
   const load = useCallback(() => {
     fetch('/api/admin/expenses')
       .then(r => r.ok ? r.json() : [])
@@ -793,6 +799,116 @@ export default function ExpensesClient() {
     })
     setScanNotice({ type: 'ok', text: `Copied "${expense.vendor || 'expense'}" — set the date and save.` })
     setFormErr(null)
+    setShowAdd(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // One batch-queue item's independent upload + OCR pair — no reconciliation
+  // against anything else, since every item is a separate receipt. Runs
+  // entirely off `item`, writing its result back into batchQueue by id (so
+  // it's safe to call again for "Retry", and a no-op if the item was already
+  // dismissed by the time it resolves).
+  async function scanOneForBatch(item) {
+    const { id, file } = item
+    setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'scanning', errorMsg: null } : x))
+    const uploadPromise = uploadReceipt(file, slugify('General')).then(url => ({ ok: true, url }), () => ({ ok: false }))
+    try {
+      if (file.type === 'application/pdf' && file.size > 4 * 1024 * 1024) {
+        const up = await uploadPromise
+        setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'error', errorMsg: 'PDF too large to scan (max 4 MB).', uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
+        return
+      }
+      const scanFile = file.type === 'application/pdf' ? file : await compressImageClient(await convertHeicIfNeeded(file), { maxEdge: 1400, quality: 0.72 })
+      const sfd = new FormData()
+      sfd.append('file', scanFile)
+      const [res, up] = await Promise.all([
+        fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd }),
+        uploadPromise,
+      ])
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'error', errorMsg: data.error || 'Scan failed.', uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
+        return
+      }
+      setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'ok', data, uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
+    } catch {
+      const up = await uploadPromise.catch(() => ({ ok: false }))
+      setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'error', errorMsg: 'Scan failed.', uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
+    }
+  }
+
+  // Processes a batch with a concurrency cap of 3 — plenty of headroom under
+  // the scan-receipt route's 20-req/60s rate limit even at the 8-file cap,
+  // while not hammering the client with 8 simultaneous image compressions.
+  async function processBatchQueue(items) {
+    const remaining = [...items]
+    const workers = Array.from({ length: Math.min(3, remaining.length) }, async () => {
+      let next
+      while ((next = remaining.shift())) await scanOneForBatch(next)
+    })
+    await Promise.all(workers)
+  }
+
+  async function handleBatchScan(e) {
+    const files = Array.from(e.target.files || []).slice(0, 8)
+    if (batchRef.current) batchRef.current.value = ''
+    if (!files.length) return
+    const items = files.map(file => ({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      file,
+      previewUrl: file.type !== 'application/pdf' ? URL.createObjectURL(file) : null,
+      status: 'scanning', data: null, uploadedUrl: null, errorMsg: null,
+    }))
+    setBatchQueue(prev => [...prev, ...items])
+    processBatchQueue(items)
+  }
+
+  function dismissBatchItem(item) {
+    if (item.uploadedUrl) deleteReceiptByUrl(item.uploadedUrl)
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+    setBatchQueue(prev => prev.filter(x => x.id !== item.id))
+  }
+
+  // Loads one finished batch item into the Add form for review/save — reuses
+  // the entire existing single-entry form/validation/save pipeline instead of
+  // a parallel mini-editor, exactly like duplicateExpense() above.
+  function loadBatchItemIntoForm(item) {
+    const d = item.data
+    if (!d) return
+    const total = d.total != null ? d.total : (d.amount != null ? round2((d.amount || 0) + (d.gst || 0) + (d.qst || 0) + (d.tip || 0)) : null)
+    const isForeign = !!(d.currency && d.currency !== 'CAD')
+    attachments.forEach(a => deleteReceiptByUrl(a.url))
+    taxManualRef.current = true
+    folderManualRef.current = false
+    provinceManualRef.current = false
+    dupAckSigRef.current = null
+    scanPagesRef.current = []
+    const vHist = vendorHistoryMap.get(normalizeVendorName(d.vendor))
+    setFolderEvent('General')
+    setForm({
+      ...EMPTY_FORM,
+      vendor:         d.vendor || '',
+      expense_date:   d.date || '',
+      category:       d.category || vHist?.category || '',
+      paid:           isForeign ? '' : (total != null ? String(total) : ''),
+      gst_amount:     isForeign ? '' : (d.gst != null ? String(d.gst) : ''),
+      qst_amount:     isForeign ? '' : (d.qst != null ? String(d.qst) : ''),
+      tip:            isForeign ? '' : (d.tip != null ? String(d.tip) : ''),
+      payment_method: d.payment_method || vHist?.payment_method || '',
+      vendor_tax_id:  d.vendor_tax_id || '',
+      currency:       d.currency || 'CAD',
+      original_amount: isForeign && total != null ? String(total) : '',
+      province:       d.province || vHist?.province || 'QC',
+      notes:          d.notes || '',
+    })
+    setAttachments(item.uploadedUrl ? [{ url: item.uploadedUrl, name: item.file.name }] : [])
+    applyLowConfidence(d.low_confidence)
+    setScanNotice(d.mismatch
+      ? { type: 'warn', text: `Loaded from batch scan, but the numbers don't fully add up${d.residual != null ? ` (off by ${fmt(Math.abs(d.residual))})` : ''} — double-check before saving.` }
+      : { type: 'ok', text: `Loaded from batch scan ✓${d.vendor ? ` ${d.vendor}` : ''}${total != null ? ` — ${fmt(total)}` : ''}. Review before saving.` })
+    setFormErr(null)
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl)
+    setBatchQueue(prev => prev.filter(x => x.id !== item.id))
     setShowAdd(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -1729,12 +1845,70 @@ export default function ExpensesClient() {
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
           <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Expenses</h1>
-          <button type="button" className="exp-tap" onClick={() => showAdd ? closeAddForm() : setShowAdd(true)}
-            style={{ padding: '0.55rem 1.2rem', background: showAdd ? 'rgba(0,0,0,0.05)' : '#0F1E14', color: showAdd ? '#555' : '#F5F1EC', border: showAdd ? '0.5px solid rgba(0,0,0,0.15)' : 'none', borderRadius: '6px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-            {showAdd ? 'Close' : '+ Add Expense'}
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <input ref={batchRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf" multiple style={{ display: 'none' }} onChange={handleBatchScan} />
+            <button type="button" className="exp-tap" onClick={() => batchRef.current?.click()}
+              title="Scan several receipts at once — up to 8, each read independently and queued for review"
+              style={{ padding: '0.55rem 1.2rem', background: 'none', color: '#0F1E14', border: '0.5px solid rgba(15,30,20,0.35)', borderRadius: '6px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Batch Scan
+            </button>
+            <button type="button" className="exp-tap" onClick={() => showAdd ? closeAddForm() : setShowAdd(true)}
+              style={{ padding: '0.55rem 1.2rem', background: showAdd ? 'rgba(0,0,0,0.05)' : '#0F1E14', color: showAdd ? '#555' : '#F5F1EC', border: showAdd ? '0.5px solid rgba(0,0,0,0.15)' : 'none', borderRadius: '6px', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              {showAdd ? 'Close' : '+ Add Expense'}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Batch scan queue — each item its own independent OCR read, no
+          reconciliation between them (unlike the Add-form's second-document
+          flow). "Add" loads a finished item into the normal Add form for
+          review/save, reusing that entire pipeline instead of a parallel one. */}
+      {batchQueue.length > 0 && (
+        <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', marginBottom: '1.75rem', padding: '1.25rem' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '0.2rem' }}>Batch Scan Queue ({batchQueue.length})</div>
+          <div style={{ fontSize: '10px', color: '#bbb', marginBottom: '0.85rem' }}>Each photo is read independently — tap Add to review &amp; save it, or Dismiss to discard.</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {batchQueue.map(item => (
+              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px' }}>
+                {item.previewUrl ? (
+                  <img src={item.previewUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(0,0,0,0.05)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#999' }}>PDF</div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {item.status === 'scanning' && <div style={{ fontSize: '12px', color: '#8A6535' }}>Scanning…</div>}
+                  {item.status === 'ok' && (
+                    <div style={{ fontSize: '12px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.data.vendor || 'Unknown vendor'}
+                      <span style={{ color: '#999' }}> · {item.data.date || 'no date'}{(item.data.total ?? item.data.amount) != null ? ` · ${fmt(item.data.total ?? item.data.amount)}` : ''}</span>
+                    </div>
+                  )}
+                  {item.status === 'error' && <div style={{ fontSize: '12px', color: '#93333E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.errorMsg || 'Scan failed.'}</div>}
+                </div>
+                <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                  {item.status === 'ok' && (
+                    <button type="button" onClick={() => loadBatchItemIntoForm(item)}
+                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 12px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Add
+                    </button>
+                  )}
+                  {item.status === 'error' && (
+                    <button type="button" onClick={() => scanOneForBatch(item)}
+                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Retry
+                    </button>
+                  )}
+                  <button type="button" onClick={() => dismissBatchItem(item)} disabled={item.status === 'scanning'}
+                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', color: item.status === 'scanning' ? '#ccc' : '#888', cursor: item.status === 'scanning' ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Stat cards — reflect whatever the filters currently show */}
       {expenses.length > 0 && (
