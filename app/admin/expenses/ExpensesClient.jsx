@@ -1831,13 +1831,17 @@ export default function ExpensesClient() {
         .exp-wrap input, .exp-wrap select, .exp-wrap textarea { max-width: 100%; box-sizing: border-box; }
         .exp-wrap input[type="date"] { min-width: 0; width: 100%; box-sizing: border-box; }
         .exp-filters > div { min-width: 0; }
+        /* iOS's native date picker needs more than the ~160-170px an
+           auto-fill column can shrink to when it shares a track-sizing rule
+           with narrower fields (Category/Payment Method selects etc.) —
+           this recurs at ANY viewport width where the grid happens to pack
+           a narrow column, not just sub-640px (confirmed recurring on
+           iPhone 13 Pro in landscape, 844px, which the old max-width:640px
+           media query didn't cover). Give the date field its own full row
+           unconditionally instead of chasing every width where it collides. */
+        .exp-date-field { grid-column: 1 / -1; }
         @media (max-width: 640px) {
           .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
-          /* iOS's native date picker needs more than half of a 2-column
-             mobile row (~170px) to render its value without visually
-             overflowing into the next cell — give it the full row instead
-             of sharing one with Event/Label. */
-          .exp-date-field { grid-column: 1 / -1 !important; }
           .exp-actions-row { flex-wrap: wrap; }
           /* Search's own div and View's own div already set width:100% via
              inline style (isMobile) — no longer force EVERY direct child
@@ -2048,7 +2052,7 @@ export default function ExpensesClient() {
               <div className="exp-btn-row-stack" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 {scanNotice.actions.map(a => (
                   <button key={a.label} type="button" onClick={a.onClick}
-                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
+                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
                       background: 'none', border: `0.5px solid ${scanNotice.type === 'warn' ? 'rgba(147,51,62,0.4)' : 'rgba(59,107,47,0.4)'}`,
                       color: scanNotice.type === 'warn' ? '#93333E' : '#3B6B2F' }}>
                     {a.label}
