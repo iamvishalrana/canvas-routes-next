@@ -6,6 +6,7 @@ import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
 import { maybeSendCheckinCompleteEmail } from '../../../../../lib/maybeSendCheckinCompleteEmail.js'
 import { ALLOWED_EXTS } from '../../../../../lib/allowedImageTypes'
 import { isValidEmail } from '../../../../../lib/emailValidation'
+import { logMemberAction } from '../../../../../lib/memberActivityLog'
 
 const BUCKET = 'route-car-photos'
 
@@ -65,5 +66,6 @@ export async function POST(request, { params }) {
 
   await maybeSendCheckinCompleteEmail(admin, eventId, email, event.name).catch(err => captureException(err, { context: 'checkin-complete-trigger-car-photo', email, eventId }))
 
+  await logMemberAction(email, { action: 'self.checkin_car_photo', entityType: 'event', entityId: eventId, entityName: event.name })
   return Response.json({ success: true, carPhoto })
 }

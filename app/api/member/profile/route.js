@@ -1,6 +1,7 @@
 import { createClient } from '../../../../lib/supabase/server'
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureMessage } from '../../../../lib/sentry.js'
+import { logMemberAction } from '../../../../lib/memberActivityLog'
 
 export async function PATCH(request) {
   const supabase = await createClient()
@@ -44,5 +45,6 @@ export async function PATCH(request) {
     }
   }
 
+  await logMemberAction(memberEmail, { action: 'self.profile_update', entityType: 'member', entityId: user.id, metadata: { fields: Object.keys(update).join(', ') } })
   return Response.json({ success: true })
 }

@@ -5,6 +5,7 @@ import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
 import { maybeSendCheckinCompleteEmail } from '../../../../../lib/maybeSendCheckinCompleteEmail.js'
 import { isValidEmail } from '../../../../../lib/emailValidation'
+import { logMemberAction } from '../../../../../lib/memberActivityLog'
 
 export async function POST(request, { params }) {
   const { eventId } = await params
@@ -83,5 +84,6 @@ export async function POST(request, { params }) {
 
   await maybeSendCheckinCompleteEmail(admin, eventId, email, event.name).catch(err => captureException(err, { context: 'checkin-complete-trigger-waiver', email, eventId }))
 
+  await logMemberAction(email, { action: 'self.checkin_waiver', entityType: 'event', entityId: eventId, entityName: event.name })
   return Response.json({ success: true, waiver: waiverRecord })
 }

@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { captureException } from '../../../../lib/sentry'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail'
+import { logMemberAction } from '../../../../lib/memberActivityLog'
 
 async function getEvent(supabase, eventName) {
   const trimmed = eventName.trim()
@@ -197,5 +198,6 @@ export async function POST(request, { params }) {
     }
   }
 
+  await logMemberAction(appEmail, { action: 'self.rsvp', entityType: 'event', entityId: event?.id || null, entityName: tokenRow.event_name })
   return Response.json({ confirmed: true, eventName: tokenRow.event_name })
 }

@@ -29,35 +29,123 @@ const ACTION_LABELS = {
   'link.delete':                   'Deleted link',
   'event_awards.reset':            'Reset event awards',
   'wtet_awards.reset':             'Reset WTET awards',
+  'calendar_note.create':          'Added calendar note',
+  'calendar_note.update':          'Updated calendar note',
+  'calendar_note.delete':          'Deleted calendar note',
+  'route.launch':                  'Launched route',
+  'route.launch_resend':           'Resent route launch',
+  'route.broadcast':               'Broadcast route update',
+  'payment_link.create':           'Created payment link',
+  'payment_link.activate':         'Activated payment link',
+  'payment_link.deactivate':       'Deactivated payment link',
+  'gallery.upload':                'Uploaded photo',
+  'gallery.photo_delete':          'Deleted photo',
+  'gallery.album_update':          'Updated album',
+  'gallery.album_delete':          'Deleted album',
+  'photo_share_person.create':     'Added photo-share person',
+  'photo_share_person.delete':     'Removed photo-share person',
+  'photo_share_folder.create':     'Created photo-share folder',
+  'photo_share_folder.delete':     'Deleted photo-share folder',
+  'photo_shares.reclaim':          'Reclaimed photo shares',
+  'gallery_submission.publish':    'Published photo submission',
+  'gallery_submission.reject':     'Rejected photo submission',
+  'self.login':                    'Logged in',
+  'self.profile_update':           'Updated profile',
+  'self.checkin_trip_details':     'Completed check-in: trip details',
+  'self.checkin_waiver':           'Signed waiver',
+  'self.checkin_lunch':            'Submitted lunch choice',
+  'self.checkin_car_photo':        'Uploaded car photo',
+  'self.route_interest':           'Expressed interest in a route',
+  'self.rsvp':                     'Submitted RSVP',
 }
 const humanize = action => ACTION_LABELS[action] || (action || '').replace(/[._]/g, ' ')
 
 const CATEGORY_META = {
-  payment:      { label: 'Payments',      color: '#3B6B2F' },
-  member:       { label: 'Members',       color: '#8A6535' },
-  broadcast:    { label: 'Broadcasts',    color: '#3D6B99' },
-  promo:        { label: 'Promo codes',   color: '#6B4E8E' },
-  expense:      { label: 'Expenses',      color: '#93333E' },
-  event:        { label: 'Events',        color: '#45643C' },
-  announcement: { label: 'Announcements', color: '#c5a882' },
-  link:         { label: 'Links',         color: '#4FA3A5' },
-  event_awards: { label: 'Awards',        color: '#b0885a' },
-  wtet_awards:  { label: 'Awards',        color: '#b0885a' },
+  payment:              { label: 'Payments',        color: '#3B6B2F' },
+  member:               { label: 'Members',         color: '#8A6535' },
+  broadcast:            { label: 'Broadcasts',      color: '#3D6B99' },
+  promo:                { label: 'Promo codes',     color: '#6B4E8E' },
+  expense:              { label: 'Expenses',        color: '#93333E' },
+  event:                { label: 'Events',          color: '#45643C' },
+  announcement:         { label: 'Announcements',   color: '#c5a882' },
+  link:                 { label: 'Links',           color: '#4FA3A5' },
+  event_awards:         { label: 'Awards',          color: '#b0885a' },
+  wtet_awards:          { label: 'Awards',          color: '#b0885a' },
+  calendar_note:        { label: 'Calendar notes',  color: '#5C7A99' },
+  route:                { label: 'Routes',          color: '#45643C' },
+  payment_link:         { label: 'Payment links',   color: '#3B6B2F' },
+  gallery:              { label: 'Gallery',         color: '#8E6BA5' },
+  photo_share_person:   { label: 'Photo shares',    color: '#8E6BA5' },
+  photo_share_folder:   { label: 'Photo shares',    color: '#8E6BA5' },
+  photo_shares:         { label: 'Photo shares',    color: '#8E6BA5' },
+  gallery_submission:   { label: 'Photo submissions', color: '#8E6BA5' },
+  self:                 { label: 'Member activity', color: '#3D6B99' },
 }
 const categoryOf = action => (action || '').split('.')[0]
 
+// Which admin_activity_log category prefixes belong to the Photo Links tab —
+// everything else (including anything not listed, so future action types
+// never silently vanish) falls into the Admin tab.
+const TAB_CATEGORY_MAP = {
+  gallery: 'photos',
+  photo_share_person: 'photos',
+  photo_share_folder: 'photos',
+  photo_shares: 'photos',
+  gallery_submission: 'photos',
+}
+const tabOf = action => TAB_CATEGORY_MAP[categoryOf(action)] || 'admin'
+
 // Where "Open in section →" points for each entity type
 const SECTION_LINK = {
-  member:         n => `/admin/members${n ? `?q=${encodeURIComponent(n)}` : ''}`,
-  application:    () => '/admin/applications',
-  contact:        () => '/admin/contacts',
-  announcement:   () => '/admin/announcements',
-  event:          () => '/admin/events',
-  payment_intent: () => '/admin/payments',
-  broadcast:      () => '/admin/broadcasts',
-  promo_code:     () => '/admin/promo-codes',
-  expense:        () => '/admin/expenses',
-  link:           () => '/admin/links',
+  member:                   n => `/admin/members${n ? `?q=${encodeURIComponent(n)}` : ''}`,
+  application:              () => '/admin/applications',
+  contact:                  () => '/admin/contacts',
+  announcement:             () => '/admin/announcements',
+  event:                    () => '/admin/events',
+  payment_intent:           () => '/admin/payments',
+  broadcast:                () => '/admin/broadcasts',
+  promo_code:               () => '/admin/promo-codes',
+  expense:                  () => '/admin/expenses',
+  link:                     () => '/admin/links',
+  calendar_note:            () => '/admin/calendar',
+  upcoming_route:           () => '/admin/upcoming-routes',
+  payment_link:             () => '/admin/payment-links',
+  gallery_photo:            () => '/admin/photos',
+  gallery_album:            () => '/admin/photos',
+  gallery_photo_submission: () => '/admin/photos',
+  photo_share_person:       () => '/admin/photos',
+  photo_share_folder:       () => '/admin/photos',
+  photo_share:              () => '/admin/photos',
+}
+
+const TABS = [
+  { id: 'admin',   label: 'Admin' },
+  { id: 'members', label: 'Members' },
+  { id: 'photos',  label: 'Photo Links' },
+]
+
+function TabBar({ tabs, active, onChange }) {
+  return (
+    <div style={{ display: 'flex', borderBottom: '0.5px solid rgba(0,0,0,0.08)', marginBottom: '1.5rem' }}>
+      {tabs.map(t => (
+        <button
+          key={t.id}
+          onClick={() => onChange(t.id)}
+          style={{
+            padding: '0.75rem 1.25rem',
+            background: 'none', border: 'none', cursor: 'pointer',
+            fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase',
+            color: active === t.id ? '#1a1a1a' : '#aaa',
+            fontFamily: 'var(--font-inter),sans-serif',
+            borderBottom: active === t.id ? '2px solid #1a1a1a' : '2px solid transparent',
+            marginBottom: '-0.5px', transition: 'color 0.15s', WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          {t.label}
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function fmtDate(iso) {
@@ -76,14 +164,16 @@ const META_LABELS = {
   tier: 'Tier', status: 'Status', from: 'From', to: 'To', count: 'Count',
   date: 'Date', type: 'Type', fields: 'Fields changed', email: 'Email',
   percentOff: '% off', amountOff: '$ off', appliesTo: 'Applies to', published: 'Published',
+  recipientCount: 'Recipients', amount_cents: 'Amount', note_date: 'Note date', photos: 'Photos',
 }
 function metaValue(k, v) {
   if (v == null || v === '') return '—'
-  if (k === 'amount' || k === 'amountOff') { const n = parseFloat(v); if (Number.isFinite(n)) return `$${(n > 999 ? n / 100 : n).toFixed(2)}` }
+  if (k === 'amount' || k === 'amountOff' || k === 'amount_cents') { const n = parseFloat(v); if (Number.isFinite(n)) return `$${(n > 999 ? n / 100 : n).toFixed(2)}` }
   return String(v)
 }
 
-export default function ActivityLogClient({ logs }) {
+export default function ActivityLogClient({ adminLogs, memberLogs }) {
+  const [activeTab, setActiveTab] = useState('admin')
   const [search, setSearch] = useState('')
   const [entityTypeFilter, setEntityTypeFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -97,6 +187,19 @@ export default function ActivityLogClient({ logs }) {
     check(); window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  function changeTab(id) {
+    setActiveTab(id)
+    setSearch(''); setEntityTypeFilter('all'); setCategoryFilter('all'); setExpanded(null)
+  }
+
+  const isMembersTab = activeTab === 'members'
+  const byField = isMembersTab ? 'member_email' : 'admin_email'
+
+  const logs = useMemo(() => {
+    if (isMembersTab) return memberLogs
+    return adminLogs.filter(l => tabOf(l.action) === activeTab)
+  }, [adminLogs, memberLogs, activeTab, isMembersTab])
 
   const now = new Date()
   const todayStart = startOfDay(now)
@@ -120,13 +223,13 @@ export default function ActivityLogClient({ logs }) {
       if (rangeStart && new Date(log.created_at) < rangeStart) return false
       if (search) {
         const q = search.toLowerCase()
-        if (![log.action, humanize(log.action), log.entity_name, log.admin_email, log.entity_type]
+        if (![log.action, humanize(log.action), log.entity_name, log[byField], log.entity_type]
           .some(v => v?.toLowerCase().includes(q))) return false
       }
       return true
     })
     return sort === 'oldest' ? [...rows].reverse() : rows
-  }, [logs, search, entityTypeFilter, categoryFilter, range, sort, todayStart])
+  }, [logs, search, entityTypeFilter, categoryFilter, range, sort, todayStart, byField])
 
   function Sentence({ log }) {
     const cat = CATEGORY_META[categoryOf(log.action)] || { color: '#999' }
@@ -145,7 +248,7 @@ export default function ActivityLogClient({ logs }) {
     return (
       <div style={{ padding: '0.85rem 1.25rem 1rem', background: '#faf9f7', borderTop: '0.5px solid rgba(0,0,0,0.05)', borderLeft: '3px solid #c5a882', animation: 'alFadeIn 0.2s ease both' }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(170px, 1fr))', gap: '0.5rem 1.25rem', marginBottom: metaEntries.length || link ? '0.75rem' : 0 }}>
-          {[['Action', humanize(log.action)], ['What', log.entity_type ? `${log.entity_type.replace(/_/g, ' ')}${log.entity_name ? ` · ${log.entity_name}` : ''}` : '—'], ['By', log.admin_email || '—'], ['When', fmtDate(log.created_at)]].map(([k, v]) => (
+          {[['Action', humanize(log.action)], ['What', log.entity_type ? `${log.entity_type.replace(/_/g, ' ')}${log.entity_name ? ` · ${log.entity_name}` : ''}` : '—'], [isMembersTab ? 'Member' : 'By', log[byField] || '—'], ['When', fmtDate(log.created_at)]].map(([k, v]) => (
             <div key={k}>
               <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb', marginBottom: '2px' }}>{k}</div>
               <div style={{ fontSize: '12px', color: '#444', wordBreak: 'break-word' }}>{v}</div>
@@ -178,6 +281,8 @@ export default function ActivityLogClient({ logs }) {
         <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c5a882', marginBottom: '0.5rem' }}>Admin</div>
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Activity Log</h1>
       </div>
+
+      <TabBar tabs={TABS} active={activeTab} onChange={changeTab} />
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
@@ -243,7 +348,9 @@ export default function ActivityLogClient({ logs }) {
           <div style={{ fontSize: '13px', color: '#bbb', lineHeight: '1.7', maxWidth: '380px', margin: '0 auto' }}>
             {search || entityTypeFilter !== 'all' || categoryFilter !== 'all' || range !== 'all'
               ? 'No entries match your filters.'
-              : 'No activity logged yet. Actions will appear here as admins use the panel.'}
+              : isMembersTab
+                ? 'No member activity logged yet. Actions will appear here as members use the site.'
+                : 'No activity logged yet. Actions will appear here as admins use the panel.'}
           </div>
         </div>
       ) : (

@@ -9,6 +9,7 @@ import { buildAdminNotifyHtml } from '../../../../lib/adminEmail'
 import { buildRouteInterestHtml } from '../../../../lib/roadtripEmail'
 import { htmlToPlainText } from '../../../../lib/emailUnsubscribe.js'
 import { isValidEmail } from '../../../../lib/emailValidation'
+import { logMemberAction } from '../../../../lib/memberActivityLog'
 
 function sendEmail(payload, context) {
   return fetch('https://api.resend.com/emails', {
@@ -188,5 +189,6 @@ export async function POST(request) {
     }, 'roadtrip-threshold-email')] : []),
   ]))
 
+  await logMemberAction(email, { action: 'self.route_interest', entityType: 'route', entityId: route.id, entityName: route.name })
   return Response.json({ success: true, interested_count: interestedCount ?? null })
 }

@@ -1,5 +1,6 @@
 import { createClient } from '../../../../lib/supabase/server'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit.js'
+import { logMemberAction } from '../../../../lib/memberActivityLog'
 
 export async function POST(request) {
   const ip = getClientIp(request)
@@ -29,5 +30,6 @@ export async function POST(request) {
     await supabase.auth.signOut()
     return Response.json({ error: 'No membership found for this account.' }, { status: 403 })
   }
+  await logMemberAction(user.email?.toLowerCase().trim(), { action: 'self.login', entityType: 'member', entityId: member.id })
   return Response.json({ success: true })
 }
