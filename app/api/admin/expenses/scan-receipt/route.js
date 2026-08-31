@@ -125,13 +125,13 @@ export async function POST(request) {
   // every other default-scope admin GET (applications, search, contacts…)
   // also increments, so a dozen dashboard fetches could push it past 20 and
   // 429 the first real scan. This budget must only count scans.
-  if (await checkRateLimit(ip, 20, 60, 'expenses-scan')) return Response.json({ error: 'Too many requests.' }, { status: 429 })
+  if (await checkRateLimit(ip, 20, 60, 'expenses-scan')) return Response.json({ error: 'Too many scans in a short time — wait a moment and try again.' }, { status: 429 })
 
   const anthropic = getAnthropic()
-  if (!anthropic) return Response.json({ error: 'Receipt scanning is not configured.' }, { status: 503 })
+  if (!anthropic) return Response.json({ error: 'Receipt scanning isn’t set up on this site (missing API key) — enter the details manually.' }, { status: 503 })
 
   let formData
-  try { formData = await request.formData() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
+  try { formData = await request.formData() } catch { return Response.json({ error: 'Couldn’t read the upload — try again.' }, { status: 400 }) }
 
   // Usually one file. Multiple files means multiple photos of the SAME
   // physical receipt (a long receipt, or one split across shots) — the

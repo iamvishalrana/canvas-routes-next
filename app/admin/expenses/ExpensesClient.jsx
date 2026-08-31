@@ -165,6 +165,20 @@ function receiptExt(url) {
   return /^[a-z0-9]{2,5}$/.test(x) ? x : 'jpg'
 }
 
+// Distinguishes a real connectivity failure from any other unexpected throw
+// during the scan pipeline (HEIC conversion, image compression, an
+// unparseable response), so the admin isn't told "Scan failed" for what's
+// actually a dropped connection — matches the existing "Network error."
+// wording this file already uses for Save failures (handleSubmit/saveEdit),
+// instead of introducing a third, inconsistent phrasing just for scans.
+// `fetch()` itself throws a TypeError specifically for network-level
+// failures (offline, DNS, connection refused, CORS) — anything else is a
+// genuine pipeline failure, not connectivity.
+function describeScanFailure(err) {
+  if (err instanceof TypeError) return 'Network error — check your connection and try again.'
+  return 'Scan failed unexpectedly — try again, or enter the details manually.'
+}
+
 function fmt(n) { return `$${(parseFloat(n) || 0).toFixed(2)}` }
 function fmtDate(d) {
   if (!d) return '—'
@@ -827,13 +841,13 @@ export default function ExpensesClient() {
       ])
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'error', errorMsg: data.error || 'Scan failed.', uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
+        setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'error', errorMsg: data.error || (res.status === 413 ? 'That file is too large to scan.' : 'Scan failed — try again.'), uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
         return
       }
       setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'ok', data, uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
-    } catch {
+    } catch (err) {
       const up = await uploadPromise.catch(() => ({ ok: false }))
-      setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'error', errorMsg: 'Scan failed.', uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
+      setBatchQueue(prev => prev.map(x => x.id === id ? { ...x, status: 'error', errorMsg: describeScanFailure(err), uploadedUrl: up.ok ? up.url : x.uploadedUrl } : x))
     }
   }
 
@@ -1096,8 +1110,8 @@ export default function ExpensesClient() {
       }))
       applyEditLowConfidence(data.low_confidence, { union: true })
       await settleUpload()
-    } catch {
-      setEditErr('Scan failed.')
+    } catch (err) {
+      setEditErr(describeScanFailure(err))
       await settleUpload()
     } finally {
       setEditScanning(false)
@@ -1403,8 +1417,8 @@ export default function ExpensesClient() {
       // the admin never sees a green "Scanned ✓" banner for an expense that
       // would actually save with no receipt at all.
       await settleUpload()
-    } catch {
-      setFormErr('Scan failed.')
+    } catch (err) {
+      setFormErr(describeScanFailure(err))
       // Settle even on an unexpected throw (e.g. HEIC conversion blowing up)
       // — the parallel upload kicked off at the top may well have already
       // succeeded, and skipping this would silently orphan it: the file
