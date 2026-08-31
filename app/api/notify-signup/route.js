@@ -6,6 +6,7 @@ import { captureException } from '../../../lib/sentry'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail'
 import { buildNotifySignupHtml } from '../../../lib/notifySignupEmail'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 const NOTIFY_EVENT_NAME = 'Event Notifications List'
 const VALID_INTERESTS = ['cars_coffee', 'routes', 'both']
@@ -30,7 +31,7 @@ export async function POST(request) {
   const more = (body.more || '').trim()
 
   if (!name || name.length < 2) return Response.json({ error: 'Please enter your name.' }, { status: 400 })
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
+  if (!email || !isValidEmail(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
   if (!dob || !/^\d{4}-\d{2}-\d{2}$/.test(dob)) return Response.json({ error: 'Date of birth is required.' }, { status: 400 })
   if (!carYear || !carModel) return Response.json({ error: 'Car year and model are required.' }, { status: 400 })
   if (!VALID_INTERESTS.includes(interest)) return Response.json({ error: 'Please choose what you\'re interested in.' }, { status: 400 })

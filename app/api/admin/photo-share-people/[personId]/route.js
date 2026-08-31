@@ -5,6 +5,7 @@ import { captureException } from '../../../../../lib/sentry'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { cleanupOrphanedPhotos } from '../../../../../lib/photoShareDedup'
 import { removeObjects } from '../../../../../lib/r2'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 const BUCKET = 'photo-shares'
 
@@ -44,7 +45,7 @@ export async function PATCH(request, { params }) {
   if ('name' in body) update.name = (body.name || '').toString().trim().slice(0, 120) || null
   if ('email' in body) {
     const email = normalizeEmail(body.email).slice(0, 200)
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'A valid email is required.' }, { status: 400 })
+    if (!isValidEmail(email)) return Response.json({ error: 'A valid email is required.' }, { status: 400 })
     update.email = email
   }
   if (!Object.keys(update).length) return Response.json({ error: 'Nothing to update.' }, { status: 400 })

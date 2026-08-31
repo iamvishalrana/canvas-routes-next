@@ -8,6 +8,7 @@ import { PRICES, MEMBERSHIP_TIER_TYPE } from '../../../lib/prices.js'
 import { computeTax } from '../../../lib/tax.js'
 import { buildMembershipConfirmHtml, buildMembershipConfirmText } from '../../../lib/membershipEmail.js'
 import { sendMetaCapiEvent } from '../../../lib/metaConversionsApi.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 function h(str) {
   return String(str ?? '')
@@ -94,7 +95,7 @@ export async function POST(request) {
 
   if (!name?.trim() || name.trim().length < 2)
     return Response.json({ error: 'Please enter your full name.' }, { status: 400 })
-  if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!email?.trim() || !isValidEmail(email))
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   if (!year?.trim())
     return Response.json({ error: 'Please enter your car year.' }, { status: 400 })

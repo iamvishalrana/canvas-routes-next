@@ -10,6 +10,7 @@ import { WTET_WAIVER_TEXT, WTET_WAIVER_TEXT_FR } from '../../../lib/wtetRegistra
 import { WTET_CHECKIN_T } from '../../../lib/wtetCheckinI18n'
 import { captureException } from '../../../lib/sentry'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 const inp = {
   width: '100%', padding: '0.75rem 0.9rem', border: '1px solid rgba(0,0,0,0.14)',
@@ -236,7 +237,7 @@ function WtetCheckinContent() {
   const autoSubmitted = useRef(false)
   useEffect(() => {
     const prefillEmail = searchParams.get('email')
-    if (autoSubmitted.current || !prefillEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(prefillEmail)) return
+    if (autoSubmitted.current || !prefillEmail || !isValidEmail(prefillEmail)) return
     autoSubmitted.current = true
     setEmail(prefillEmail)
     verify(null, prefillEmail)

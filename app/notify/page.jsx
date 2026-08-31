@@ -5,6 +5,7 @@ import { User, Mail, Phone, Car, Share2 } from 'lucide-react'
 import SiteFooter from '../../components/SiteFooter'
 import SiteNav from '../../components/SiteNav'
 import TermsPrivacyNote from '../../components/TermsPrivacyNote'
+import { isValidEmail } from '../../lib/emailValidation'
 
 const COUNTRY_CODES = [
   '+1',  '+7',  '+20', '+27', '+30', '+31', '+32', '+33', '+34', '+36',
@@ -85,7 +86,7 @@ export default function NotifyPage() {
   function validate() {
     const e = {}
     if (form.name.trim().length < 2) e.name = true
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+    if (!form.email.trim() || !isValidEmail(form.email)) e.email = true
     if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true

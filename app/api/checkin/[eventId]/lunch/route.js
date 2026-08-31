@@ -4,6 +4,7 @@ import { captureException } from '../../../../../lib/sentry'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
 import { maybeSendCheckinCompleteEmail } from '../../../../../lib/maybeSendCheckinCompleteEmail.js'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 export async function POST(request, { params }) {
   const { eventId } = await params
@@ -14,7 +15,7 @@ export async function POST(request, { params }) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = normalizeEmail(body?.email)
   const dishIds = body?.dishIds
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (!Array.isArray(dishIds) || dishIds.length === 0) {

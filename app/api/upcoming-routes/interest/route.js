@@ -8,6 +8,7 @@ import { normalizeEmail } from '../../../../lib/normalizeEmail'
 import { buildAdminNotifyHtml } from '../../../../lib/adminEmail'
 import { buildRouteInterestHtml } from '../../../../lib/roadtripEmail'
 import { htmlToPlainText } from '../../../../lib/emailUnsubscribe.js'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 function sendEmail(payload, context) {
   return fetch('https://api.resend.com/emails', {
@@ -60,7 +61,7 @@ export async function POST(request) {
 
   if (!slug) return Response.json({ error: 'Missing route.' }, { status: 400 })
   if (!name || name.length < 2) return Response.json({ error: 'Please enter your name.' }, { status: 400 })
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
+  if (!email || !isValidEmail(email)) return Response.json({ error: 'Please enter a valid email.' }, { status: 400 })
   if (name.length > 100 || email.length > 254 || phone.length > 40 || car.length > 120) return Response.json({ error: 'Input too long.' }, { status: 400 })
   // All fields are mandatory (hotel only for trips with nights away — checked after the route lookup)
   if (!phone) return Response.json({ error: 'Please enter your phone number.' }, { status: 400 })

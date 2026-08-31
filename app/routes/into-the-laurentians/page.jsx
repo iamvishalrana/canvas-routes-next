@@ -6,6 +6,7 @@ import { User, Mail, Phone, Car, Users, Share2 } from 'lucide-react'
 import SiteFooter from '../../../components/SiteFooter'
 import SiteNav from '../../../components/SiteNav'
 import PageLoader from '../../../components/PageLoader'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 const ROUTES_CLOSED = new Date('2026-06-06T00:00:00Z').getTime() // manually closed
 
@@ -99,7 +100,7 @@ export default function RoutesPage() {
   function validate() {
     const e = {}
     if (form.name.trim().length < 2) e.name = true
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+    if (!form.email.trim() || !isValidEmail(form.email)) e.email = true
     if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true

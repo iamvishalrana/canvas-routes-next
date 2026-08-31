@@ -4,6 +4,7 @@ import { normalizeEmail } from '../../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../../lib/eventCheckinShared'
 import { MIME_TO_EXT, ALLOWED_MIME_TYPES } from '../../../../../../lib/allowedImageTypes'
 import { captureException } from '../../../../../../lib/sentry'
+import { isValidEmail } from '../../../../../../lib/emailValidation'
 
 const BUCKET = 'route-car-photos'
 const EXT_BY_MIME = MIME_TO_EXT
@@ -21,7 +22,7 @@ export async function POST(request, { params }) {
 
   const body = await request.json().catch(() => ({}))
   const email = normalizeEmail(body.email)
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   const ext = EXT_BY_MIME[body.fileType]

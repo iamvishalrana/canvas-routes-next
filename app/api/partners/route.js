@@ -1,6 +1,7 @@
 import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { emailShell, p, FONT, COLOR } from '../../../lib/emailLayout.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 function h(str) {
   return String(str ?? '')
@@ -95,7 +96,7 @@ export async function POST(req) {
   if (!n || !b || !ci || !t || !e || !m) return Response.json({ error: 'All fields are required.' }, { status: 400 })
   if (p && p.length > 30) return Response.json({ error: 'Phone number too long.' }, { status: 400 })
   if (!VALID_TYPES.includes(t)) return Response.json({ error: 'Please select a valid business type.' }, { status: 400 })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
+  if (!isValidEmail(e)) return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   if (n.length > 100) return Response.json({ error: 'Name too long.' }, { status: 400 })
   if (b.length > 150) return Response.json({ error: 'Business name too long.' }, { status: 400 })
   if (m.length > 1000) return Response.json({ error: 'Message too long (max 1000 characters).' }, { status: 400 })

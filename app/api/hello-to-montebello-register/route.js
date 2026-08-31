@@ -9,6 +9,7 @@ import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
 import { getFbCookiesFromRequest } from '../../../lib/metaConversionsApi.js'
 import { isRouteAtCapacity } from '../../../lib/checkRouteCapacity.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 // Route/itinerary names say "Name — Year" only, never the exact date (site convention).
 const EVENT_NAME = 'Hello to Montebello — 2026'
@@ -53,7 +54,7 @@ export async function POST(request) {
   // Validate required fields
   if (!name?.trim() || name.trim().length < 2)
     return Response.json({ error: 'Full name is required.' }, { status: 400 })
-  if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!email?.trim() || !isValidEmail(email))
     return Response.json({ error: 'A valid email address is required.' }, { status: 400 })
   if (!year?.trim()) return Response.json({ error: 'Car year is required.' }, { status: 400 })
   if (!carMake?.trim()) return Response.json({ error: 'Car make is required.' }, { status: 400 })

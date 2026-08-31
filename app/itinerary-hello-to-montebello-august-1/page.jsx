@@ -6,6 +6,7 @@ import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
 import { captureException } from '../../lib/sentry'
 import { normalizeEmail } from '../../lib/normalizeEmail'
+import { isValidEmail } from '../../lib/emailValidation'
 
 const PASSWORD = 'montebello'
 const ROUTE_SLUG = 'hello-to-montebello'
@@ -557,7 +558,7 @@ export default function HelloToMontebelloItineraryPage() {
     // Handoff from the check-in page's personalized link — re-verify
     // automatically so they don't have to retype the email they just used.
     const urlEmail = params.get('email')
-    if (urlEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(urlEmail)) {
+    if (urlEmail && isValidEmail(urlEmail)) {
       setEmail(urlEmail)
       submit(null, urlEmail)
     }
@@ -573,7 +574,7 @@ export default function HelloToMontebelloItineraryPage() {
       setAuthed(true)
       return
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+    if (!isValidEmail(entered)) {
       setErrMsg('Please enter a valid email address.')
       return
     }

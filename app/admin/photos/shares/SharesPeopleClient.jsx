@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { inp, sel, L, PrimaryBtn, GhostBtn, Err, CopyBtn } from '../../_components/shared'
 import { useConfirm } from '../../_components/ConfirmProvider'
 import ContactSearchSelect from '../../_components/ContactSearchSelect'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 const EMPTY_FORM = { name: '', email: '' }
 
@@ -85,7 +86,7 @@ export default function SharesPeopleClient() {
 
   async function handleCreate(e) {
     e.preventDefault()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+    if (!isValidEmail(form.email)) {
       setFormErr('A valid email is required — this is where their access code is sent.')
       return
     }

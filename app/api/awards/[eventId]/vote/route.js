@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant, listEventCandidates } from '../../../../../lib/eventCheckinShared'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 function norm(s) { return (s || '').toLowerCase().trim() }
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -17,7 +18,7 @@ export async function POST(request, { params }) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = normalizeEmail(body?.email)
   const picks = body?.picks
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (!picks || typeof picks !== 'object' || Array.isArray(picks)) {

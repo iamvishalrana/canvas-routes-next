@@ -5,6 +5,7 @@ import PageLoader from '../../components/PageLoader'
 import { normalizeEmail } from '../../lib/normalizeEmail'
 import { captureException } from '../../lib/sentry'
 import { WTET_AWARD_CATEGORIES, CATEGORY_DISCOUNT_PCT } from '../../lib/wtetAwardsContent'
+import { isValidEmail } from '../../lib/emailValidation'
 
 // Only the logo — candidate photos are multi-megabyte originals and aren't
 // needed until after email verification, well after this loader is gone.
@@ -78,7 +79,7 @@ export default function WtetAwardsPage() {
     e.preventDefault()
     setErrMsg(null)
     const entered = normalizeEmail(email)
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+    if (!isValidEmail(entered)) {
       setErrMsg(t.invalidEmailError)
       return
     }

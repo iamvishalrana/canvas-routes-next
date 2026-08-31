@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 // Lists every non-member with a photo share, newest first, with folder and
 // photo counts — the "people" list is the entry point into the whole
@@ -48,7 +49,7 @@ export async function POST(request) {
 
   const body = await request.json().catch(() => ({}))
   const email = normalizeEmail(body.email).slice(0, 200)
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return Response.json({ error: 'A valid email is required — it doubles as the access password.' }, { status: 400 })
   }
   const name = (body.name || '').toString().trim().slice(0, 120) || null

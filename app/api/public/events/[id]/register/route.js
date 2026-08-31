@@ -9,6 +9,7 @@ import { buildAdminNotifyHtml } from '../../../../../../lib/adminEmail.js'
 import { buildPendingReviewHtml, buildAcceptedHtml } from '../../../../../../lib/eventReviewEmails.js'
 import { getEventTimes } from '../../../../../../lib/eventMeta.js'
 import { calendarButtonsHtml } from '../../../../../../lib/eventCalendarLinks.js'
+import { isValidEmail } from '../../../../../../lib/emailValidation'
 
 const VALID_SOURCES = ['Instagram', 'Facebook', 'Friend / Word of mouth', 'Google', 'Other']
 
@@ -53,7 +54,7 @@ export async function POST(request, { params }) {
 
   if (!name?.trim() || name.trim().length < 2)
     return Response.json({ error: 'Full name is required.' }, { status: 400 })
-  if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!email?.trim() || !isValidEmail(email))
     return Response.json({ error: 'A valid email address is required.' }, { status: 400 })
   if (!year?.trim()) return Response.json({ error: 'Car year is required.' }, { status: 400 })
   if (!carMake?.trim()) return Response.json({ error: 'Car make is required.' }, { status: 400 })

@@ -6,6 +6,7 @@ import { isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 import { notifyIfWtetComplete } from '../../../../lib/wtetCompleteNotify'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 export async function POST(request) {
   const ip = getClientIp(request)
@@ -22,7 +23,7 @@ export async function POST(request) {
   const waiverLang = lang === 'fr' ? 'fr' : 'en'
 
   const normalEmail = normalizeEmail(email)
-  if (!token && (!normalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalEmail))) {
+  if (!token && (!normalEmail || !isValidEmail(normalEmail))) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (agreed !== true) return Response.json({ error: 'You must agree to the waiver terms.' }, { status: 400 })

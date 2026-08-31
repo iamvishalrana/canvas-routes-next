@@ -8,6 +8,7 @@ import { normalizeEmail } from '../../../lib/normalizeEmail'
 import { captureException } from '../../../lib/sentry'
 import { useLanguage } from '../../../lib/i18n/LanguageContext'
 import { genericAwardsT } from '../../../lib/i18n/genericAwards'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 // Only the logo — candidate photos are real uploaded car photos and aren't
 // needed until after email verification, well after this loader is gone.
@@ -68,7 +69,7 @@ export default function EventAwardsPage() {
     e.preventDefault()
     setErrMsg(null)
     const entered = normalizeEmail(email)
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+    if (!isValidEmail(entered)) {
       setErrMsg(t.invalidEmailError)
       return
     }

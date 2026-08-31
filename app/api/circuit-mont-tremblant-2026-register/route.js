@@ -7,6 +7,7 @@ import { createClient } from '../../../lib/supabase/server'
 import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 const EVENT_NAME = 'Circuit Mont-Tremblant — Track Day — September 13, 2026'
 const MEMBER_PRICE_CENTS    = 34900 // $349 CAD
@@ -44,7 +45,7 @@ export async function POST(request) {
   // Validate required fields
   if (!name?.trim() || name.trim().length < 2)
     return Response.json({ error: 'Full name is required.' }, { status: 400 })
-  if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!email?.trim() || !isValidEmail(email))
     return Response.json({ error: 'A valid email address is required.' }, { status: 400 })
   const VALID_VEHICLE = ['own', 'rental']
   if (!vehicleChoice || !VALID_VEHICLE.includes(vehicleChoice))

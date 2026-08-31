@@ -4,6 +4,7 @@ import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { canSendCode, issueCode } from '../../../../../lib/otp'
 import { captureException } from '../../../../../lib/sentry'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -68,7 +69,7 @@ export async function POST(request, { params }) {
 
   const { email } = await request.json().catch(() => ({}))
   const entered = normalizeEmail(email)
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+  if (!isValidEmail(entered)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (!UUID_RE.test(token)) {

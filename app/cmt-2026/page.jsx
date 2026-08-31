@@ -11,6 +11,7 @@ import PageLoader from '../../components/PageLoader'
 import { computeTax } from '../../lib/tax'
 import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { circuitMontTremblantT } from '../../lib/i18n/circuitMontTremblant'
+import { isValidEmail } from '../../lib/emailValidation'
 
 const MEMBER_PRICE = 349
 const NONMEMBER_PRICE = 379
@@ -472,7 +473,7 @@ export default function CircuitMontTremblantPage() {
       if (!form.isMember) e.isMember = true
       if (form.isMember !== 'yes') {
         if (form.name.trim().length < 2) e.name = true
-        if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+        if (!form.email.trim() || !isValidEmail(form.email)) e.email = true
         if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
         if (!form.dob_month) e.dob_month = true
         if (!form.dob_day)   e.dob_day   = true

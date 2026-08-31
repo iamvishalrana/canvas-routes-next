@@ -1,9 +1,10 @@
 import { createAdminClient } from '../../../../lib/supabase/admin.js'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const email = searchParams.get('email')?.toLowerCase().trim()
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ hasApplication: false })
   }
   try {

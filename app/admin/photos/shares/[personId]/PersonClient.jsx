@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, CopyBtn } from '../../../_components/shared'
 import { useConfirm } from '../../../_components/ConfirmProvider'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 const LIFETIME_OPTIONS = [7, 14, 30, 60, 90]
 
@@ -132,7 +133,7 @@ export default function PersonClient() {
   }
 
   async function saveEditPerson() {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personDraft.email.trim())) { setErr('A valid email is required.'); return }
+    if (!isValidEmail(personDraft.email)) { setErr('A valid email is required.'); return }
     setSavingPerson(true); setErr(null)
     try {
       const res = await fetch(`/api/admin/photo-share-people/${personId}`, {

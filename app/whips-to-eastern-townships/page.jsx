@@ -6,6 +6,7 @@ import PageLoader from '../../components/PageLoader'
 import { WTET_PARTICIPANTS as PARTICIPANTS } from '../../lib/wtetParticipants'
 import { captureException } from '../../lib/sentry'
 import { normalizeEmail } from '../../lib/normalizeEmail'
+import { isValidEmail } from '../../lib/emailValidation'
 
 const PASSWORD = 'eastern'
 
@@ -319,7 +320,7 @@ export default function EasternTownshipsPage() {
     // fully complete — re-verify automatically so they don't have to retype
     // the email they just used.
     const urlEmail = params.get('email')
-    if (!authed && urlEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(urlEmail)) {
+    if (!authed && urlEmail && isValidEmail(urlEmail)) {
       setEmail(urlEmail)
       submit(null, urlEmail)
     }
@@ -334,7 +335,7 @@ export default function EasternTownshipsPage() {
       setAuthed(true)
       return
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+    if (!isValidEmail(entered)) {
       setErrMsg(t.invalidEmailError)
       return
     }

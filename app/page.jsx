@@ -13,6 +13,7 @@ import { getConsent } from '../lib/consent'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { homepageT } from '../lib/i18n/homepage'
 import { routesT } from '../lib/i18n/routes'
+import { isValidEmail } from '../lib/emailValidation'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -485,7 +486,7 @@ export default function Home() {
     if (!form.registerFor) newErrors.registerFor = true
     if (form.name.trim().length < 2) newErrors.name = true
     if (!form.email.trim()) newErrors.email = 'required'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = 'invalid'
+    else if (!isValidEmail(form.email)) newErrors.email = 'invalid'
     else if (['.con','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) newErrors.email = 'typo'
     if (!form.year.trim()) newErrors.year = true
     if (!form.carMake) newErrors.carMake = true
@@ -505,7 +506,7 @@ export default function Home() {
       const next = { ...prev }
       if (field === 'email') {
         if (!form.email.trim()) { delete next.email }
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) next.email = 'invalid'
+        else if (!isValidEmail(form.email)) next.email = 'invalid'
         else if (['.con','.cmo','.ocm','.cm','.vom','.cpm','.c'].some(t => form.email.toLowerCase().endsWith(t))) next.email = 'typo'
         else delete next.email
       }

@@ -5,6 +5,7 @@ import Link from 'next/link'
 import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
 import TermsPrivacyNote from '../../components/TermsPrivacyNote'
+import { isValidEmail } from '../../lib/emailValidation'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -88,7 +89,7 @@ export default function CCDPage() {
     e.preventDefault()
     const newErrors = {}
     if (!form.name.trim() || form.name.trim().length < 2) newErrors.name = true
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = true
+    if (!form.email.trim() || !isValidEmail(form.email)) newErrors.email = true
     if (!form.year) newErrors.year = true
     if (!form.carMake) newErrors.carMake = true
     if (!form.carModel.trim()) newErrors.carModel = true

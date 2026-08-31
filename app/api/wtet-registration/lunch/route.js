@@ -6,6 +6,7 @@ import { WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, isWtetEventName } from '
 import { normalizeEventName } from '../../../../lib/eventMeta'
 import { notifyIfWtetComplete } from '../../../../lib/wtetCompleteNotify'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 export async function POST(request) {
   const ip = getClientIp(request)
@@ -16,7 +17,7 @@ export async function POST(request) {
   const email = normalizeEmail(body?.email)
   const token = body?.token
   const dishIds = body?.dishIds
-  if (!token && (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+  if (!token && (!email || !isValidEmail(email))) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (!Array.isArray(dishIds) || dishIds.length === 0) {

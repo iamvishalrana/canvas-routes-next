@@ -4,6 +4,7 @@ import { captureException } from '../../../../lib/sentry'
 import { WTET_EVENT_NAME, WTET_LUNCH_OPTIONS, WTET_LUNCH_DEFAULT_CUTOFF, normalizeWtetLunch, isWtetEventName } from '../../../../lib/wtetRegistrationContent'
 import { normalizeEventName } from '../../../../lib/eventMeta'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 // Email-only lookup, no code/link sent. Rate-limited per IP to slow down
 // enumeration — accepted tradeoff for a low-stakes single-event lookup.
@@ -15,7 +16,7 @@ export async function POST(request) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = normalizeEmail(body?.email)
   const token = body?.token
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
 

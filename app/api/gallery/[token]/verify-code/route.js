@@ -4,6 +4,7 @@ import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { checkCode, createSession } from '../../../../../lib/otp'
 import { loadPersonFolders } from '../../../../../lib/gallerySharePhotos'
 import { captureException } from '../../../../../lib/sentry'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -29,7 +30,7 @@ export async function POST(request, { params }) {
   const { email, code } = await request.json().catch(() => ({}))
   const entered = normalizeEmail(email)
   const candidate = String(code ?? '').trim()
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered) || !/^\d{6}$/.test(candidate)) {
+  if (!isValidEmail(entered) || !/^\d{6}$/.test(candidate)) {
     return Response.json({ error: 'Please enter the 6-digit code.' }, { status: 400 })
   }
 

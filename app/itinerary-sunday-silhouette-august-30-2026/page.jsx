@@ -4,6 +4,7 @@ import SiteFooter from '../../components/SiteFooter'
 import PageLoader from '../../components/PageLoader'
 import { captureException } from '../../lib/sentry'
 import { normalizeEmail } from '../../lib/normalizeEmail'
+import { isValidEmail } from '../../lib/emailValidation'
 
 const PASSWORD = 'crsunday'
 const ROUTE_SLUG = 'sunday-silhouette-2026'
@@ -562,7 +563,7 @@ export default function SundaySilhouetteItineraryPage() {
     let storedEmail = null
     try { storedEmail = localStorage.getItem('ss_itinerary_email') } catch {}
     const candidate = urlEmail || storedEmail
-    if (candidate && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) {
+    if (candidate && isValidEmail(candidate)) {
       setEmail(candidate)
       submit(null, candidate)
     }
@@ -578,7 +579,7 @@ export default function SundaySilhouetteItineraryPage() {
       setAuthed(true)
       return
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) {
+    if (!isValidEmail(entered)) {
       setErrMsg('Please enter a valid email address.')
       return
     }

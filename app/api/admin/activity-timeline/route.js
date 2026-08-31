@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
 import { formatPaymentType } from '../../../../lib/paymentTypeLabels'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 // Read-only, derived activity timeline for one contact (keyed by email). It
 // aggregates the timestamped events already recorded across the CRM — nothing
@@ -22,7 +23,7 @@ export async function GET(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
   const email = normalizeEmail(new URL(request.url).searchParams.get('email') || '')
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'A valid email is required.' }, { status: 400 })
   }
 

@@ -1,6 +1,7 @@
 import { createAdminClient } from '../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 // Live check while typing in the interest sheet: does this email belong to a
 // member account? Boolean only — same low-sensitivity stance as the event
@@ -12,7 +13,7 @@ export async function POST(request) {
   let body
   try { body = await request.json() } catch { return Response.json({ member: false }) }
   const email = normalizeEmail(body.email)
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ member: false })
+  if (!email || !isValidEmail(email)) return Response.json({ member: false })
 
   const supabase = createAdminClient()
   const { data } = await supabase.from('members').select('id').eq('email', email).maybeSingle()

@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import MembersGallery from './MembersGallery'
 import NonMemberPhotoUpload from './NonMemberPhotoUpload'
 import TermsPrivacyNote from './TermsPrivacyNote'
+import { isValidEmail } from '../lib/emailValidation'
 
 const inp = {
   width: '100%', boxSizing: 'border-box', padding: '0.95rem 1.1rem',
@@ -79,7 +80,7 @@ export default function GalleryPasswordGate({ token, children }) {
   async function requestCode(e, overrideEmail) {
     e?.preventDefault()
     const entered = (overrideEmail ?? email).trim().toLowerCase()
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(entered)) { setErrMsg('Please enter a valid email address.'); return }
+    if (!isValidEmail(entered)) { setErrMsg('Please enter a valid email address.'); return }
     setChecking(true); setErrMsg(null)
     try {
       const res = await fetch(`/api/gallery/${token}/request-code`, {

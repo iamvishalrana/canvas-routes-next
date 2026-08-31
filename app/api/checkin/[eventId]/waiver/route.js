@@ -4,6 +4,7 @@ import { captureException } from '../../../../../lib/sentry'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant } from '../../../../../lib/eventCheckinShared'
 import { maybeSendCheckinCompleteEmail } from '../../../../../lib/maybeSendCheckinCompleteEmail.js'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 export async function POST(request, { params }) {
   const { eventId } = await params
@@ -18,7 +19,7 @@ export async function POST(request, { params }) {
   } = body || {}
   const email = normalizeEmail(body?.email)
 
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (agreed !== true) return Response.json({ error: 'You must agree to the waiver terms.' }, { status: 400 })

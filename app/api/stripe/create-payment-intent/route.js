@@ -4,6 +4,7 @@ import { captureException } from '../../../../lib/sentry.js'
 import { PRICES } from '../../../../lib/prices.js'
 import { computeTax } from '../../../../lib/tax.js'
 import { getFbCookiesFromRequest } from '../../../../lib/metaConversionsApi.js'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 const VALID_TYPES = Object.keys(PRICES)
 
@@ -31,7 +32,7 @@ export async function POST(request) {
   if (!type || !VALID_TYPES.includes(type)) {
     return Response.json({ error: 'Invalid payment type.' }, { status: 400 })
   }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Valid email required.' }, { status: 400 })
   }
   if (!name?.trim()) {

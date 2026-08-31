@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { normalizeEmail } from '../../../../../lib/normalizeEmail'
 import { findEventRegistrant, resolveCheckinSections } from '../../../../../lib/eventCheckinShared'
+import { isValidEmail } from '../../../../../lib/emailValidation'
 
 // Email-only lookup, no code/link sent — same low-stakes tradeoff as the
 // WTET check-in lookup this is modeled on.
@@ -13,7 +14,7 @@ export async function POST(request, { params }) {
   let body
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = normalizeEmail(body?.email)
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
 

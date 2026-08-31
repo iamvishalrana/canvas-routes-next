@@ -5,6 +5,7 @@ import PastRouteRecapModal from './PastRouteRecapModal'
 import TermsPrivacyNote from './TermsPrivacyNote'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { routesT } from '../lib/i18n/routes'
+import { isValidEmail } from '../lib/emailValidation'
 
 const ACCENT = '#c5a882'
 export const ACCENT_BGS = [
@@ -295,7 +296,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
   useEffect(() => {
     setEmailIsMember(false)
     const email = sheetEmailValue.trim()
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return
+    if (!email || !isValidEmail(email)) return
     const t = setTimeout(() => {
       fetch('/api/upcoming-routes/member-check', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -329,7 +330,7 @@ export default function UpcomingRoadtrips({ isMember = false, memberName = '', m
     const name = (route.formName || '').trim()
     const email = (route.formEmail || '').trim()
     if (!name || name.length < 2) { patch(route.id, { error: t.errName }); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { patch(route.id, { error: t.errEmail }); return }
+    if (!isValidEmail(email)) { patch(route.id, { error: t.errEmail }); return }
     if (!(route.formPhone || '').trim()) { patch(route.id, { error: t.errPhone }); return }
     if (!(route.formCar || '').trim()) { patch(route.id, { error: t.errCar }); return }
     if (!route.formBudget) { patch(route.id, { error: t.errBudget }); return }

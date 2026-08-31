@@ -11,6 +11,7 @@ import { CHECKIN_T } from '../../../lib/genericCheckinContent'
 import { captureException } from '../../../lib/sentry'
 import { normalizeEmail } from '../../../lib/normalizeEmail'
 import { useLanguage } from '../../../lib/i18n/LanguageContext'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 function LangToggle() {
   const { lang, setLang } = useLanguage()
@@ -102,7 +103,7 @@ function CheckinContent() {
     let storedEmail = null
     try { storedEmail = localStorage.getItem(`checkin_email_${eventId}`) } catch {}
     const candidate = prefillEmail || storedEmail
-    if (!candidate || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) return
+    if (!candidate || !isValidEmail(candidate)) return
     autoSubmitted.current = true
     setEmail(candidate)
     verify(null, candidate)

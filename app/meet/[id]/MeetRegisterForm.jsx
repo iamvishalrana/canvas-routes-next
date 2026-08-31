@@ -7,6 +7,7 @@ import SiteFooter from '../../../components/SiteFooter'
 import TermsPrivacyNote from '../../../components/TermsPrivacyNote'
 import AddToCalendar from '../../../components/AddToCalendar'
 import { EVENT_TIME_OVERRIDES } from '../../../lib/eventMeta'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -138,7 +139,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
     let hasError = false
     switch (field) {
       case 'name':     hasError = !form.name.trim() || form.name.trim().length < 2; break
-      case 'email':    hasError = !form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email); break
+      case 'email':    hasError = !form.email.trim() || !isValidEmail(form.email); break
       case 'year':     hasError = !form.year; break
       case 'carMake':  hasError = !form.carMake; break
       case 'carModel': hasError = !form.carModel.trim(); break
@@ -175,7 +176,7 @@ export default function MeetRegisterForm({ event, spotsLeft = null }) {
     e.preventDefault()
     const newErrors = {}
     if (!form.name.trim() || form.name.trim().length < 2) newErrors.name = true
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) newErrors.email = true
+    if (!form.email.trim() || !isValidEmail(form.email)) newErrors.email = true
     if (!form.year) newErrors.year = true
     if (!form.carMake) newErrors.carMake = true
     if (!form.carModel.trim()) newErrors.carModel = true

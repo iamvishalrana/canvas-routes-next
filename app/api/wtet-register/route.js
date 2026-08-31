@@ -6,6 +6,7 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import { stripe } from '../../../lib/stripe.js'
 import { buildAdminNotifyHtml } from '../../../lib/adminEmail.js'
 import { computeTax } from '../../../lib/tax.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 const EVENT_NAME = 'Whips to Eastern Townships — July 5, 2026'
 const MEMBER_PRICE_CENTS    = 17900 // $179 CAD
@@ -39,7 +40,7 @@ export async function POST(request) {
   // Validate required fields
   if (!name?.trim() || name.trim().length < 2)
     return Response.json({ error: 'Full name is required.' }, { status: 400 })
-  if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!email?.trim() || !isValidEmail(email))
     return Response.json({ error: 'A valid email address is required.' }, { status: 400 })
   if (!year?.trim()) return Response.json({ error: 'Car year is required.' }, { status: 400 })
   if (!carMake?.trim()) return Response.json({ error: 'Car make is required.' }, { status: 400 })

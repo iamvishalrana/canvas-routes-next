@@ -7,6 +7,7 @@ import PageLoader from './PageLoader'
 import TermsPrivacyNote from './TermsPrivacyNote'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { partnersT } from '../lib/i18n/partners'
+import { isValidEmail } from '../lib/emailValidation'
 
 // Icons only — text for each entry comes from partnersT[lang].categories[i]
 // (matched by array index).
@@ -95,7 +96,7 @@ export default function PartnerContent() {
     if (!form.business.trim()) e.business = t.form.required
     if (!form.city.trim()) e.city = t.form.required
     if (!form.type) e.type = t.form.required
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = t.form.validEmailRequired
+    if (!form.email.trim() || !isValidEmail(form.email)) e.email = t.form.validEmailRequired
     if (!form.message.trim()) e.message = t.form.required
     return e
   }

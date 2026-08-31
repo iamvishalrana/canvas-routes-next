@@ -4,6 +4,7 @@ import { captureException } from '../../../lib/sentry.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { createClient } from '../../../lib/supabase/server'
 import { emailShell, p, button, infoCard, accentCard, eyebrow, COLOR } from '../../../lib/emailLayout.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 const EVENT_NAME = 'Cars, Coffee & Dad Jokes — June 20, 2026'
 
@@ -77,7 +78,7 @@ export async function POST(request) {
 
   if (!name?.trim() || name.trim().length < 2)
     return Response.json({ error: 'Full name is required.' }, { status: 400 })
-  if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+  if (!email?.trim() || !isValidEmail(email))
     return Response.json({ error: 'A valid email address is required.' }, { status: 400 })
   if (!year?.trim())
     return Response.json({ error: 'Car year is required.' }, { status: 400 })

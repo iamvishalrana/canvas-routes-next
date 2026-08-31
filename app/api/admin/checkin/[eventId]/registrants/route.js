@@ -4,6 +4,7 @@ import { normalizeEmail } from '../../../../../../lib/normalizeEmail'
 import { isSameEvent } from '../../../../../../lib/eventCheckinShared'
 import { isPermanentRegistrant } from '../../../../../../lib/jerryRegistrant.js'
 import { captureException } from '../../../../../../lib/sentry.js'
+import { isValidEmail } from '../../../../../../lib/emailValidation'
 
 // Manually add someone to an event's registrant list — for walk-ins, comps,
 // or anyone who registered outside the normal Stripe flow. Writes to the
@@ -18,7 +19,7 @@ export async function POST(request, { params }) {
   try { body = await request.json() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
   const email = normalizeEmail(body?.email)
   const name = (body?.name || '').trim()
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !isValidEmail(email)) {
     return Response.json({ error: 'Please enter a valid email address.' }, { status: 400 })
   }
   if (!name) return Response.json({ error: 'Please enter a name.' }, { status: 400 })

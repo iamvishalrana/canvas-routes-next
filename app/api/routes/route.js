@@ -3,6 +3,7 @@ import { deviceType } from '../../../lib/deviceType'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin.js'
 import { createClient } from '../../../lib/supabase/server.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 function h(str) {
   return String(str ?? '')
@@ -155,7 +156,7 @@ export async function POST(request) {
     return Response.json({ error: 'Invalid date of birth.' }, { status: 400 })
   }
   if (phone && phone.length > 30) return Response.json({ error: 'Phone too long.' }, { status: 400 })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return Response.json({ error: 'Invalid email address.' }, { status: 400 })
   }
   if (!passengers || !['1','2','3','4+'].includes(passengers)) {

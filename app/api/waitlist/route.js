@@ -3,6 +3,7 @@ import { deviceType } from '../../../lib/deviceType'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { emailShell, p, accentCard, instagram, eyebrow, COLOR } from '../../../lib/emailLayout.js'
+import { isValidEmail } from '../../../lib/emailValidation'
 
 function h(str) {
   return String(str ?? '')
@@ -113,7 +114,7 @@ export async function POST(request) {
   if (!dob_month || !dob_day) {
     return Response.json({ error: 'Date of birth month and day are required' }, { status: 400 })
   }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isValidEmail(email)) {
     return Response.json({ error: 'Invalid email address' }, { status: 400 })
   }
   if (name.length > 100) return Response.json({ error: 'Name too long' }, { status: 400 })

@@ -12,6 +12,7 @@ import { captureException } from '../lib/sentry'
 import { computeTax } from '../lib/tax'
 import { useLanguage } from '../lib/i18n/LanguageContext'
 import { membershipT } from '../lib/i18n/membership'
+import { isValidEmail } from '../lib/emailValidation'
 
 let _stripePromise = null
 function getStripe() {
@@ -518,7 +519,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
   function validate() {
     const e = {}
     if (!form.name.trim() || form.name.trim().length < 2) e.name = true
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+    if (!form.email.trim() || !isValidEmail(form.email)) e.email = true
     if (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 7)) e.phone = true
     if (!form.dob_month) e.dob_month = true
     if (!form.dob_day) e.dob_day = true
@@ -985,7 +986,7 @@ export default function MembershipContent({ membershipOpen = true, closedMessage
                     onBlur={e => {
                       setFocusedField(null)
                       const val = e.target.value.trim()
-                      if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
+                      if (isValidEmail(val)) {
                         fetch(`/api/public/membership-check?email=${encodeURIComponent(val)}`)
                           .then(r => r.ok ? r.json() : null)
                           .then(d => { if (d?.hasApplication) setAlreadyApplied(true) })

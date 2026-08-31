@@ -14,6 +14,7 @@ import { useLanguage } from '../../lib/i18n/LanguageContext'
 import { routeEventSharedT } from '../../lib/i18n/routeEventShared'
 import { sundaySilhouetteT } from '../../lib/i18n/sundaySilhouette'
 import { getRegistrationStatus } from '../../lib/routeRegistrationStatus'
+import { isValidEmail } from '../../lib/emailValidation'
 
 const EVENT_DATE = new Date('2026-08-30T11:30:00Z') // 7:30 AM EDT — Laval meetup
 
@@ -487,7 +488,7 @@ export default function SundaySilhouettePage() {
       if (!form.isMember) e.isMember = true
       if (form.isMember !== 'yes') {
         if (form.name.trim().length < 2) e.name = true
-        if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = true
+        if (!form.email.trim() || !isValidEmail(form.email)) e.email = true
         if (!phoneOptOut && (!form.phone.trim() || form.phone.replace(/\D/g,'').length < (countryCode === '+1' ? 10 : 6))) e.phone = true
         if (!form.dob_month) e.dob_month = true
         if (!form.dob_day)   e.dob_day   = true

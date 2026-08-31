@@ -2,6 +2,7 @@ import { createAdminClient } from '../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../lib/supabase/authCheck'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { normalizeWtetLunch } from '../../../../lib/wtetRegistrationContent'
+import { isValidEmail } from '../../../../lib/emailValidation'
 
 export async function GET(request) {
   if (!await requireAdmin()) return Response.json({ error: 'Forbidden' }, { status: 403 })
@@ -82,7 +83,7 @@ export async function POST(request) {
   // New flow: create application record + contact directly (no email sent)
   const { name, email, phone, car_year, car_model } = body
   if (!name?.trim() || !email?.trim()) return Response.json({ error: 'Name and email are required.' }, { status: 400 })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return Response.json({ error: 'Invalid email address.' }, { status: 400 })
+  if (!isValidEmail(email)) return Response.json({ error: 'Invalid email address.' }, { status: 400 })
 
   // Never upsert registrations here — an upsert with registrations: [] would
   // wipe the event history of an existing applicant with the same email.
