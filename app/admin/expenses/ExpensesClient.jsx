@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import JSZip from 'jszip'
-import { inp, sel, L, GhostBtn, DangerBtn, Err, DateRangeMenu } from '../_components/shared'
+import { inp, sel, L, GhostBtn, DangerBtn, Err, DateRangeMenu, FilterMenu } from '../_components/shared'
 import { EXPENSE_CATEGORIES, MEALS_ENTERTAINMENT_CATEGORY, MEALS_ENTERTAINMENT_DEDUCTIBLE_RATE } from '../../../lib/expenseCategories'
 import { EXPENSE_PAYMENT_METHODS, EXPENSE_PAYMENT_LABELS } from '../../../lib/expensePaymentMethods'
 import { EXPENSE_PROVINCES, EXPENSE_PROVINCE_MAP } from '../../../lib/expenseProvinces'
@@ -185,6 +185,38 @@ function fmtDate(d) {
   const [y, m, day] = d.split('-')
   return new Date(y, m - 1, day).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
 }
+
+// 'all' listed first — the neutral/unfiltered option FilterMenu's active
+// styling assumes options[0] to be.
+const RANGE_PRESET_KEYS = ['all', 'month', 'quarter', 'year']
+const RANGE_PRESET_LABELS = { all: 'All time', month: 'This month', quarter: 'This quarter', year: 'This year' }
+function rangePresetRange(preset) {
+  const now = new Date()
+  const y = now.getFullYear()
+  const pad = n => String(n).padStart(2, '0')
+  if (preset === 'all') return { from: '', to: '' }
+  if (preset === 'year') return { from: `${y}-01-01`, to: `${y}-12-31` }
+  if (preset === 'quarter') {
+    const startM = Math.floor(now.getMonth() / 3) * 3 + 1
+    const endM = startM + 2
+    return { from: `${y}-${pad(startM)}-01`, to: `${y}-${pad(endM)}-${pad(new Date(y, endM, 0).getDate())}` }
+  }
+  if (preset === 'month') {
+    const m = now.getMonth() + 1
+    return { from: `${y}-${pad(m)}-01`, to: `${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}` }
+  }
+  return null
+}
+const SORT_OPTIONS = [
+  { id: 'date_desc', label: 'Newest first' },
+  { id: 'date_asc', label: 'Oldest first' },
+  { id: 'amount_desc', label: 'Highest amount' },
+  { id: 'amount_asc', label: 'Lowest amount' },
+  { id: 'vendor_az', label: 'Vendor A–Z' },
+  { id: 'category_az', label: 'Category A–Z' },
+  { id: 'event_az', label: 'Event A–Z' },
+  { id: 'added_desc', label: 'Recently added' },
+]
 function slugify(str) {
   if (!str?.trim()) return 'general'
   return str.trim().toLowerCase().replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'general'
@@ -714,22 +746,16 @@ export default function ExpensesClient() {
   const summaryQst = summaryByQuarter.reduce((s, q) => s + q.qst, 0)
 
   function setRangePreset(preset) {
-    const now = new Date()
-    const y = now.getFullYear()
-    const pad = n => String(n).padStart(2, '0')
-    if (preset === 'all') { setDateFrom(''); setDateTo(''); return }
-    if (preset === 'year') { setDateFrom(`${y}-01-01`); setDateTo(`${y}-12-31`); return }
-    if (preset === 'quarter') {
-      const startM = Math.floor(now.getMonth() / 3) * 3 + 1
-      const endM = startM + 2
-      setDateFrom(`${y}-${pad(startM)}-01`); setDateTo(`${y}-${pad(endM)}-${pad(new Date(y, endM, 0).getDate())}`); return
-    }
-    if (preset === 'month') {
-      const m = now.getMonth() + 1
-      setDateFrom(`${y}-${pad(m)}-01`); setDateTo(`${y}-${pad(m)}-${pad(new Date(y, m, 0).getDate())}`)
-    }
+    const r = rangePresetRange(preset)
+    if (r) { setDateFrom(r.from); setDateTo(r.to) }
   }
   const hasDateFilter = !!(dateFrom || dateTo)
+  // Which quick preset (if any) matches the current dateFrom/dateTo — drives
+  // the consolidated FilterMenu's displayed selection below.
+  const activeRangePreset = RANGE_PRESET_KEYS.find(k => {
+    const r = rangePresetRange(k)
+    return (r.from || '') === (dateFrom || '') && (r.to || '') === (dateTo || '')
+  })
 
   function toggleGroup(name) { setOpenGroups(p => ({ ...p, [name]: !p[name] })) }
 
@@ -1802,10 +1828,18 @@ export default function ExpensesClient() {
         .exp-filters > div { min-width: 0; }
         @media (max-width: 640px) {
           .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
+          /* iOS's native date picker needs more than half of a 2-column
+             mobile row (~170px) to render its value without visually
+             overflowing into the next cell — give it the full row instead
+             of sharing one with Event/Label. */
+          .exp-date-field { grid-column: 1 / -1 !important; }
           .exp-actions-row { flex-wrap: wrap; }
-          /* Stack the filter controls cleanly instead of letting fixed widths collide. */
+          /* Search's own div and View's own div already set width:100% via
+             inline style (isMobile) — no longer force EVERY direct child
+             full-width here, since most of .exp-filters' children are now
+             compact FilterMenu/DateRangeMenu buttons (each renders its own
+             root <div>) that should wrap as pills, not stack full-width. */
           .exp-filters { gap: 0.5rem !important; }
-          .exp-filters > div { flex: 1 1 100% !important; width: 100% !important; }
           /* Button clusters (scan-notice actions, edit-panel actions, batch
              queue item actions) — wrapping alone still lets 3-5 buttons of
              uneven width break across lines unevenly and crowd each other.
@@ -2022,7 +2056,7 @@ export default function ExpensesClient() {
 
         {/* Row 1 — what & where */}
         <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.6rem', marginBottom: '0.6rem' }}>
-          <div>
+          <div className="exp-date-field">
             <L>Date</L>
             <input type="date" style={withLowConfidence(inp, 'expense_date', lowConfidenceFields)} max={today} value={form.expense_date}
               onChange={e => { clearLowConfidence('expense_date'); setForm(p => ({ ...p, expense_date: e.target.value })) }} required />
@@ -2249,101 +2283,56 @@ export default function ExpensesClient() {
       {/* Filter + summary bar */}
       {expenses.length > 0 && (
         <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.1rem', marginBottom: '1.25rem' }}>
-          {/* Event filter chips */}
-          {eventNames.length > 1 && (
-            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
-              {['all', ...eventNames].map(name => {
-                const active = filterEvent === name
-                return (
-                  <button key={name} className="exp-filter-chip exp-tap"
-                    onClick={() => setFilterEvent(name)}
-                    style={{
-                      fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase',
-                      padding: '0.35rem 0.7rem', border: '0.5px solid', borderRadius: '6px',
-                      cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
-                      background: active ? '#0F1E14' : 'none',
-                      color:      active ? '#F5F1EC' : '#888',
-                      borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.15)',
-                    }}>
-                    {name === 'all' ? 'All' : name}
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Date range + category filters */}
-          <div className="exp-filters" style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '0.85rem' }}>
+          {/* Filters — one button per GROUP that expands into its options
+              (FilterMenu, same pattern used elsewhere in admin), instead of
+              every option/field being its own always-visible chip or a
+              separately-labeled, width-constrained dropdown. Search stays a
+              plain text input (a menu doesn't make sense for free text);
+              View stays a 2-option segmented toggle (already minimal). */}
+          <div className="exp-filters" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '0.85rem' }}>
             <div style={{ width: isMobile ? '100%' : '190px' }}>
-              <L>Search</L>
-              <input style={inp} value={searchQuery} placeholder="Vendor, event, category, notes…"
+              <input style={inp} value={searchQuery} placeholder="Search vendor, event, category, notes…"
                 onChange={e => setSearchQuery(e.target.value)} />
             </div>
-            <div>
-              <L>Date Range</L>
-              <DateRangeMenu from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} maxDate={today} />
-            </div>
-            <div style={{ width: isMobile ? '100%' : '180px' }}>
-              <L>Category</L>
-              <div style={{ position: 'relative' }}>
-                <select style={sel} value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
-                  <option value="all">All categories</option>
-                  {usedCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <SelectChevron />
-              </div>
-            </div>
-            <div style={{ width: isMobile ? '100%' : '160px' }}>
-              <L>Payment</L>
-              <div style={{ position: 'relative' }}>
-                <select style={sel} value={filterPayment} onChange={e => setFilterPayment(e.target.value)}>
-                  <option value="all">All methods</option>
-                  {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
-                </select>
-                <SelectChevron />
-              </div>
-            </div>
+            <DateRangeMenu label="Date Range" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} maxDate={today} />
+            <FilterMenu
+              placeholder="Custom range"
+              options={RANGE_PRESET_KEYS.map(k => ({ id: k, label: RANGE_PRESET_LABELS[k] }))}
+              value={activeRangePreset}
+              onChange={setRangePreset}
+            />
+            {eventNames.length > 1 && (
+              <FilterMenu
+                options={[{ id: 'all', label: 'All events' }, ...eventNames.map(n => ({ id: n, label: n }))]}
+                value={filterEvent}
+                onChange={setFilterEvent}
+              />
+            )}
+            <FilterMenu
+              options={[{ id: 'all', label: 'All categories' }, ...usedCategories.map(c => ({ id: c, label: c }))]}
+              value={filterCategory}
+              onChange={setFilterCategory}
+            />
+            <FilterMenu
+              options={[{ id: 'all', label: 'All methods' }, ...PAYMENT_METHODS.map(m => ({ id: m.value, label: m.label }))]}
+              value={filterPayment}
+              onChange={setFilterPayment}
+            />
             {usedProvinces.length > 1 && (
-              <div style={{ width: isMobile ? '100%' : '170px' }}>
-                <L>Province / State</L>
-                <div style={{ position: 'relative' }}>
-                  <select style={sel} value={filterProvince} onChange={e => setFilterProvince(e.target.value)}>
-                    <option value="all">Everywhere</option>
-                    {usedProvinces.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
-                  </select>
-                  <SelectChevron />
-                </div>
-              </div>
+              <FilterMenu
+                options={[{ id: 'all', label: 'Everywhere' }, ...usedProvinces.map(p => ({ id: p.value, label: p.label }))]}
+                value={filterProvince}
+                onChange={setFilterProvince}
+              />
             )}
             {usedForeign && (
-              <div style={{ width: isMobile ? '100%' : '150px' }}>
-                <L>Currency</L>
-                <div style={{ position: 'relative' }}>
-                  <select style={sel} value={filterCurrency} onChange={e => setFilterCurrency(e.target.value)}>
-                    <option value="all">All currencies</option>
-                    <option value="CAD">CAD only</option>
-                    <option value="foreign">Foreign only</option>
-                  </select>
-                  <SelectChevron />
-                </div>
-              </div>
+              <FilterMenu
+                options={[{ id: 'all', label: 'All currencies' }, { id: 'CAD', label: 'CAD only' }, { id: 'foreign', label: 'Foreign only' }]}
+                value={filterCurrency}
+                onChange={setFilterCurrency}
+              />
             )}
-            <div style={{ width: isMobile ? '100%' : '170px' }}>
-              <L>Sort</L>
-              <div style={{ position: 'relative' }}>
-                <select style={sel} value={sortBy} onChange={e => setSortBy(e.target.value)}>
-                  <option value="date_desc">Newest first</option>
-                  <option value="date_asc">Oldest first</option>
-                  <option value="amount_desc">Highest amount</option>
-                  <option value="amount_asc">Lowest amount</option>
-                  <option value="vendor_az">Vendor A–Z</option>
-                  <option value="category_az">Category A–Z</option>
-                  <option value="event_az">Event A–Z</option>
-                  <option value="added_desc">Recently added</option>
-                </select>
-                <SelectChevron />
-              </div>
-            </div>
+            <FilterMenu options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
             <div style={{ width: isMobile ? '100%' : 'auto' }}>
               <L>View</L>
               <div style={{ display: 'inline-flex', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '8px', overflow: 'hidden', width: isMobile ? '100%' : 'auto' }}>
@@ -2355,17 +2344,6 @@ export default function ExpensesClient() {
                   </button>
                 ))}
               </div>
-            </div>
-            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', paddingBottom: '2px' }}>
-              {[['month', 'This month'], ['quarter', 'This quarter'], ['year', 'This year'], ['all', 'All time']].map(([key, label]) => {
-                const active = key === 'all' ? !hasDateFilter : false
-                return (
-                  <button key={key} type="button" className="exp-tap" onClick={() => setRangePreset(key)}
-                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '0.35rem 0.7rem', border: '0.5px solid', borderRadius: '6px', background: active ? '#0F1E14' : 'none', color: active ? '#F5F1EC' : '#777', borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.15)', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                    {label}
-                  </button>
-                )
-              })}
             </div>
           </div>
 
@@ -2804,7 +2782,7 @@ export default function ExpensesClient() {
                                 </div>
                               )}
                               <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                <div>
+                                <div className="exp-date-field">
                                   <L>Date</L>
                                   <input type="date" style={withLowConfidence(inp, 'expense_date', editLowConfidenceFields)} value={editForm.expense_date} max={today} required
                                     onChange={e => { clearEditLowConfidence('expense_date'); setEditForm(p => ({ ...p, expense_date: e.target.value })) }} />
