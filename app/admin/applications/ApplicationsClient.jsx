@@ -674,9 +674,14 @@ export default function ApplicationsClient() {
         <div style={{ padding: '4rem 0', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>No applications yet.</div>
       ) : (
         <div style={isMobile ? {} : { overflowX: 'auto' }}>
-        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', ...(isMobile ? {} : { minWidth: '700px' }) }}>
+        {/* Last column widened 110px→150px — the Capture/Reject pair and the
+            Routes/Inner Circle/× tier-picker (both live in inviteCell, last
+            column) had no flexWrap and didn't fit ("Inner Circle" alone is
+            ~96px), so they overflowed past the column's right edge. Both rows
+            now wrap too, as a second line of defense. minWidth bumped to match. */}
+        <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', ...(isMobile ? {} : { minWidth: '740px' }) }}>
           {!isMobile && (
-            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 150px', padding: '0.65rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', background: '#fafaf9', alignItems: 'center' }}>
               <input type="checkbox"
                 checked={filtered.length > 0 && filtered.every(a => selected.has(a.id))}
                 ref={el => { if (el) el.indeterminate = filtered.some(a => selected.has(a.id)) && !filtered.every(a => selected.has(a.id)) }}
@@ -727,7 +732,7 @@ export default function ApplicationsClient() {
                         <span style={{ fontSize: '10px', color: '#bbb' }}>Capturing…</span>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                          <div style={{ display: 'flex', gap: '0.6rem' }}>
+                          <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
                             <button onClick={() => setCaptureConfirm(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(59,107,47,0.1)', border: '0.5px solid rgba(59,107,47,0.4)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#3B6B2F', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Capture</button>
                             <button onClick={() => handleReject(a)} style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.3)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>Reject</button>
                           </div>
@@ -740,7 +745,7 @@ export default function ApplicationsClient() {
                     a.is_member || inviteStatus[a.id] === 'success' ? (
                       <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', border: '0.5px solid rgba(59,107,47,0.3)', padding: '3px 9px', background: 'rgba(59,107,47,0.07)' }}>Invited</span>
                     ) : appTierPick === a.id ? (
-                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <button onClick={() => setInviteTierConfirm({ app: a, tier: 'routes_member' })}
                           style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', background: 'none', border: '0.5px solid rgba(197,168,130,0.5)', padding: '9px 12px', minHeight: '34px', cursor: 'pointer', color: '#c5a882', fontFamily: 'var(--font-inter),sans-serif', whiteSpace: 'nowrap', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
                           Routes
@@ -802,7 +807,7 @@ export default function ApplicationsClient() {
                 }
                 return (
                 <div
-                  style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 110px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(a.id) ? 'rgba(197,168,130,0.06)' : isGreyed ? 'rgba(0,0,0,0.025)' : undefined }}
+                  style={{ display: 'grid', gridTemplateColumns: '28px 1.4fr 1.6fr 1.2fr 0.8fr 90px 150px', padding: '0.85rem 1.25rem', alignItems: 'center', cursor: 'pointer', background: selected.has(a.id) ? 'rgba(197,168,130,0.06)' : isGreyed ? 'rgba(0,0,0,0.025)' : undefined }}
                   onClick={handleRowClick}
                 >
                   <div onClick={e => e.stopPropagation()}>
