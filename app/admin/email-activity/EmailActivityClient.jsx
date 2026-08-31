@@ -23,6 +23,15 @@ const TYPE_FILTER_OPTIONS = [
   ...Object.entries(EVENT_META).map(([type, meta]) => ({ id: type, label: meta.label })),
 ]
 
+// Every event here is sitewide (transactional + broadcast) — this lets an
+// admin isolate just broadcast sends, or just everything else, without
+// leaving the flat table for the separate Past Broadcasts list.
+const SOURCE_FILTER_OPTIONS = [
+  { id: 'all',           label: 'All Sources' },
+  { id: 'broadcast',     label: 'Broadcasts Only' },
+  { id: 'transactional', label: 'Transactional Only' },
+]
+
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.35rem' }
 
 function fmtDate(iso) {
@@ -91,6 +100,7 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
   const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
+  const [sourceFilter, setSourceFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [page, setPage] = useState(1)
@@ -119,6 +129,8 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
     return events.filter(e => {
       if (typeFilter === 'problems') { if (!PROBLEM_TYPES.has(e.event_type)) return false }
       else if (typeFilter !== 'all' && e.event_type !== typeFilter) return false
+      if (sourceFilter === 'broadcast' && !e.broadcast_subject) return false
+      if (sourceFilter === 'transactional' && e.broadcast_subject) return false
       if (fromTs || toTs) {
         const ts = e.occurred_at ? new Date(e.occurred_at).getTime() : null
         if (!ts || (fromTs && ts < fromTs) || (toTs && ts > toTs)) return false
@@ -127,10 +139,11 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
       return (e.recipient || '').toLowerCase().includes(q)
         || (e.subject || '').toLowerCase().includes(q)
         || (e.resend_message_id || '').toLowerCase().includes(q)
+        || (e.broadcast_subject || '').toLowerCase().includes(q)
     })
-  }, [events, search, typeFilter, dateFrom, dateTo])
+  }, [events, search, typeFilter, sourceFilter, dateFrom, dateTo])
 
-  useEffect(() => { setPage(1) }, [search, typeFilter, dateFrom, dateTo])
+  useEffect(() => { setPage(1) }, [search, typeFilter, sourceFilter, dateFrom, dateTo])
 
   const pageRows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const problemCount = (counts['email.bounced'] || 0) + (counts['email.complained'] || 0)
@@ -146,7 +159,7 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
 
   const exportRows = filtered.map(e => [
     fmtDate(e.occurred_at), EVENT_META[e.event_type]?.label || e.event_type,
-    e.recipient || '', e.subject || '', e.bounce_type || '', e.resend_message_id || '',
+    e.recipient || '', e.subject || '', e.broadcast_subject || '', e.bounce_type || '', e.resend_message_id || '',
   ])
 
   return (
@@ -241,9 +254,10 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
         <input style={{ ...inp, maxWidth: '280px', flex: '1 1 200px' }} placeholder="Search recipient, subject, or message id…"
           value={search} onChange={e => setSearch(e.target.value)} />
         <FilterMenu options={TYPE_FILTER_OPTIONS} value={typeFilter} onChange={setTypeFilter} />
+        <FilterMenu options={SOURCE_FILTER_OPTIONS} value={sourceFilter} onChange={setSourceFilter} />
         <DateRangeMenu label="Date range" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
         {filtered.length > 0 && (
-          <ExportButton filename="email-activity" title="Email Activity" headers={['Time', 'Event', 'Recipient', 'Subject', 'Bounce Type', 'Message ID']} rows={exportRows} />
+          <ExportButton filename="email-activity" title="Email Activity" headers={['Time', 'Event', 'Recipient', 'Subject', 'Broadcast', 'Bounce Type', 'Message ID']} rows={exportRows} />
         )}
         <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto', fontFamily: 'var(--font-inter),sans-serif' }}>{filtered.length} of {events.length}{problemCount > 0 ? ` · ${problemCount} problem${problemCount !== 1 ? 's' : ''}` : ''}</span>
       </div>
@@ -251,7 +265,7 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
       {isMobile ? (
         <div>
           {pageRows.length === 0 && (
-            <div style={{ ...CARD, textAlign: 'center', color: '#bbb', fontSize: '13px' }}>No events{search || typeFilter !== 'all' || dateFrom || dateTo ? ' match this filter' : ' yet'}.</div>
+            <div style={{ ...CARD, textAlign: 'center', color: '#bbb', fontSize: '13px' }}>No events{search || typeFilter !== 'all' || sourceFilter !== 'all' || dateFrom || dateTo ? ' match this filter' : ' yet'}.</div>
           )}
           {pageRows.map(e => {
             const meta = EVENT_META[e.event_type] || { label: e.event_type, color: '#888', bg: 'rgba(0,0,0,0.04)' }
@@ -262,6 +276,12 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
                   <span style={{ fontSize: '11px', color: '#aaa', whiteSpace: 'nowrap' }}>{fmtDate(e.occurred_at)}</span>
                 </div>
                 <div style={{ fontSize: '12.5px', color: '#333', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.15rem', marginBottom: '0.2rem' }}>{e.recipient || '—'}<CopyBtn value={e.recipient} /></div>
+                {e.broadcast_subject && (
+                  <button onClick={() => { setSearch(e.broadcast_subject); setSourceFilter('broadcast') }} title="Filter to just this broadcast"
+                    style={{ display: 'inline-block', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', color: '#8A6535', fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: '99px', marginBottom: '0.3rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    Broadcast
+                  </button>
+                )}
                 {e.subject && <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.4rem' }}>{e.subject}</div>}
                 {e.bounce_type && <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '0.4rem' }}>{e.bounce_type}</div>}
                 {e.recipient && (
@@ -287,7 +307,7 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
               </thead>
               <tbody>
                 {pageRows.length === 0 && (
-                  <tr><td colSpan={6} style={{ padding: '2rem 1rem', textAlign: 'center', color: '#bbb' }}>No events{search || typeFilter !== 'all' || dateFrom || dateTo ? ' match this filter' : ' yet'}.</td></tr>
+                  <tr><td colSpan={6} style={{ padding: '2rem 1rem', textAlign: 'center', color: '#bbb' }}>No events{search || typeFilter !== 'all' || sourceFilter !== 'all' || dateFrom || dateTo ? ' match this filter' : ' yet'}.</td></tr>
                 )}
                 {pageRows.map(e => {
                   const meta = EVENT_META[e.event_type] || { label: e.event_type, color: '#888', bg: 'rgba(0,0,0,0.04)' }
@@ -301,7 +321,15 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
                       <td style={{ padding: '0.65rem 1rem', color: '#333', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{e.recipient || '—'}<CopyBtn value={e.recipient} /></span>
                       </td>
-                      <td style={{ padding: '0.65rem 1rem', color: '#666', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.subject || '—'}</td>
+                      <td style={{ padding: '0.65rem 1rem', color: '#666', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {e.broadcast_subject && (
+                          <button onClick={() => { setSearch(e.broadcast_subject); setSourceFilter('broadcast') }} title="Filter to just this broadcast"
+                            style={{ display: 'inline-block', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', color: '#8A6535', fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '1px 6px', borderRadius: '99px', marginRight: '0.4rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                            Broadcast
+                          </button>
+                        )}
+                        {e.subject || '—'}
+                      </td>
                       <td style={{ padding: '0.65rem 1rem', color: '#bbb', whiteSpace: 'nowrap' }}>
                         <span style={{ fontFamily: 'monospace', fontSize: '11px' }}>{(e.resend_message_id || '').slice(0, 8)}…</span>
                         <CopyBtn value={e.resend_message_id} />

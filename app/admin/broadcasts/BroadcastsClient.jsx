@@ -8,7 +8,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
-import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn } from '../_components/shared'
+import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn, KebabMenu } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { EMAIL_SIGNATURE_HTML } from '../../../lib/emailSignature.js'
 import EmailActivityClient from '../email-activity/EmailActivityClient'
@@ -422,12 +422,10 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
   const [history, setHistory]                   = useState([])
   const [historyLoading, setHistoryLoading]     = useState(false)
   const [historyError, setHistoryError]         = useState(null)
-  const [expandedHistoryId, setExpandedHistoryId] = useState(null)     // 3. history expand
+  const [pastBroadcastsOpen, setPastBroadcastsOpen] = useState(false)  // collapsed until clicked
+  const [deliveryModalId, setDeliveryModalId]   = useState(null)       // which broadcast's delivery modal is open
   const [deliveryStats, setDeliveryStats]       = useState({})        // { [broadcastId]: { loading, error, counts, recipients, showList } }
   const [historySearch, setHistorySearch]       = useState('')
-  const [historyAudience, setHistoryAudience]   = useState('all')
-  const [historySort, setHistorySort]           = useState('newest')
-  const [expandedMonths, setExpandedMonths]     = useState(() => new Set()) // collapsed by default
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null)
   const [deletingHistory, setDeletingHistory]   = useState(false)
   const [historyActionErr, setHistoryActionErr] = useState(null)
@@ -554,7 +552,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
     setHistoryLoading(false)
   }, [])
 
-  useEffect(() => { if (tab === 'history') loadHistory() }, [tab, loadHistory])
+  useEffect(() => { if (tab === 'activity') loadHistory() }, [tab, loadHistory])
 
   async function deleteHistory(id) {
     setDeletingHistory(true)
@@ -568,21 +566,13 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { setHistoryActionErr(d.error || 'Failed to delete.'); return }
       setHistory(prev => prev.filter(h => h.id !== id))
-      if (expandedHistoryId === id) setExpandedHistoryId(null)
+      if (deliveryModalId === id) setDeliveryModalId(null)
       setDeleteHistoryConfirm(null)
     } catch {
       setHistoryActionErr('Network error — entry not deleted.')
     } finally {
       setDeletingHistory(false)
     }
-  }
-
-  function toggleMonth(key) {
-    setExpandedMonths(prev => {
-      const n = new Set(prev)
-      if (n.has(key)) n.delete(key); else n.add(key)
-      return n
-    })
   }
 
   const loadTemplates = useCallback(async () => {
@@ -633,7 +623,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
   }
 
   const onBroadcastChange = useCallback(() => {
-    if (tabRef.current === 'history') loadHistory()
+    if (tabRef.current === 'activity') loadHistory()
   }, [loadHistory])
   useRealtimeSync('broadcasts', onBroadcastChange)
 
@@ -816,30 +806,18 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
       .catch(() => setDeliveryStats(prev => ({ ...prev, [id]: { loading: false, error: true } })))
   }
 
-  // Filter → sort → group by send month
-  const filteredHistory = history
-    .filter(h => historyAudience === 'all' || h.audience === historyAudience)
-    .filter(h => !historySearch.trim() || (h.subject || '').toLowerCase().includes(historySearch.trim().toLowerCase()))
-  const sortedHistory = [...filteredHistory].sort((a, b) => {
-    if (historySort === 'oldest')      return new Date(a.sent_at) - new Date(b.sent_at)
-    if (historySort === 'most_sent')   return (b.sent_count || 0) - (a.sent_count || 0)
-    if (historySort === 'most_failed') return (b.failed_count || 0) - (a.failed_count || 0)
-    return new Date(b.sent_at) - new Date(a.sent_at)
-  })
-  const monthsMap = new Map()
-  for (const h of sortedHistory) {
-    const d = new Date(h.sent_at)
-    // Group by Montreal calendar month, not the server's UTC month — a
-    // broadcast sent late evening in Montreal can already be past midnight UTC.
-    const parts = new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', timeZone: 'America/Toronto' }).formatToParts(d)
-    const key = `${parts.find(p => p.type === 'year').value}-${parts.find(p => p.type === 'month').value}`
-    if (!monthsMap.has(key)) monthsMap.set(key, { key, label: d.toLocaleDateString('en-CA', { month: 'long', year: 'numeric', timeZone: 'America/Toronto' }), rows: [] })
-    monthsMap.get(key).rows.push(h)
+  function openDeliveryModal(h) {
+    setDeliveryModalId(h.id)
+    loadDeliveryStats(h.id)
   }
-  const historyMonths = [...monthsMap.values()].sort((a, b) =>
-    historySort === 'oldest' ? a.key.localeCompare(b.key) : b.key.localeCompare(a.key))
-  // Searching with everything collapsed would hide all matches — open while searching
-  const forceMonthsOpen = !!historySearch.trim()
+
+  // Filter → sort — this is now just the compact "Past Broadcasts" list
+  // (management actions: re-use / retry / delete). Delivery browsing lives
+  // in the Email Activity table below, which already has its own filters.
+  const filteredHistory = history
+    .filter(h => !historySearch.trim() || (h.subject || '').toLowerCase().includes(historySearch.trim().toLowerCase()))
+  const sortedHistory = [...filteredHistory].sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at))
+  const deliveryModalBroadcast = deliveryModalId ? history.find(h => h.id === deliveryModalId) : null
 
   return (
     <div style={{ padding: 'clamp(1.5rem, 3vw, 2.5rem)' }}>
@@ -881,11 +859,6 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
           border: 0.5px solid rgba(0,0,0,0.15);
           animation: adminModalIn 0.22s cubic-bezier(0.2,0.8,0.3,1);
         }
-        .bc-history-row:hover { background: rgba(0,0,0,0.018) !important; }
-        .bc-reuse-btn { opacity: 0.5; transition: opacity 0.1s; }
-        .bc-history-row:hover .bc-reuse-btn { opacity: 1; }
-        @media (hover: none) { .bc-reuse-btn { opacity: 1; } }
-
         /* ── Broadcast animations ── */
         @keyframes bc-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes bc-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
@@ -924,7 +897,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
 
       {/* Tabs — horizontal scroll (not wrap) once 4 tabs no longer fit a narrow viewport */}
       <div style={{ display: 'flex', marginBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-        {[{ id: 'compose', label: 'Compose' }, { id: 'templates', label: 'Templates' }, { id: 'history', label: 'History' }, { id: 'activity', label: 'Email Activity' }].map(t => (
+        {[{ id: 'compose', label: 'Compose' }, { id: 'templates', label: 'Templates' }, { id: 'activity', label: 'Email Activity' }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: '0.6rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
             fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
@@ -936,15 +909,75 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
         ))}
       </div>
 
-      {/* ── Email Activity — cross-broadcast Resend delivery/bounce/complaint events ── */}
+      {/* ── Email Activity — merges the old History tab in as a compact,
+           collapsed-by-default "Past Broadcasts" management list (re-use /
+           retry-failed / delete), with the flat sitewide delivery table
+           (every Resend event, broadcast or not) as the main view below ── */}
       {tab === 'activity' && (
-        <EmailActivityClient
-          events={emailEvents}
-          counts={emailCounts}
-          configured={emailConfigured}
-          loadError={emailLoadError}
-          fetchedAt={emailFetchedAt}
-        />
+        <div>
+          <div style={{ marginBottom: '1.5rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+            <button
+              onClick={() => setPastBroadcastsOpen(v => !v)}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.85rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif' }}
+            >
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5" style={{ transform: pastBroadcastsOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+              <span style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888' }}>Past Broadcasts</span>
+              {history.length > 0 && <span style={{ fontSize: '10px', color: '#bbb' }}>({history.length})</span>}
+            </button>
+            {pastBroadcastsOpen && (
+              <div style={{ padding: '0 1.25rem 1.25rem' }}>
+                <input
+                  value={historySearch}
+                  onChange={e => setHistorySearch(e.target.value)}
+                  placeholder="Search subject…"
+                  style={{ ...INP, maxWidth: '260px', padding: '0.45rem 0.65rem', fontSize: '12px', marginBottom: '0.75rem' }}
+                />
+                {historyActionErr && (
+                  <div style={{ padding: '0.6rem 1rem', fontSize: '12px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', marginBottom: '0.75rem' }}>{historyActionErr}</div>
+                )}
+                {historyLoading ? (
+                  <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
+                ) : historyError ? (
+                  <div style={{ padding: '1rem', fontSize: '13px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)' }}>{historyError}</div>
+                ) : sortedHistory.length === 0 ? (
+                  <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
+                    {history.length === 0 ? 'No broadcasts sent yet.' : 'No broadcasts match this search.'}
+                  </div>
+                ) : (
+                  <div>
+                    {sortedHistory.map((h, idx) => (
+                      <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0', borderTop: idx > 0 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', flexWrap: 'wrap' }}>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.subject}</div>
+                          <div style={{ fontSize: '10px', color: '#bbb', marginTop: '1px' }}>
+                            {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto' })}
+                            {' · '}{h.audience === 'specific_emails' ? `${h.specific_emails?.length ?? 0} emails` : AUDIENCE_LABELS[h.audience] || h.audience}
+                            {' · '}<span style={{ color: '#3B6B2F' }}>{h.sent_count} sent</span>
+                            {h.failed_count > 0 && <span style={{ color: '#93333E' }}> · {h.failed_count} failed</span>}
+                          </div>
+                        </div>
+                        <KebabMenu items={[
+                          { label: 'View Delivery', onClick: () => openDeliveryModal(h) },
+                          { label: 'Re-use', onClick: () => reuseHistory(h) },
+                          h.failed_recipients?.length > 0 ? { label: 'Retry Failed', onClick: () => retryFailed(h) } : null,
+                          { label: 'Delete', danger: true, onClick: () => setDeleteHistoryConfirm(h) },
+                        ]} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <EmailActivityClient
+            events={emailEvents}
+            counts={emailCounts}
+            configured={emailConfigured}
+            loadError={emailLoadError}
+            fetchedAt={emailFetchedAt}
+          />
+        </div>
       )}
 
       {/* ── Templates ── */}
@@ -1012,199 +1045,6 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* ── History ── */}
-      {tab === 'history' && (
-        <div>
-          {/* Filter + sort toolbar */}
-          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
-            <input
-              value={historySearch}
-              onChange={e => setHistorySearch(e.target.value)}
-              placeholder="Search subject…"
-              style={{ ...INP, flex: '1 1 180px', maxWidth: '260px', padding: '0.45rem 0.65rem', fontSize: '12px' }}
-            />
-            <select style={{ ...TSEL, height: '30px', padding: '2px 8px' }} value={historyAudience} onChange={e => setHistoryAudience(e.target.value)}>
-              <option value="all">All audiences</option>
-              {AUDIENCE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select style={{ ...TSEL, height: '30px', padding: '2px 8px' }} value={historySort} onChange={e => setHistorySort(e.target.value)}>
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-              <option value="most_sent">Most sent</option>
-              <option value="most_failed">Most failed</option>
-            </select>
-            <span style={{ fontSize: '11px', color: '#aaa', marginLeft: 'auto' }}>
-              {filteredHistory.length} broadcast{filteredHistory.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-          {historyActionErr && (
-            <div style={{ padding: '0.6rem 1rem', fontSize: '12px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', marginBottom: '1rem' }}>{historyActionErr}</div>
-          )}
-          {historyLoading ? (
-            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
-          ) : historyError ? (
-            <div style={{ padding: '1rem', fontSize: '13px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)' }}>{historyError}</div>
-          ) : historyMonths.length === 0 ? (
-            <div style={{ padding: '3rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
-              {history.length === 0 ? 'No broadcasts sent yet.' : 'No broadcasts match the current filters.'}
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {historyMonths.map(({ key, label, rows }) => {
-                const open = forceMonthsOpen || expandedMonths.has(key)
-                const monthSent = rows.reduce((sum, h) => sum + (h.sent_count || 0), 0)
-                return (
-                  <div key={key} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                    {/* Month header */}
-                    <button
-                      onClick={() => toggleMonth(key)}
-                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.6rem 1rem', background: open ? 'rgba(0,0,0,0.015)' : 'none', border: 'none', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', textAlign: 'left' }}
-                    >
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'transform 0.2s', transform: open ? 'rotate(0deg)' : 'rotate(-90deg)', flexShrink: 0 }}><polyline points="6 9 12 15 18 9"/></svg>
-                      <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', letterSpacing: '0.02em' }}>{label}</span>
-                      <span style={{ fontSize: '10px', color: '#bbb' }}>{rows.length} broadcast{rows.length !== 1 ? 's' : ''}</span>
-                      <span style={{ fontSize: '10px', color: '#3B6B2F', marginLeft: 'auto' }}>{monthSent} sent</span>
-                    </button>
-                    {/* Rows */}
-                    {open && rows.map((h, idx) => (
-                      <div key={h.id} className="admin-panel-enter">
-                        <div
-                          className="bc-history-row"
-                          style={{ padding: '0.5rem 1rem 0.5rem 2rem', borderTop: '0.5px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}
-                        >
-                          <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>{h.subject}</span>
-                            <span style={{ fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '1px 6px', border: '0.5px solid rgba(197,168,130,0.4)', background: 'rgba(197,168,130,0.07)', color: '#8A6535', whiteSpace: 'nowrap' }}>
-                              {h.audience === 'specific_emails'
-                                ? `${h.specific_emails?.length ?? 0} emails`
-                                : AUDIENCE_LABELS[h.audience] || h.audience}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '10px', color: '#bbb' }}>
-                              {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto' })}
-                            </span>
-                            <span style={{ fontSize: '11px', fontWeight: '500', color: '#3B6B2F' }}>{h.sent_count}✓</span>
-                            {h.failed_count > 0 && <span style={{ fontSize: '11px', fontWeight: '500', color: '#93333E' }}>{h.failed_count}✗</span>}
-                            <button
-                              onClick={() => {
-                                const next = expandedHistoryId === h.id ? null : h.id
-                                setExpandedHistoryId(next)
-                                if (next) loadDeliveryStats(next)
-                              }}
-                              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: h.failed_count > 0 ? '#93333E' : '#888', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
-                            >
-                              {expandedHistoryId === h.id ? 'Hide' : h.failed_count > 0 ? 'Details' : 'Delivery'}
-                            </button>
-                            <button
-                              className="bc-reuse-btn"
-                              onClick={() => reuseHistory(h)}
-                              style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.12)', padding: '2px 7px', cursor: 'pointer', color: '#555', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
-                            >
-                              Re-use
-                            </button>
-                            <button
-                              onClick={() => setDeleteHistoryConfirm(h)}
-                              title="Delete from history"
-                              style={{ background: 'none', border: '0.5px solid rgba(147,51,62,0.25)', padding: '2px 7px', cursor: 'pointer', color: '#93333E', fontSize: '9px', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.06em', textTransform: 'uppercase' }}
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </div>
-                        {expandedHistoryId === h.id && (
-                          <div style={{ padding: '1rem 1.25rem 1rem 2rem', background: '#fafaf9', borderTop: '0.5px solid rgba(0,0,0,0.05)' }}>
-                            {h.audience === 'specific_emails' && h.specific_emails?.length > 0 && (
-                              <div style={{ fontSize: '11px', color: '#999', marginBottom: '0.75rem', wordBreak: 'break-word' }}>
-                                To: {h.specific_emails.join(', ')}
-                              </div>
-                            )}
-                            {(() => {
-                              const ds = deliveryStats[h.id]
-                              if (!ds || ds.loading) {
-                                return <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.75rem' }}>{ds?.loading ? 'Loading delivery status…' : ''}</div>
-                              }
-                              if (ds.error) {
-                                return <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '0.75rem' }}>Could not load delivery status.</div>
-                              }
-                              if (!ds.counts || ds.counts.total === 0) {
-                                return <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.75rem' }}>No delivery data — this broadcast was sent before per-recipient tracking was added.</div>
-                              }
-                              const c = ds.counts
-                              return (
-                                <div style={{ marginBottom: '0.75rem' }}>
-                                  <div style={{ display: 'flex', gap: '0.9rem', flexWrap: 'wrap', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                    <span style={{ color: '#3B6B2F' }}>{c.delivered} delivered</span>
-                                    <span style={{ color: '#4FA3A5' }}>{c.opened} opened</span>
-                                    <span style={{ color: '#4FA3A5' }}>{c.clicked} clicked</span>
-                                    {c.bounced > 0 && <span style={{ color: '#93333E' }}>{c.bounced} bounced</span>}
-                                    {c.complained > 0 && <span style={{ color: '#93333E' }}>{c.complained} complained</span>}
-                                    {c.pending > 0 && <span style={{ color: '#bbb' }}>{c.pending} pending</span>}
-                                    {c.sendFailed > 0 && <span style={{ color: '#93333E' }}>{c.sendFailed} failed to send</span>}
-                                  </div>
-                                  {ds.recipients?.length > 0 && (
-                                    <>
-                                      <button type="button"
-                                        onClick={() => setDeliveryStats(prev => ({ ...prev, [h.id]: { ...prev[h.id], showList: !prev[h.id].showList } }))}
-                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#8A6535', fontSize: '10px', textDecoration: 'underline', padding: 0, marginTop: '0.4rem', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                        {ds.showList ? 'Hide recipient list' : `Show recipient list (${ds.recipients.length})`}
-                                      </button>
-                                      {ds.showList && (
-                                        <div style={{ marginTop: '0.5rem', maxHeight: '220px', overflowY: 'auto', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '6px', background: '#fff' }}>
-                                          {ds.recipients.map((r, ri) => (
-                                            <div key={ri} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.3rem 0.6rem', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', borderBottom: ri < ds.recipients.length - 1 ? '0.5px solid rgba(0,0,0,0.04)' : 'none' }}>
-                                              <span style={{ color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || r.email}</span>
-                                              <span style={{ flexShrink: 0, color: DELIVERY_STATUS_META[r.status]?.color || '#999', letterSpacing: '0.04em' }}>
-                                                {DELIVERY_STATUS_META[r.status]?.label || r.status}
-                                              </span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </>
-                                  )}
-                                </div>
-                              )
-                            })()}
-                            {h.failed_recipients?.length > 0 && (
-                              <div style={{ marginBottom: h.body_html ? '1rem' : 0, padding: '0.75rem 0.9rem', background: 'rgba(147,51,62,0.04)', border: '0.5px solid rgba(147,51,62,0.18)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                                  <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                    {h.failed_recipients.length} failed recipient{h.failed_recipients.length !== 1 ? 's' : ''}
-                                  </div>
-                                  <button type="button" onClick={() => retryFailed(h)}
-                                    style={{ background: '#93333E', color: '#F5F1EC', border: 'none', borderRadius: '5px', padding: '3px 10px', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }}>
-                                    Retry these →
-                                  </button>
-                                </div>
-                                {h.failed_recipients.map((f, fi) => (
-                                  <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < h.failed_recipients.length - 1 ? '0.35rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>
-                                    <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{f.name || f.email}</span>
-                                    {f.name && <span style={{ color: '#999' }}> · {f.email}</span>}
-                                    <CopyBtn value={f.email} />
-                                    {f.reason && <span style={{ color: '#93333E' }}> — {f.reason}</span>}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {h.body_html && (
-                              <div
-                                style={{ fontSize: '13px', lineHeight: '1.7', color: '#444', fontFamily: 'Arial,sans-serif' }}
-                                dangerouslySetInnerHTML={{ __html: h.body_html }}
-                              />
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )
-              })}
-            </div>
-          )}
         </div>
       )}
 
@@ -1509,6 +1349,87 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
           onConfirm={() => deleteHistory(deleteHistoryConfirm.id)}
           onCancel={() => setDeleteHistoryConfirm(null)}
         />
+      )}
+
+      {/* Per-broadcast delivery detail — from the compact Past Broadcasts list */}
+      {deliveryModalBroadcast && (
+        <div className="bc-preview-overlay" onClick={() => setDeliveryModalId(null)}>
+          <div className="bc-preview-modal" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem', padding: '0.85rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.08)', flexShrink: 0 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa', marginBottom: '0.25rem' }}>Delivery</div>
+                <div style={{ fontSize: '13px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{deliveryModalBroadcast.subject}</div>
+              </div>
+              <button onClick={() => setDeliveryModalId(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', color: '#aaa', lineHeight: 1, padding: '0 4px', flexShrink: 0 }}>×</button>
+            </div>
+            <div style={{ padding: '1.1rem 1.25rem', overflowY: 'auto', flex: 1 }}>
+              {deliveryModalBroadcast.audience === 'specific_emails' && deliveryModalBroadcast.specific_emails?.length > 0 && (
+                <div style={{ fontSize: '11px', color: '#999', marginBottom: '0.75rem', wordBreak: 'break-word' }}>
+                  To: {deliveryModalBroadcast.specific_emails.join(', ')}
+                </div>
+              )}
+              {(() => {
+                const ds = deliveryStats[deliveryModalBroadcast.id]
+                if (!ds || ds.loading) {
+                  return <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.75rem' }}>{ds?.loading ? 'Loading delivery status…' : ''}</div>
+                }
+                if (ds.error) {
+                  return <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '0.75rem' }}>Could not load delivery status.</div>
+                }
+                if (!ds.counts || ds.counts.total === 0) {
+                  return <div style={{ fontSize: '11px', color: '#bbb', marginBottom: '0.75rem' }}>No delivery data — this broadcast was sent before per-recipient tracking was added.</div>
+                }
+                const c = ds.counts
+                return (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.9rem', flexWrap: 'wrap', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      <span style={{ color: '#3B6B2F' }}>{c.delivered} delivered</span>
+                      <span style={{ color: '#4FA3A5' }}>{c.opened} opened</span>
+                      <span style={{ color: '#4FA3A5' }}>{c.clicked} clicked</span>
+                      {c.bounced > 0 && <span style={{ color: '#93333E' }}>{c.bounced} bounced</span>}
+                      {c.complained > 0 && <span style={{ color: '#93333E' }}>{c.complained} complained</span>}
+                      {c.pending > 0 && <span style={{ color: '#bbb' }}>{c.pending} pending</span>}
+                      {c.sendFailed > 0 && <span style={{ color: '#93333E' }}>{c.sendFailed} failed to send</span>}
+                    </div>
+                    {ds.recipients?.length > 0 && (
+                      <div style={{ marginTop: '0.75rem', maxHeight: '260px', overflowY: 'auto', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '6px', background: '#fff' }}>
+                        {ds.recipients.map((r, ri) => (
+                          <div key={ri} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0.65rem', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', borderBottom: ri < ds.recipients.length - 1 ? '0.5px solid rgba(0,0,0,0.04)' : 'none' }}>
+                            <span style={{ color: '#444', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name || r.email}</span>
+                            <span style={{ flexShrink: 0, color: DELIVERY_STATUS_META[r.status]?.color || '#999', letterSpacing: '0.04em' }}>
+                              {DELIVERY_STATUS_META[r.status]?.label || r.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
+              {deliveryModalBroadcast.failed_recipients?.length > 0 && (
+                <div style={{ padding: '0.75rem 0.9rem', background: 'rgba(147,51,62,0.04)', border: '0.5px solid rgba(147,51,62,0.18)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                    <div style={{ fontSize: '9px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      {deliveryModalBroadcast.failed_recipients.length} failed recipient{deliveryModalBroadcast.failed_recipients.length !== 1 ? 's' : ''}
+                    </div>
+                    <button type="button" onClick={() => { setDeliveryModalId(null); retryFailed(deliveryModalBroadcast) }}
+                      style={{ background: '#93333E', color: '#F5F1EC', border: 'none', borderRadius: '5px', padding: '3px 10px', cursor: 'pointer', fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      Retry these →
+                    </button>
+                  </div>
+                  {deliveryModalBroadcast.failed_recipients.map((f, fi) => (
+                    <div key={fi} style={{ fontSize: '12px', color: '#444', marginBottom: fi < deliveryModalBroadcast.failed_recipients.length - 1 ? '0.35rem' : 0, fontFamily: 'var(--font-inter),sans-serif' }}>
+                      <span style={{ fontWeight: '500', color: '#1a1a1a' }}>{f.name || f.email}</span>
+                      {f.name && <span style={{ color: '#999' }}> · {f.email}</span>}
+                      <CopyBtn value={f.email} />
+                      {f.reason && <span style={{ color: '#93333E' }}> — {f.reason}</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

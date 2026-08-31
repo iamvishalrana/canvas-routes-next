@@ -22,6 +22,29 @@ export default async function BroadcastsPage() {
       .limit(500)
     if (error) throw error
     emailEvents = data || []
+
+    // Tag each event with the broadcast it belongs to (if any) — joins via
+    // resend_message_id, same correlation the per-broadcast stats route
+    // (app/api/admin/broadcasts/[id]/stats) already does. Lets the merged
+    // Email Activity tab show which rows came from a broadcast vs. a
+    // transactional send, without duplicating the flat event list per-broadcast.
+    const messageIds = [...new Set(emailEvents.map(e => e.resend_message_id).filter(Boolean))]
+    if (messageIds.length > 0) {
+      const { data: recipients } = await supabase
+        .from('broadcast_recipients')
+        .select('resend_message_id, broadcast_id')
+        .in('resend_message_id', messageIds)
+      const broadcastIds = [...new Set((recipients || []).map(r => r.broadcast_id).filter(Boolean))]
+      const { data: broadcasts } = broadcastIds.length
+        ? await supabase.from('broadcasts').select('id, subject').in('id', broadcastIds)
+        : { data: [] }
+      const subjectById = new Map((broadcasts || []).map(b => [b.id, b.subject]))
+      const broadcastByMessageId = new Map((recipients || []).map(r => [r.resend_message_id, { broadcastId: r.broadcast_id, subject: subjectById.get(r.broadcast_id) || null }]))
+      emailEvents = emailEvents.map(e => {
+        const match = e.resend_message_id ? broadcastByMessageId.get(e.resend_message_id) : null
+        return { ...e, broadcast_id: match?.broadcastId || null, broadcast_subject: match?.subject || null }
+      })
+    }
   } catch {
     emailLoadError = true
   }
