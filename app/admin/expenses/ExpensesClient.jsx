@@ -234,7 +234,12 @@ function SelectChevron() {
   return <svg style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
 }
 
-const COL = '22px 96px 1fr 1fr 88px 88px 88px 78px'
+// Last column (row actions: reconciled toggle, duplicate, edit, delete) was
+// 78px — nowhere near enough for those 4 right-aligned buttons (~146px
+// needed), so they overflowed leftward into Total/Tax/Amount instead of
+// clipping. Widened to fit; minWidth below bumped by the same amount so the
+// table's own horizontal-scroll threshold still matches its real content width.
+const COL = '22px 96px 1fr 1fr 88px 88px 88px 155px'
 
 // Shared by all three upload sites below: browser -> R2 directly via a
 // presigned URL (receipts include scanned PDFs, which run larger than a
@@ -2333,18 +2338,20 @@ export default function ExpensesClient() {
               />
             )}
             <FilterMenu options={SORT_OPTIONS} value={sortBy} onChange={setSortBy} />
-            <div style={{ width: isMobile ? '100%' : 'auto' }}>
-              <L>View</L>
-              <div style={{ display: 'inline-flex', border: '1px solid rgba(0,0,0,0.14)', borderRadius: '8px', overflow: 'hidden', width: isMobile ? '100%' : 'auto' }}>
+            {/* Matches FilterMenu's own buttons exactly (same pill shape,
+                minHeight, font, padding) instead of its previous own square-
+                cornered, shorter, separately-labeled style — same row, same
+                size, no separate "View" label since none of the FilterMenu
+                buttons beside it have one either. */}
+            <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '99px', overflow: 'hidden', width: isMobile ? '100%' : 'auto' }}>
                 {[['flat', 'By date'], ['folders', 'Folders']].map(([key, label]) => (
                   <button key={key} type="button" className="exp-tap" onClick={() => setViewMode(key)}
-                    style={{ flex: 1, padding: '0.35rem 0.75rem', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif',
+                    style={{ flex: 1, padding: '5px 14px', minHeight: '30px', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif',
                       background: viewMode === key ? '#0F1E14' : '#fff', color: viewMode === key ? '#F5F1EC' : '#777' }}>
                     {label}
                   </button>
                 ))}
               </div>
-            </div>
           </div>
 
           {/* Summary row — totals live in the stat cards above */}
@@ -2644,7 +2651,7 @@ export default function ExpensesClient() {
                     {/* Column headers — desktop only; mobile uses card rows */}
                     {!isMobile && (
                       <div className="exp-scroll">
-                        <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '560px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.45rem 1.1rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fdfdfc', minWidth: '640px' }}>
                           {['', 'Date', 'Vendor', 'Category', 'Amount', 'Tax', 'Total', ''].map((h, i) => (
                             <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                           ))}
@@ -2736,7 +2743,7 @@ export default function ExpensesClient() {
                           ) : (
                             /* Desktop table row — scrolls horizontally on its own */
                             <div className="exp-scroll">
-                              <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '560px' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.65rem 1.1rem', alignItems: 'center', background: isEditing ? 'rgba(197,168,130,0.04)' : undefined, transition: 'background 0.2s', minWidth: '640px' }}>
                                 <input type="checkbox" checked={selectedIds.has(expense.id)} onChange={() => toggleSelect(expense.id)}
                                   style={{ width: '15px', height: '15px', cursor: 'pointer' }} aria-label="Select expense" />
                                 <div style={{ fontSize: '12px', color: '#555' }}>{fmtDate(expense.expense_date)}</div>
@@ -2952,7 +2959,7 @@ export default function ExpensesClient() {
                       </div>
                     ) : (
                       <div className="exp-scroll">
-                        <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '560px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: COL, padding: '0.55rem 1.1rem', borderTop: '0.5px solid rgba(0,0,0,0.07)', background: '#fafaf9', minWidth: '640px' }}>
                           <div style={{ gridColumn: '1 / 5', fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#bbb' }}>Group total</div>
                           <div style={{ fontSize: '12px', color: '#555', fontVariantNumeric: 'tabular-nums' }}>{fmt(group.total)}</div>
                           <div style={{ fontSize: '12px', color: '#888', fontVariantNumeric: 'tabular-nums' }}>{group.totalTax > 0 ? fmt(group.totalTax) : '—'}</div>
