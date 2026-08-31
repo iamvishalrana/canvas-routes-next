@@ -1806,6 +1806,18 @@ export default function ExpensesClient() {
           /* Stack the filter controls cleanly instead of letting fixed widths collide. */
           .exp-filters { gap: 0.5rem !important; }
           .exp-filters > div { flex: 1 1 100% !important; width: 100% !important; }
+          /* Button clusters (scan-notice actions, edit-panel actions, batch
+             queue item actions) — wrapping alone still lets 3-5 buttons of
+             uneven width break across lines unevenly and crowd each other.
+             Stacking each one full-width guarantees no collision regardless
+             of how many buttons or how long their labels are. */
+          .exp-btn-row-stack { flex-direction: column !important; align-items: stretch !important; }
+          .exp-btn-row-stack > button { width: 100%; justify-content: center; }
+          /* Batch queue row: thumbnail+text on top, actions full-width below,
+             instead of squeezing everything into one row. */
+          .exp-batch-item { flex-direction: column !important; align-items: stretch !important; }
+          .exp-batch-item-main { width: 100%; }
+          .exp-batch-item-actions { width: 100%; justify-content: flex-end; }
         }
 
         /* Scan button — recurring gold shimmer sweep, plus a stronger attention
@@ -1884,23 +1896,25 @@ export default function ExpensesClient() {
           <div style={{ fontSize: '10px', color: '#bbb', marginBottom: '0.85rem' }}>Each photo is read independently — tap Add to review &amp; save it, or Dismiss to discard.</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {batchQueue.map(item => (
-              <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px' }}>
-                {item.previewUrl ? (
-                  <img src={item.previewUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
-                ) : (
-                  <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(0,0,0,0.05)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#999' }}>PDF</div>
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {item.status === 'scanning' && <div style={{ fontSize: '12px', color: '#8A6535' }}>Scanning…</div>}
-                  {item.status === 'ok' && (
-                    <div style={{ fontSize: '12px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {item.data.vendor || 'Unknown vendor'}
-                      <span style={{ color: '#999' }}> · {item.data.date || 'no date'}{(item.data.total ?? item.data.amount) != null ? ` · ${fmt(item.data.total ?? item.data.amount)}` : ''}</span>
-                    </div>
+              <div key={item.id} className="exp-batch-item" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.6rem', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '8px' }}>
+                <div className="exp-batch-item-main" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: 1, minWidth: 0 }}>
+                  {item.previewUrl ? (
+                    <img src={item.previewUrl} alt="" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: '40px', height: '40px', borderRadius: '6px', background: 'rgba(0,0,0,0.05)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '9px', color: '#999' }}>PDF</div>
                   )}
-                  {item.status === 'error' && <div style={{ fontSize: '12px', color: '#93333E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.errorMsg || 'Scan failed.'}</div>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {item.status === 'scanning' && <div style={{ fontSize: '12px', color: '#8A6535' }}>Scanning…</div>}
+                    {item.status === 'ok' && (
+                      <div style={{ fontSize: '12px', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.data.vendor || 'Unknown vendor'}
+                        <span style={{ color: '#999' }}> · {item.data.date || 'no date'}{(item.data.total ?? item.data.amount) != null ? ` · ${fmt(item.data.total ?? item.data.amount)}` : ''}</span>
+                      </div>
+                    )}
+                    {item.status === 'error' && <div style={{ fontSize: '12px', color: '#93333E', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.errorMsg || 'Scan failed.'}</div>}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                <div className="exp-batch-item-actions" style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                   {item.status === 'ok' && (
                     <button type="button" onClick={() => loadBatchItemIntoForm(item)}
                       style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 12px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
@@ -1959,8 +1973,10 @@ export default function ExpensesClient() {
       <form className="exp-form" onSubmit={handleSubmit} style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.25rem', marginBottom: '2rem' }}>
         <div style={{ fontSize: '10px', letterSpacing: '0.16em', textTransform: 'uppercase', color: '#999', marginBottom: '1rem' }}>Add Expense</div>
 
-        {/* Scan-to-fill banner */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', padding: '0.7rem 0.85rem', marginBottom: '1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', borderRadius: '8px' }}>
+        {/* Scan-to-fill banner — buttons live in their own stacking row,
+            separate from the description text below, so a long description
+            never competes with the buttons for the same line on mobile. */}
+        <div style={{ padding: '0.7rem 0.85rem', marginBottom: '1rem', background: 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.35)', borderRadius: '8px' }}>
           {/* Direct rear-camera capture on iOS (snap a receipt on the spot) */}
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleScan} />
           {/* File / library picker — for an existing photo or a PDF */}
@@ -1969,16 +1985,18 @@ export default function ExpensesClient() {
               can pass appendPage:true without changing the normal Take-photo flow */}
           <input ref={pageRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
             onChange={e => { const f = e.target.files?.[0]; if (pageRef.current) pageRef.current.value = ''; if (f) runScan(f, { appendPage: true }) }} />
-          <button type="button" ref={scanBtnRef} className={`exp-tap exp-scan-btn${scanHighlight ? ' exp-scan-pulse' : ''}`} onClick={() => cameraRef.current?.click()} disabled={scanning}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, padding: '12px 22px', border: 'none', borderRadius: '8px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-            {scanning ? 'Scanning…' : 'Take photo'}
-          </button>
-          <button type="button" className="exp-tap" onClick={() => scanRef.current?.click()} disabled={scanning}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '11px 16px', border: '0.5px solid rgba(15,30,20,0.35)', borderRadius: '8px', background: 'none', color: '#0F1E14', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-            Upload file
-          </button>
-          <span style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4, flex: '1 1 180px', minWidth: 0 }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount, tax, payment method, province &amp; a note. Review &amp; save.</span>
+          <div className="exp-btn-row-stack" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+            <button type="button" ref={scanBtnRef} className={`exp-tap exp-scan-btn${scanHighlight ? ' exp-scan-pulse' : ''}`} onClick={() => cameraRef.current?.click()} disabled={scanning}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, padding: '12px 22px', border: 'none', borderRadius: '8px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              {scanning ? 'Scanning…' : 'Take photo'}
+            </button>
+            <button type="button" className="exp-tap" onClick={() => scanRef.current?.click()} disabled={scanning}
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', fontSize: '11px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '11px 16px', border: '0.5px solid rgba(15,30,20,0.35)', borderRadius: '8px', background: 'none', color: '#0F1E14', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+              Upload file
+            </button>
+          </div>
+          <div style={{ fontSize: '11px', color: '#8a7a5c', lineHeight: 1.4, marginTop: '0.5rem' }}>Snap or upload a receipt — we’ll auto-fill the vendor, date, amount, tax, payment method, province &amp; a note. Review &amp; save.</div>
         </div>
 
         {scanNotice && (
@@ -1988,7 +2006,7 @@ export default function ExpensesClient() {
             color: scanNotice.type === 'warn' ? '#93333E' : '#3B6B2F' }}>
             <div>{scanNotice.text}</div>
             {scanNotice.actions?.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+              <div className="exp-btn-row-stack" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
                 {scanNotice.actions.map(a => (
                   <button key={a.label} type="button" onClick={a.onClick}
                     style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
@@ -2877,12 +2895,19 @@ export default function ExpensesClient() {
                                 <input style={withLowConfidence(inp, 'notes', editLowConfidenceFields)} value={editForm.notes || ''} placeholder="—"
                                   onChange={e => { clearEditLowConfidence('notes'); setEditForm(p => ({ ...p, notes: e.target.value })) }} maxLength={1000} />
                               </div>
-                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                              {/* Primary actions (Save/Cancel) and secondary/utility actions
+                                  (Auto tax/Scan/Attach) are two separate rows — five buttons of
+                                  similar weight in one row wrapped unevenly on mobile; splitting
+                                  them, plus stacking each row full-width below 640px, means
+                                  neither row's buttons ever crowd or run into each other. */}
+                              <div className="exp-btn-row-stack" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
                                 <button onClick={() => saveEdit(expense.id)} disabled={editSaving || editUploading} className="exp-tap"
                                   style={{ fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '8px 16px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: (editSaving || editUploading) ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: (editSaving || editUploading) ? 0.6 : 1 }}>
                                   {editSaving ? 'Saving…' : 'Save'}
                                 </button>
                                 <GhostBtn small onClick={cancelEdit}>Cancel</GhostBtn>
+                              </div>
+                              <div className="exp-btn-row-stack" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <button type="button" onClick={applyEditTax}
                                   style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   Auto tax ({editForm.province})
