@@ -11,6 +11,7 @@ import Link from '@tiptap/extension-link'
 import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { EMAIL_SIGNATURE_HTML } from '../../../lib/emailSignature.js'
+import EmailActivityClient from '../email-activity/EmailActivityClient'
 
 const MAX_RECIPIENTS = 2000
 const DRAFT_KEY = 'bc_draft'
@@ -403,10 +404,10 @@ function Toolbar({ editor }) {
   )
 }
 
-export default function BroadcastsClient() {
+export default function BroadcastsClient({ emailEvents, emailCounts, emailConfigured, emailLoadError, emailFetchedAt }) {
   const confirm = useConfirm()
   const searchParams = useSearchParams()
-  const [tab, setTab]                           = useState('compose')
+  const [tab, setTab]                           = useState(() => (searchParams.get('tab') === 'activity' ? 'activity' : 'compose'))
   const [audience, setAudience]                 = useState('specific_emails')
   const [fromEmail, setFromEmail]               = useState('jerry@canvasroutes.com')
   const [chipEmails, setChipEmails]             = useState([])          // 1. chip emails
@@ -923,7 +924,7 @@ export default function BroadcastsClient() {
 
       {/* Tabs */}
       <div style={{ display: 'flex', marginBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
-        {[{ id: 'compose', label: 'Compose' }, { id: 'templates', label: 'Templates' }, { id: 'history', label: 'History' }].map(t => (
+        {[{ id: 'compose', label: 'Compose' }, { id: 'templates', label: 'Templates' }, { id: 'history', label: 'History' }, { id: 'activity', label: 'Email Activity' }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: '0.6rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
             fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase',
@@ -934,6 +935,17 @@ export default function BroadcastsClient() {
           }}>{t.label}</button>
         ))}
       </div>
+
+      {/* ── Email Activity — cross-broadcast Resend delivery/bounce/complaint events ── */}
+      {tab === 'activity' && (
+        <EmailActivityClient
+          events={emailEvents}
+          counts={emailCounts}
+          configured={emailConfigured}
+          loadError={emailLoadError}
+          fetchedAt={emailFetchedAt}
+        />
+      )}
 
       {/* ── Templates ── */}
       {tab === 'templates' && (

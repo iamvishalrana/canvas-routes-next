@@ -41,6 +41,13 @@ const nextConfig = {
       { source: '/ccsept5-2026', destination: '/meet/1a020f09-f618-42ed-b646-75c1927da38a' },
     ]
   },
+  // Email Activity folded into Broadcasts as a tab (2026-08-31) — keeps any
+  // bookmarked/linked admin URL working instead of 404ing.
+  async redirects() {
+    return [
+      { source: '/admin/email-activity', destination: '/admin/broadcasts?tab=activity', permanent: true },
+    ]
+  },
 }
 
 export default withSentryConfig(nextConfig, {

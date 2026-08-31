@@ -150,12 +150,9 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
   ])
 
   return (
-    <div style={{ padding: '1.5rem clamp(1rem,3vw,2rem) 3rem', maxWidth: '1100px', margin: '0 auto' }}>
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        <div>
-          <h1 style={{ fontFamily: 'var(--font-cormorant),serif', fontSize: '1.9rem', fontWeight: '300', color: '#1a1a1a', margin: 0 }}>Email Activity</h1>
-          <p style={{ fontSize: '13px', color: '#888', marginTop: '0.35rem' }}>Delivery, bounce, and complaint events from Resend — last 500 events.</p>
-        </div>
+        <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Delivery, bounce, and complaint events from Resend — last 500 events.</p>
         <button onClick={refresh} disabled={refreshing} title="Reload the latest events"
           style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', minHeight: '36px', background: 'transparent', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#555', cursor: refreshing ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', flexShrink: 0 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
