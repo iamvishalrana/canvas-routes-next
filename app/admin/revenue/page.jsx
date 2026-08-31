@@ -52,11 +52,12 @@ export default async function RevenuePage() {
 
   if (stripe) {
     try {
-      // Expand the charge's balance_transaction too — that's the only place
-      // Stripe exposes the actual processing fee (bt.fee, in cents) and net for
-      // each charge. Without it the page could only ever show gross/net-of-
-      // refunds, never what Stripe actually took.
-      const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge.balance_transaction'] }).autoPagingToArray({ limit: PI_FETCH_LIMIT })
+      // Expand the latest charge so we can read the charged/refunded amounts and
+      // the charge date. Processing fees are NOT taken from the balance
+      // transaction — they're computed from Stripe's standard 2.9% + $0.30 card
+      // pricing in toPaymentRow, so every card payment has a consistent fee
+      // (including very fresh charges whose balance transaction isn't posted yet).
+      const allPIs = await stripe.paymentIntents.list({ expand: ['data.latest_charge'] }).autoPagingToArray({ limit: PI_FETCH_LIMIT })
       if (allPIs.length >= PI_FETCH_LIMIT) {
         captureMessage('Revenue page hit its PaymentIntent fetch cap — totals may be missing older payments', { context: 'admin-revenue-list', limit: PI_FETCH_LIMIT })
       }
@@ -104,14 +105,6 @@ export default async function RevenuePage() {
           const amountRefunded = disputedLostPiIds.has(pi.id)
             ? pi.amount_received
             : ((charge && typeof charge === 'object') ? (charge.amount_refunded || 0) : 0)
-          // Actual Stripe processing fee for this charge, straight from the
-          // balance transaction (cents). Stripe keeps the fee even when a
-          // charge is later refunded/disputed, so this is the true cost paid —
-          // it is NOT reduced for refunds. null when the balance transaction
-          // isn't available yet (very fresh charge), so it reads as "unknown"
-          // rather than a false $0.
-          const bt = (charge && typeof charge === 'object') ? charge.balance_transaction : null
-          const stripeFee = (bt && typeof bt === 'object' && typeof bt.fee === 'number') ? bt.fee : null
           return {
             id:                     pi.id,
             manual:                 false,
@@ -120,7 +113,6 @@ export default async function RevenuePage() {
             phone:                  pi.metadata.phone || '',
             stripe_amount_paid:     pi.amount_received,
             stripe_amount_refunded: amountRefunded,
-            stripe_fee:             stripeFee,
             stripe_paid_at:         (charge && typeof charge === 'object' && charge.created)
               ? new Date(charge.created * 1000).toISOString()
               : new Date(pi.created * 1000).toISOString(),
@@ -201,19 +193,22 @@ export default async function RevenuePage() {
   const toPaymentRow = r => {
     const receipt = r.id ? receiptsByPi[r.id] : null
     const promo = r.id ? promoByPi[r.id] : null
+    const manual = !!r.manual
+    const gross = (r.stripe_amount_paid || 0) / 100
     return {
       id:        r.id || null,
-      manual:    !!r.manual,
+      manual,
       name:      r.name,
       email:     r.email,
       phone:     r.phone || '',
       amount:    ((r.stripe_amount_paid || 0) - (r.stripe_amount_refunded || 0)) / 100,
-      gross:     (r.stripe_amount_paid || 0) / 100,
+      gross,
       refunded:  (r.stripe_amount_refunded || 0) / 100,
-      // Stripe processing fee (dollars). null on manual/e-transfer rows and on
-      // charges whose balance transaction wasn't available — so a genuine
-      // unknown never masquerades as $0 in the fee totals.
-      fee:       (r.stripe_fee == null ? null : r.stripe_fee / 100),
+      // Stripe processing fee (dollars). Always computed from Stripe's standard
+      // Canadian card pricing — 2.9% + $0.30 per transaction — on the gross
+      // charge, rounded to the cent. null on manual/e-transfer rows and on $0
+      // charges (no card processed, so no fee applies).
+      fee:       manual || gross <= 0 ? null : Math.round((gross * 0.029 + 0.30) * 100) / 100,
       typeKey:   r.stripe_payment_type || '',
       type:      formatPaymentType(r.stripe_payment_type),
       date:      r.stripe_paid_at,
