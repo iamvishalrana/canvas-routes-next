@@ -26,6 +26,31 @@ const EMPTY_FORM = { expense_date: '', event_name: '', vendor: '', paid: '', gst
 const CURRENCIES = ['CAD', 'USD', 'EUR', 'GBP', 'Other']
 
 function round2(n) { return Math.round((parseFloat(n) || 0) * 100) / 100 }
+
+// Normalizes a vendor name for same-vendor comparison. OCR reads the same
+// business slightly differently between an itemized bill and a card terminal
+// slip — e.g. "Cafe St Sauveur" vs "Cafe Saint Sauveur" — which used to read
+// as two different vendors under a plain lowercase/trim compare and wrongly
+// flag a "second document differs" mismatch. Strips accents, folds
+// punctuation to spaces, and expands "st"/"ste" to "saint"/"sainte" as whole
+// words — extremely common in Quebec place names (St-Sauveur, St-Jérôme,
+// Ste-Adèle) — so both spellings normalize to the same string.
+function normalizeVendorName(s) {
+  if (!s) return ''
+  return s
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // café → cafe
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ') // any punctuation/hyphen/apostrophe → space
+    .trim()
+    .split(/\s+/)
+    .map(w => (w === 'st' ? 'saint' : w === 'ste' ? 'sainte' : w))
+    .join(' ')
+}
+function vendorsMatch(a, b) {
+  const na = normalizeVendorName(a)
+  return !!na && na === normalizeVendorName(b)
+}
+
 // Break a tax-INCLUDED total into { subtotal, gst, qst } for a province's rates.
 function splitTax(total, provinceCode) {
   const p = PROVINCE_MAP[provinceCode] || PROVINCE_MAP.QC
@@ -801,11 +826,11 @@ export default function ExpensesClient() {
       // happens to total the same number) and false negatives (a genuine repeat
       // USD receipt whose CAD-charged amount doesn't numerically match its own
       // USD total).
-      const sVendor = (data.vendor || '').trim().toLowerCase()
+      const sVendor = normalizeVendorName(data.vendor)
       const sTotal = total != null ? round2(total) : null
       const dup = (!isForeign && sVendor && data.date && sTotal != null)
         ? expenses.find(x =>
-            (x.vendor || '').trim().toLowerCase() === sVendor &&
+            normalizeVendorName(x.vendor) === sVendor &&
             x.expense_date === data.date &&
             Math.abs(grandTotalOf(x) - sTotal) < 0.01)
         : null
@@ -832,7 +857,7 @@ export default function ExpensesClient() {
       // the higher-total-means-tip fallback below must not fire.
       const otherDiffs = []
       if (isSubsequent) {
-        if (data.vendor && form.vendor && data.vendor.trim().toLowerCase() !== form.vendor.trim().toLowerCase()) otherDiffs.push(`vendor “${data.vendor}” vs “${form.vendor}”`)
+        if (data.vendor && form.vendor && !vendorsMatch(data.vendor, form.vendor)) otherDiffs.push(`vendor “${data.vendor}” vs “${form.vendor}”`)
         if (data.date && form.expense_date && data.date !== form.expense_date) otherDiffs.push(`date ${data.date} vs ${form.expense_date}`)
         if (data.payment_method && form.payment_method && data.payment_method !== form.payment_method) otherDiffs.push(`paid by ${PAYMENT_LABELS[data.payment_method] || data.payment_method} vs ${PAYMENT_LABELS[form.payment_method] || form.payment_method}`)
       }
@@ -982,11 +1007,11 @@ export default function ExpensesClient() {
     // second Save with the same vendor+date+total goes through, and editing any
     // of those fields re-arms the check.
     const totalPaid = round2(paidNum)
-    const vendorKey = (form.vendor || '').trim().toLowerCase()
+    const vendorKey = normalizeVendorName(form.vendor)
     const sig = `${vendorKey}|${form.expense_date}|${totalPaid}`
     if (vendorKey && dupAckSigRef.current !== sig) {
       const dup = expenses.find(x =>
-        (x.vendor || '').trim().toLowerCase() === vendorKey &&
+        normalizeVendorName(x.vendor) === vendorKey &&
         x.expense_date === form.expense_date &&
         Math.abs(grandTotalOf(x) - totalPaid) < 0.01
       )
