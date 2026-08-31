@@ -750,7 +750,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
       setExtraEmails([]); setEmailMode(null)
       setAttachments([])
       setAttachErr(null)
-      setFromEmail('info@canvasroutes.com')
+      setFromEmail('jerry@canvasroutes.com')
       setAudience('specific_emails')
       try { localStorage.removeItem(DRAFT_KEY) } catch {}  // 4. clear draft on send
     } catch {
