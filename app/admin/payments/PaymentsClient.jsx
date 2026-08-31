@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRealtimeSync } from '../_components/useRealtimeSync'
-import { inp, GhostBtn, DangerBtn, CopyBtn, DateRangeMenu } from '../_components/shared'
+import { inp, GhostBtn, DangerBtn, CopyBtn, DateRangeMenu, FilterMenu } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -13,6 +13,22 @@ const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borde
 
 function fmt(cents) {
   return `$${((cents || 0) / 100).toFixed(2)}`
+}
+
+// 'all' listed first — the neutral/unfiltered option FilterMenu's active
+// styling assumes options[0] to be.
+const DATE_PRESET_KEYS = ['all', 'month', '30d', 'year']
+const DATE_PRESET_LABELS = { all: 'All time', month: 'This month', '30d': 'Last 30d', year: 'This year' }
+function datePresetRange(preset) {
+  const now = new Date()
+  const pad = n => String(n).padStart(2, '0')
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+  if (preset === 'all') return { from: '', to: '' }
+  const today = ymd(now)
+  if (preset === 'month') return { from: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`, to: today }
+  if (preset === 'year') return { from: `${now.getFullYear()}-01-01`, to: today }
+  if (preset === '30d') return { from: ymd(new Date(now.getTime() - 29 * 86400000)), to: today }
+  return null
 }
 
 // Turn a raw Stripe snake_case value (e.g. 'not_assessed') into plain,
@@ -376,15 +392,15 @@ export default function PaymentsClient({ initialRecords = [] }) {
   // Montreal admins matches the Montreal day the YYYY-MM-DD inputs compare
   // against (montrealDateKey).
   function setDatePreset(preset) {
-    const now = new Date()
-    const pad = n => String(n).padStart(2, '0')
-    const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-    if (preset === 'all') { setDateFrom(''); setDateTo(''); return }
-    const today = ymd(now)
-    if (preset === 'month') { setDateFrom(`${now.getFullYear()}-${pad(now.getMonth() + 1)}-01`); setDateTo(today) }
-    else if (preset === 'year') { setDateFrom(`${now.getFullYear()}-01-01`); setDateTo(today) }
-    else if (preset === '30d') { setDateFrom(ymd(new Date(now.getTime() - 29 * 86400000))); setDateTo(today) }
+    const r = datePresetRange(preset)
+    if (r) { setDateFrom(r.from); setDateTo(r.to) }
   }
+  // Which quick preset (if any) matches the current dateFrom/dateTo — drives
+  // the consolidated FilterMenu's displayed selection below.
+  const activeDatePreset = DATE_PRESET_KEYS.find(k => {
+    const r = datePresetRange(k)
+    return (r.from || '') === (dateFrom || '') && (r.to || '') === (dateTo || '')
+  })
 
   // Date range scopes every stat/table below — applied once here rather than
   // separately in each derived list, so the cards and the table always agree.
@@ -500,35 +516,23 @@ export default function PaymentsClient({ initialRecords = [] }) {
         ))}
       </div>
 
-      {/* Filters — on mobile the search takes its own full row and the two
-          selects split the next row, instead of fixed desktop widths wrapping
-          into a ragged stack on a 390px screen */}
+      {/* Filters — search stays a plain input (full width on mobile); status/
+          sort are FilterMenu dropdowns (one button that expands into its
+          options) instead of native selects with fixed pixel widths, matching
+          the same consolidation already applied to Revenue/Expenses. */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap', alignItems: 'center' }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name or email…"
           style={{ ...inp, width: isMobile ? '100%' : '220px', padding: '0.55rem 0.9rem', fontSize: '13px' }} />
-        <div style={{ position: 'relative', ...(isMobile ? { flex: '1 1 0', minWidth: 0 } : {}) }}>
-          <select value={filter} onChange={e => setFilter(e.target.value)}
-            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: isMobile ? '100%' : '155px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
-            <option value="">All statuses</option>
-            <option value="paid">Paid</option>
-            <option value="partially_refunded">Partially Refunded</option>
-            <option value="refunded">Refunded</option>
-            <option value="disputed">Disputed</option>
-            <option value="authorized">Authorized</option>
-          </select>
-          <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <div style={{ position: 'relative', ...(isMobile ? { flex: '1 1 0', minWidth: 0 } : {}) }}>
-          <select value={sort} onChange={e => setSort(e.target.value)}
-            style={{ ...inp, cursor: 'pointer', WebkitAppearance: 'none', appearance: 'none', width: isMobile ? '100%' : '170px', padding: '0.55rem 2rem 0.55rem 0.9rem', fontSize: '13px' }}>
-            <option value="date_desc">Newest first</option>
-            <option value="date_asc">Oldest first</option>
-            <option value="amount_desc">Highest amount</option>
-            <option value="amount_asc">Lowest amount</option>
-            <option value="name_az">Name A–Z</option>
-          </select>
-          <svg style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
+        <FilterMenu
+          options={[{ id: '', label: 'All statuses' }, { id: 'paid', label: 'Paid' }, { id: 'partially_refunded', label: 'Partially Refunded' }, { id: 'refunded', label: 'Refunded' }, { id: 'disputed', label: 'Disputed' }, { id: 'authorized', label: 'Authorized' }]}
+          value={filter}
+          onChange={setFilter}
+        />
+        <FilterMenu
+          options={[{ id: 'date_desc', label: 'Newest first' }, { id: 'date_asc', label: 'Oldest first' }, { id: 'amount_desc', label: 'Highest amount' }, { id: 'amount_asc', label: 'Lowest amount' }, { id: 'name_az', label: 'Name A–Z' }]}
+          value={sort}
+          onChange={setSort}
+        />
         <ExportButton
           filename="payments"
           title="Payments"
@@ -560,13 +564,15 @@ export default function PaymentsClient({ initialRecords = [] }) {
 
       <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
         <DateRangeMenu label="Date Range" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
-        {/* Quick presets — matches the Montreal-local day the date inputs compare against */}
-        {[['month', 'This month'], ['30d', 'Last 30d'], ['year', 'This year'], ['all', 'All time']].map(([key, label]) => (
-          <button key={key} type="button" onClick={() => setDatePreset(key)}
-            style={{ background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', color: '#666', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '0.35rem 0.7rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-            {label}
-          </button>
-        ))}
+        {/* Quick presets consolidated into one dropdown instead of 4 always-
+            visible pills — matches the Montreal-local day the date inputs
+            compare against. */}
+        <FilterMenu
+          placeholder="Custom range"
+          options={DATE_PRESET_KEYS.map(k => ({ id: k, label: DATE_PRESET_LABELS[k] }))}
+          value={activeDatePreset}
+          onChange={setDatePreset}
+        />
       </div>
 
       {/* Live summary of exactly what the table is showing right now — reflects

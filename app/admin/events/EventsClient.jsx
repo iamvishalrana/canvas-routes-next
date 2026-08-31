@@ -1512,11 +1512,15 @@ export default function EventsClient() {
                           <div style={{ fontSize: '13px', color: '#ccc', paddingTop: '0.5rem' }}>No registrants on record.</div>
                         )}
 
-                        {/* Registrants table */}
+                        {/* Registrants table — Status/Paid-Date columns widened
+                            from 70px (labels like "Pending review" were tight
+                            enough to wrap awkwardly at that width); minWidth
+                            below bumped by the same 30px so the horizontal-
+                            scroll threshold still matches the real content width. */}
                         {(registrantsData[item.id] || []).length > 0 && <div style={{ overflowX: 'auto' }}>
-                          <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isNarrow ? 'unset' : '680px' }}>
+                          <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isNarrow ? 'unset' : '710px' }}>
                             {!isMobile && (
-                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 180px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 85px 85px 180px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
                                 {['Name', 'Email', 'Type', 'Status', item.member_price ? 'Paid / Date' : 'Date', '', ''].map((h, i) => (
                                   <div key={i} style={{ fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                                 ))}
@@ -1572,7 +1576,7 @@ export default function EventsClient() {
                               const oldCheckinIsLastBlock = hasOldCheckin && !showWtetReg
                               return (
                                 <div key={ri}>
-                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 70px 70px 180px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 85px 85px 180px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
                                     {isMobile ? (
                                       <div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
