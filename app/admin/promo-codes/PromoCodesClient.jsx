@@ -873,7 +873,7 @@ export default function PromoCodesClient() {
                     <td style={{ ...TD, color: '#888', fontSize: '12px' }}>{fmtCreated(c.created)}</td>
                     <td style={TD}><StatusChip code={c} /></td>
                     <td style={TD}>
-                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <button
                           onClick={() => loadUsage(c.id)}
                           disabled={usageLoading === c.id}

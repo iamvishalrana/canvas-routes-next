@@ -670,9 +670,9 @@ export default function PhotosClient() {
           {personalMember && (
             <div className="ph-body" style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden', marginBottom: '1.5rem' }}>
               <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)', background: '#fafaf9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: '14px', fontWeight: '500', color: '#1a1a1a' }}>{personalMember.name || '(no name)'}</div>
-                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{personalMember.email}<CopyBtn value={personalMember.email} /></div>
+                  <div style={{ fontSize: '11px', color: '#999', marginTop: '2px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem', wordBreak: 'break-all' }}>{personalMember.email}<CopyBtn value={personalMember.email} /></div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <PrimaryBtn onClick={() => setCreatingPersonalFolder(v => !v)}>{creatingPersonalFolder ? 'Cancel' : '+ New Folder'}</PrimaryBtn>
@@ -763,12 +763,12 @@ export default function PhotosClient() {
                 {personalGroups.map(g => (
                   <div key={g.member?.id || 'unknown'} role="button" tabIndex={0} onClick={() => { setPersonalMember(g.member); setPersonalFolder(''); setCreatingPersonalFolder(false) }}
                     onKeyDown={e => { if (e.key === 'Enter') { setPersonalMember(g.member); setPersonalFolder(''); setCreatingPersonalFolder(false) } }}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                    <div>
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', textAlign: 'left', padding: '0.75rem 1rem', background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '10px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', gap: '0.75rem' }}>
+                    <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{g.member?.name || '(no name)'}</div>
-                      <div style={{ fontSize: '10px', color: '#999', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{g.member?.email}<CopyBtn value={g.member?.email} /></div>
+                      <div style={{ fontSize: '10px', color: '#999', display: 'inline-flex', alignItems: 'center', gap: '0.1rem', wordBreak: 'break-all' }}>{g.member?.email}<CopyBtn value={g.member?.email} /></div>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#999' }}>{g.photos.length} {g.photos.length === 1 ? 'photo' : 'photos'}</div>
+                    <div style={{ fontSize: '11px', color: '#999', flexShrink: 0 }}>{g.photos.length} {g.photos.length === 1 ? 'photo' : 'photos'}</div>
                   </div>
                 ))}
               </div>

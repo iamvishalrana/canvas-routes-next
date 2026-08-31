@@ -1061,7 +1061,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                       </div>
                       {m.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{m.notes}</div>}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, wordBreak: 'break-all' }}>
                       <EmailLink email={m.email} />
                       <CopyBtn value={m.email} />
                     </div>
@@ -1113,7 +1113,7 @@ export default function MembersClient({ initialMembers, total, page, pageSize, s
                         </div>
                       )}
                     </div>
-                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
+                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
                       <button
                         onClick={() => setPreviewMember(m)}
                         title="Preview member profile card"

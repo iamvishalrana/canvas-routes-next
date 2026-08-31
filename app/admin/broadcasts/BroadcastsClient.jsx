@@ -922,12 +922,12 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Broadcasts</h1>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', marginBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)' }}>
+      {/* Tabs — horizontal scroll (not wrap) once 4 tabs no longer fit a narrow viewport */}
+      <div style={{ display: 'flex', marginBottom: '2rem', borderBottom: '0.5px solid rgba(0,0,0,0.1)', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
         {[{ id: 'compose', label: 'Compose' }, { id: 'templates', label: 'Templates' }, { id: 'history', label: 'History' }, { id: 'activity', label: 'Email Activity' }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: '0.6rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase',
+            fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', flexShrink: 0,
             color: tab === t.id ? '#1a1a1a' : '#aaa',
             borderBottom: tab === t.id ? '1.5px solid #1a1a1a' : '1.5px solid transparent',
             marginBottom: '-0.5px', transition: 'color 0.15s',
@@ -1073,7 +1073,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
                       <div key={h.id} className="admin-panel-enter">
                         <div
                           className="bc-history-row"
-                          style={{ padding: '0.5rem 1rem 0.5rem 2rem', borderTop: '0.5px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem' }}
+                          style={{ padding: '0.5rem 1rem 0.5rem 2rem', borderTop: '0.5px solid rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}
                         >
                           <div style={{ minWidth: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>{h.subject}</span>
@@ -1083,7 +1083,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
                                 : AUDIENCE_LABELS[h.audience] || h.audience}
                             </span>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexShrink: 0, flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '10px', color: '#bbb' }}>
                               {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto' })}
                             </span>

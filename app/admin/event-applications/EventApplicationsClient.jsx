@@ -112,7 +112,7 @@ export default function EventApplicationsClient() {
                 {/* Event header */}
                 <button
                   onClick={() => setExpanded(isOpen ? null : ev.id)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', gap: '1rem' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.25rem 1.5rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', gap: '1rem', flexWrap: 'wrap' }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -128,9 +128,9 @@ export default function EventApplicationsClient() {
                       </span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.75rem' : '1.5rem', flexShrink: 0, flexWrap: 'wrap' }}>
                     {/* Counters */}
-                    <div style={{ display: 'flex', gap: '1rem' }}>
+                    <div style={{ display: 'flex', gap: isMobile ? '0.6rem' : '1rem', flexWrap: 'wrap' }}>
                       <div style={{ textAlign: 'center' }}>
                         <div style={{ fontSize: '18px', fontWeight: '300', color: '#1a1a1a', lineHeight: 1 }}>{totalApps}</div>
                         <div style={{ fontSize: '9px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#aaa', marginTop: '2px' }}>Applied</div>
@@ -165,7 +165,7 @@ export default function EventApplicationsClient() {
                       <>
                         {/* Table header */}
                         {!isMobile && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 140px', padding: '0.6rem 1.5rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 165px', padding: '0.6rem 1.5rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
                             {['Name', 'Car', 'Member', 'RSVP', ''].map((h, i) => (
                               <div key={i} style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#bbb' }}>{h}</div>
                             ))}
@@ -203,10 +203,10 @@ export default function EventApplicationsClient() {
                                   )}
                                 </div>
                               ) : (
-                                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 140px', padding: '0.85rem 1.5rem', alignItems: 'start', gap: '0.5rem' }}>
-                                  <div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr 165px', padding: '0.85rem 1.5rem', alignItems: 'start', gap: '0.5rem' }}>
+                                  <div style={{ minWidth: 0 }}>
                                     <div style={{ fontSize: '13px', color: '#1a1a1a', marginBottom: '0.1rem' }}>{app.name || '—'}</div>
-                                    <div style={{ fontSize: '11px', color: '#aaa', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{app.email}<CopyBtn value={app.email} /></div>
+                                    <div style={{ fontSize: '11px', color: '#aaa', display: 'inline-flex', alignItems: 'center', gap: '0.1rem', wordBreak: 'break-all' }}>{app.email}<CopyBtn value={app.email} /></div>
                                     {app.rsvp?.answers && <RsvpAnswers answers={app.rsvp.answers} />}
                                   </div>
                                   <div style={{ fontSize: '12px', color: '#666' }}>{car || '—'}</div>

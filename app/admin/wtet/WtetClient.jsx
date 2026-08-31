@@ -207,7 +207,7 @@ export default function WtetClient() {
                 >
                   <div style={{ minWidth: 0, flex: '1 1 200px' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.name || '—'}</div>
-                    <div style={{ fontSize: '11px', color: '#999', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{p.email}<CopyBtn value={p.email} /></div>
+                    <div style={{ fontSize: '11px', color: '#999', display: 'inline-flex', alignItems: 'center', gap: '0.1rem', wordBreak: 'break-all' }}>{p.email}<CopyBtn value={p.email} /></div>
                   </div>
                   <div style={{ fontSize: '12px', color: '#888', flex: '0 0 auto', minWidth: '120px' }}>
                     {formatCarLabel(p.car_year, p.car_make, p.car_model) || '—'}

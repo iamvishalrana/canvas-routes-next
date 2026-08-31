@@ -436,7 +436,7 @@ export default function CalendarClient() {
                       {editingNoteId === n.id ? (
                         <>
                           <textarea style={{ ...inp, height: '60px', resize: 'vertical', width: '100%' }} value={editDraft} onChange={e => setEditDraft(e.target.value)} maxLength={2000} autoFocus />
-                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem' }}>
+                          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.4rem', flexWrap: 'wrap' }}>
                             <GhostBtn small onClick={() => saveEditNote(n.id)}>Save</GhostBtn>
                             <GhostBtn small onClick={() => setEditingNoteId(null)}>Cancel</GhostBtn>
                           </div>
@@ -450,7 +450,7 @@ export default function CalendarClient() {
                       ) : (
                         <>
                           <div style={{ fontSize: '12px', color: '#333', whiteSpace: 'pre-wrap', marginBottom: '0.4rem' }}>{n.content}</div>
-                          <div style={{ display: 'flex', gap: '0.9rem' }}>
+                          <div style={{ display: 'flex', gap: '0.9rem', flexWrap: 'wrap' }}>
                             <button onClick={() => startEditNote(n)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#8a7a5c', fontFamily: 'var(--font-inter),sans-serif' }}>Edit</button>
                             <button onClick={() => setDeleteConfirm(n.id)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', color: '#c99', fontFamily: 'var(--font-inter),sans-serif' }}>Delete</button>
                           </div>

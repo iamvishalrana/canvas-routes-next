@@ -188,7 +188,7 @@ export default function WtetAwardsClient() {
                   <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a' }}>
                     {p.name}{p.car && <span style={{ color: '#999', fontWeight: '400' }}> — {p.car}</span>}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#bbb', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{p.email}<CopyBtn value={p.email} /></div>
+                  <div style={{ fontSize: '11px', color: '#bbb', display: 'inline-flex', alignItems: 'center', gap: '0.1rem', wordBreak: 'break-all' }}>{p.email}<CopyBtn value={p.email} /></div>
                 </div>
               </div>
             ))}

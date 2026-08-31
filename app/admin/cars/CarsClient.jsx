@@ -163,7 +163,7 @@ export default function CarsClient() {
                       {isMobile && <div style={{ fontSize: '11px', color: '#888', marginTop: '1px' }}>{[car.year, car.model].filter(Boolean).join(' ') || '—'}{car.mods?.length > 0 && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.mods.length} mod{car.mods.length !== 1 ? 's' : ''}</span>}{car.paint && <span style={{ marginLeft: '0.3rem', color: '#c5a882' }}>{car.paint}</span>}</div>}
                       {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
                     </div>
-                    {!isMobile && <div style={{ fontSize: '12px', color: '#666', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
+                    {!isMobile && <div style={{ fontSize: '12px', color: '#666', display: 'inline-flex', alignItems: 'center', gap: '0.1rem', minWidth: 0, wordBreak: 'break-all' }}>{m.email}<CopyBtn value={m.email} /></div>}
                     {!isMobile && (
                       <div style={{ fontSize: '12px', color: '#888' }}>
                         <div>
@@ -238,8 +238,8 @@ export default function CarsClient() {
                     <div style={{ fontSize: '13px', color: '#1a1a1a' }}>{m.name || <span style={{ color: '#ccc' }}>—</span>}</div>
                     {isMobile && <div style={{ fontSize: '11px', color: '#bbb', marginTop: '1px', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
                   </div>
-                  {!isMobile && <div style={{ fontSize: '12px', color: '#666', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{m.email}<CopyBtn value={m.email} /></div>}
-                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  {!isMobile && <div style={{ fontSize: '12px', color: '#666', display: 'inline-flex', alignItems: 'center', gap: '0.1rem', minWidth: 0, wordBreak: 'break-all' }}>{m.email}<CopyBtn value={m.email} /></div>}
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <input
                       style={{ ...inp, width: '120px', padding: '0.4rem 0.6rem', fontSize: '12px' }}
                       placeholder="Brand"

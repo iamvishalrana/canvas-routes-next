@@ -134,7 +134,7 @@ export default function SubmissionsClient() {
                           {item.caption}
                         </div>
                       )}
-                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                         <GhostBtn small disabled={busy.has(item.id)} onClick={() => publish(item.id)}>Publish</GhostBtn>
                         <DangerBtn small disabled={busy.has(item.id)} onClick={() => reject(item.id)}>Reject</DangerBtn>
                       </div>

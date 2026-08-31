@@ -551,7 +551,7 @@ export default function CheckinStatusClient({ eventId }) {
                 >
                   <div style={{ minWidth: 0, flex: '1 1 200px' }}>
                     <div style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{p.name || '—'}</div>
-                    <div style={{ fontSize: '11px', color: '#999', display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                    <div style={{ fontSize: '11px', color: '#999', display: 'flex', alignItems: 'center', gap: '0.15rem', wordBreak: 'break-all' }}>
                       {p.email}
                       <CopyBtn value={p.email} />
                     </div>

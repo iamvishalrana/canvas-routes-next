@@ -662,7 +662,7 @@ export default function ContactsClient() {
                   </div>
                   {c.notes && <div style={{ fontSize: '11px', color: '#999', fontStyle: 'italic', marginTop: '2px' }}>{c.notes}</div>}
                 </div>
-                <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem' }}><EmailLink email={c.email} /><CopyBtn value={c.email} /></div>
+                <div style={{ fontSize: '12px', color: '#666', display: 'flex', alignItems: 'center', gap: '0.2rem', minWidth: 0, wordBreak: 'break-all' }}><EmailLink email={c.email} /><CopyBtn value={c.email} /></div>
                 <div style={{ fontSize: '12px', color: '#888' }}>
                   <div>{[c.car_year, c.car_model].filter(Boolean).join(' ') || <span style={{ color: '#ddd' }}>—</span>}</div>
                   {c.car_paint && <div style={{ fontSize: '11px', color: '#c5a882', marginTop: '1px' }}>{c.car_paint}</div>}
@@ -673,7 +673,7 @@ export default function ContactsClient() {
                 <div style={{ fontSize: '11px', color: '#bbb' }}>
                   {c.created_at ? new Date(c.created_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }) : '—'}
                 </div>
-                <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                   {c.is_invited || contactInviteStatus[c.contact_id] === 'sent' ? (
                     <span style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#3B6B2F', padding: '3px 8px', border: '0.5px solid rgba(59,107,47,0.3)', background: 'rgba(59,107,47,0.06)', whiteSpace: 'nowrap' }}>Invited</span>
                   ) : (
