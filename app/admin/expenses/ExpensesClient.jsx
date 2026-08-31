@@ -51,6 +51,70 @@ function vendorsMatch(a, b) {
   return !!na && na === normalizeVendorName(b)
 }
 
+// Maps a low_confidence field name from the scan API (its own extraction
+// key) to the client form field it corresponds to. "amount"/"total"/
+// "other_charges" all bear on the single "Paid" input client-side — there's
+// no separate subtotal field to point at — everything else is a 1:1 rename
+// or exact match.
+const LOW_CONFIDENCE_FIELD_MAP = {
+  vendor: 'vendor', date: 'expense_date', amount: 'paid', total: 'paid', other_charges: 'paid',
+  gst: 'gst_amount', qst: 'qst_amount', tip: 'tip', currency: 'currency', vendor_tax_id: 'vendor_tax_id',
+  category: 'category', payment_method: 'payment_method', province: 'province', notes: 'notes',
+}
+// Amber highlight for an input the scan wasn't fully sure about — layered
+// on top of the base `inp`/`sel` style, never replacing it.
+function withLowConfidence(base, key, set) {
+  return set.has(key) ? { ...base, border: '1px solid rgba(197,140,40,0.65)', boxShadow: '0 0 0 3px rgba(197,140,40,0.12)' } : base
+}
+
+// A variance-of-Laplacian below this on a 300px-downscaled grayscale image
+// reads as "clearly blurry." Deliberately conservative/low — this can't be
+// tuned against real phone-camera photos in this environment, and a false
+// "retake this" on a perfectly scannable photo is worse than occasionally
+// missing a genuinely blurry one (which still gets a normal shot at OCR).
+const BLUR_VARIANCE_THRESHOLD = 12
+
+// Quick client-side blur heuristic: downscale the image, grayscale it,
+// convolve with a 4-neighbor Laplacian kernel, and return the variance of
+// the result — few/weak edges (low variance) means the photo is likely out
+// of focus. Runs in well under 50ms even on an older phone since the canvas
+// is capped to ~300px. Best-effort only: any failure (canvas support,
+// decode error) resolves null, which the caller treats as "skip the check"
+// — this must never block a scan on its own.
+async function estimateBlur(file) {
+  try {
+    const bitmap = await createImageBitmap(file)
+    const maxEdge = 300
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height))
+    const w = Math.max(1, Math.round(bitmap.width * scale))
+    const h = Math.max(1, Math.round(bitmap.height * scale))
+    const canvas = document.createElement('canvas')
+    canvas.width = w; canvas.height = h
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    if (!ctx) { bitmap.close?.(); return null }
+    ctx.drawImage(bitmap, 0, 0, w, h)
+    bitmap.close?.()
+    const { data } = ctx.getImageData(0, 0, w, h)
+    const gray = new Float32Array(w * h)
+    for (let i = 0; i < w * h; i++) {
+      gray[i] = 0.299 * data[i * 4] + 0.587 * data[i * 4 + 1] + 0.114 * data[i * 4 + 2]
+    }
+    let sum = 0, sumSq = 0, n = 0
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const i = y * w + x
+        const lap = gray[i - 1] + gray[i + 1] + gray[i - w] + gray[i + w] - 4 * gray[i]
+        sum += lap; sumSq += lap * lap; n++
+      }
+    }
+    if (n === 0) return null
+    const mean = sum / n
+    return sumSq / n - mean * mean
+  } catch {
+    return null
+  }
+}
+
 // Break a tax-INCLUDED total into { subtotal, gst, qst } for a province's rates.
 function splitTax(total, provinceCode) {
   const p = PROVINCE_MAP[provinceCode] || PROVINCE_MAP.QC
@@ -182,6 +246,11 @@ export default function ExpensesClient() {
   const [uploadingFile, setUploadingFile] = useState(false)
   const [scanning, setScanning]         = useState(false)
   const [scanNotice, setScanNotice]     = useState(null) // { type: 'ok'|'warn', text }
+  // Client form field names the model flagged as a best-guess read on the
+  // most recent scan — cleared per-field the moment the admin edits it (see
+  // each Add-form input's onChange below), so the highlight fades as fields
+  // get reviewed instead of lingering after the fact.
+  const [lowConfidenceFields, setLowConfidenceFields] = useState(new Set())
   const [attachments, setAttachments]   = useState([]) // add-form attachments: [{ url, name }] — invoice + receipt, etc.
   const [filterMissing, setFilterMissing] = useState(false)
   const [filterUnreconciled, setFilterUnreconciled] = useState(false)
@@ -226,6 +295,12 @@ export default function ExpensesClient() {
   const fileRef = useRef(null)
   const scanRef = useRef(null)
   const cameraRef = useRef(null) // camera-capture input (opens the rear camera directly on iOS)
+  const pageRef = useRef(null) // "+ Add another page" capture input — same camera, separate onChange
+  // Raw (pre-compression) files for the CURRENT single logical receipt, so
+  // "+ Add another page" can re-send everything scanned so far together.
+  // Reset on a fresh single-photo scan, on the second-document (invoice vs.
+  // card slip) flow, and when the draft is discarded.
+  const scanPagesRef = useRef([])
   const scanBtnRef = useRef(null)
   const [scanHighlight, setScanHighlight] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -422,6 +497,27 @@ export default function ExpensesClient() {
   // group names from typos (e.g. "Into the Laurentians" vs "into the laurentians"
   // fragmenting the same event across two separate groups).
   const vendorNames = [...new Set(expenses.map(e => e.vendor?.trim()).filter(Boolean))].sort()
+
+  // What category/payment method/province you've actually used at each vendor
+  // before — falls back for OCR when a receipt doesn't print a category (it
+  // never does) or the payment tender/province wasn't legible. Each field is
+  // tracked independently in chronological order, so the LAST time you set
+  // that specific field is what wins — an older visit missing a category
+  // doesn't erase what a more recent one filled in, and vice versa.
+  const vendorHistoryMap = useMemo(() => {
+    const map = new Map()
+    const byDateAsc = [...expenses].sort((a, b) => (a.expense_date || '').localeCompare(b.expense_date || ''))
+    for (const e of byDateAsc) {
+      const key = normalizeVendorName(e.vendor)
+      if (!key) continue
+      const cur = map.get(key) || {}
+      if (e.category) cur.category = e.category
+      if (e.payment_method) cur.payment_method = e.payment_method
+      if (e.province) cur.province = e.province
+      map.set(key, cur)
+    }
+    return map
+  }, [expenses])
 
   // If the category/date filters narrow the list until the selected event's
   // chip disappears, the filter was silently still active with no chip shown
@@ -741,13 +837,57 @@ export default function ExpensesClient() {
     await runScan(e.target.files?.[0])
   }
 
+  // Fields the scan wasn't sure about stop being flagged the moment the admin
+  // actually looks at and edits them — called from that field's own onChange.
+  function clearLowConfidence(key) {
+    setLowConfidenceFields(prev => {
+      if (!prev.has(key)) return prev
+      const next = new Set(prev); next.delete(key); return next
+    })
+  }
+  // Applies the low_confidence keys from a scan response to the tracked set.
+  // `union` merges into what's already flagged (second document / added page,
+  // which build on existing data); a fresh first scan replaces it outright.
+  function applyLowConfidence(rawKeys, { union = false } = {}) {
+    const mapped = new Set((rawKeys || []).map(k => LOW_CONFIDENCE_FIELD_MAP[k]).filter(Boolean))
+    setLowConfidenceFields(prev => union ? new Set([...prev, ...mapped]) : mapped)
+  }
+
   // Core scan pipeline — shared by the Scan button (file input) and desktop
   // drag-and-drop (drop a receipt anywhere on the page). Opens the add form so
   // the fields it prefills are visible.
-  async function runScan(file) {
+  async function runScan(file, opts = {}) {
     if (!file) return
     setShowAdd(true)
+
+    // Catch an obviously-blurry photo before spending an API call on it. Not
+    // a hard gate — "Scan anyway" re-enters right here with skipBlurCheck, and
+    // any check failure (unsupported browser, decode error) just proceeds as
+    // if nothing was flagged.
+    if (!opts.skipBlurCheck && file.type !== 'application/pdf') {
+      const variance = await estimateBlur(file)
+      if (variance != null && variance < BLUR_VARIANCE_THRESHOLD) {
+        setFormErr(null)
+        setScanNotice({
+          type: 'warn',
+          text: 'This photo looks blurry — the scan may come back inaccurate or incomplete.',
+          actions: [
+            { label: 'Retake', onClick: () => cameraRef.current?.click() },
+            { label: 'Scan anyway', onClick: () => runScan(file, { ...opts, skipBlurCheck: true }) },
+          ],
+        })
+        return
+      }
+    }
+
     setScanning(true); setFormErr(null); setScanNotice(null)
+
+    // "+ Add another page" (see below) re-scans ALL pages of this receipt
+    // together, not just the new one — letting Claude combine multiple
+    // photos into one read beats trying to programmatically merge two
+    // separate JSON extractions. Never applies to a PDF (already a complete
+    // document on its own) — the button that triggers this is image-only.
+    const isAppendPage = !!opts.appendPage && file.type !== 'application/pdf'
 
     // Upload the ORIGINAL file to Storage starting right now, in parallel
     // with the whole OCR pipeline below (HEIC convert → compress → fetch →
@@ -781,13 +921,14 @@ export default function ExpensesClient() {
       // comfortably clears that; the untouched original is what the parallel
       // upload above attaches. PDFs can't be canvas-compressed, so those are
       // capped client-side instead of silently hitting the platform wall.
-      let scanFile = file
+      let scanFiles
       if (file.type === 'application/pdf') {
         if (file.size > 4 * 1024 * 1024) {
           setFormErr('PDF is too large to scan (max 4 MB) — attaching it below for you to fill in manually.')
           await settleUpload()
           return
         }
+        scanFiles = [file]
       } else {
         // iPhone receipt photos are usually HEIC — the scan route can't read
         // those and compressImageClient passes small ones through untouched,
@@ -795,11 +936,16 @@ export default function ExpensesClient() {
         // to ~1400px / q0.72 specifically for the OCR call — under the vision
         // API's ~1568px cap, so it costs fewer image tokens while staying
         // legible. This only affects the OCR copy — the parallel upload above
-        // always sends the untouched original.
-        scanFile = await compressImageClient(await convertHeicIfNeeded(file), { maxEdge: 1400, quality: 0.72 })
+        // always sends the untouched original(s).
+        // Append-page mode re-prepares EVERY page scanned so far (not just
+        // the new one — the earlier already-downscaled copies weren't kept
+        // around) so the API reads them all together as one document.
+        const rawPages = isAppendPage ? [...scanPagesRef.current, file] : [file]
+        scanFiles = await Promise.all(rawPages.map(async f => compressImageClient(await convertHeicIfNeeded(f), { maxEdge: 1400, quality: 0.72 })))
+        scanPagesRef.current = rawPages
       }
       const sfd = new FormData()
-      sfd.append('file', scanFile)
+      scanFiles.forEach(f => sfd.append('file', f))
       const res = await fetch('/api/admin/expenses/scan-receipt', { method: 'POST', body: sfd })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -815,6 +961,41 @@ export default function ExpensesClient() {
       // the duplicate check right below needs it too, not just the form-merge
       // logic further down.
       const isForeign = !!(data.currency && data.currency !== 'CAD')
+
+      // Append-page: the combined multi-page read supersedes whatever the
+      // earlier partial photo(s) already set (it may correct or complete
+      // it), so this OVERWRITES rather than the usual fill-blanks-only merge
+      // below — and skips the dup-check/second-document-diff logic entirely,
+      // since this was never a second, different document.
+      if (isAppendPage) {
+        taxManualRef.current = true
+        setForm(p => ({
+          ...p,
+          vendor:          data.vendor          || p.vendor || '',
+          expense_date:    data.date             || p.expense_date || '',
+          category:        data.category         || p.category || '',
+          paid:            isForeign ? p.paid : (total != null ? String(total) : p.paid),
+          gst_amount:      isForeign ? p.gst_amount : (data.gst != null ? String(data.gst) : p.gst_amount),
+          qst_amount:      isForeign ? p.qst_amount : (data.qst != null ? String(data.qst) : p.qst_amount),
+          tip:             isForeign ? p.tip : (scanTip != null ? String(scanTip) : p.tip),
+          payment_method:  data.payment_method   || p.payment_method || '',
+          vendor_tax_id:   data.vendor_tax_id    || p.vendor_tax_id || '',
+          currency:        isForeign ? (data.currency || p.currency) : p.currency,
+          original_amount: isForeign ? (total != null ? String(total) : p.original_amount) : p.original_amount,
+          province:        provinceManualRef.current ? p.province : (data.province || p.province),
+          notes:           data.notes            || p.notes || '',
+        }))
+        applyLowConfidence(data.low_confidence, { union: true })
+        setScanNotice({
+          type: data.mismatch ? 'warn' : 'ok',
+          text: data.mismatch
+            ? `Combined ${scanFiles.length} pages, but the numbers don't fully add up${data.residual != null ? ` (off by ${fmt(Math.abs(data.residual))})` : ''} — double-check before saving.`
+            : `Combined ${scanFiles.length} pages into one read ✓${data.vendor ? ` ${data.vendor}` : ''}${total != null ? ` — ${fmt(total)}` : ''}.`,
+          actions: scanPagesRef.current.length < 4 ? [{ label: '+ Add another page', onClick: () => pageRef.current?.click() }] : [],
+        })
+        await settleUpload()
+        return
+      }
 
       // Scan-time duplicate check — warn right away if this vendor + date + total
       // already exists, so the same receipt isn't scanned and saved twice. Mirrors
@@ -919,11 +1100,16 @@ export default function ExpensesClient() {
       // a scan so it can't impute GST/QST the receipt didn't actually charge.
       // (To re-enable auto-split, the admin just changes the province.)
       taxManualRef.current = true
+      // A receipt never prints a category, and the tender/province line isn't
+      // always legible — fall back to what you've actually used at this same
+      // vendor before, so a repeat vendor (gas station, regular supplier)
+      // comes in pre-filled even when the OCR itself came back blank on these.
+      const vHist = vendorHistoryMap.get(normalizeVendorName(form.vendor || data.vendor))
       setForm(p => ({
         ...p,
         vendor:         p.vendor         || data.vendor   || '',
         expense_date:   p.expense_date   || data.date     || '',
-        category:       p.category       || data.category || '',
+        category:       p.category       || data.category || vHist?.category || '',
         // Money fields fill from the scan ONLY for CAD receipts — a foreign
         // receipt's amounts aren't CAD, so they're left for manual entry from
         // the statement (see isForeign notice). When a later payment receipt
@@ -935,21 +1121,35 @@ export default function ExpensesClient() {
         // guessed tip (case 2 above); scanTip covers an explicit tip found on
         // a FIRST scan (tipAdded is only ever set when isSubsequent).
         tip:            isForeign ? p.tip : (parseFloat(p.tip) > 0 ? p.tip : ((tipAdded ?? scanTip) > 0 ? String(tipAdded ?? scanTip) : p.tip)),
-        payment_method: p.payment_method || data.payment_method || '',
+        payment_method: p.payment_method || data.payment_method || vHist?.payment_method || '',
         vendor_tax_id:  p.vendor_tax_id  || data.vendor_tax_id || '',
         currency:       (p.currency && p.currency !== 'CAD') ? p.currency : (data.currency || p.currency || 'CAD'),
         original_amount: isForeign ? (p.original_amount || (total != null ? String(total) : '')) : p.original_amount,
         // Scanned province wins ONLY if the admin hasn't picked one by hand —
         // then a total-only receipt from, say, Ontario splits at ON rates, not
         // the QC default. Scanning never sets provinceManualRef, so re-scanning
-        // a different receipt still updates it.
-        province:       provinceManualRef.current ? p.province : (data.province || p.province),
+        // a different receipt still updates it. Vendor history is the last
+        // resort, below both.
+        province:       provinceManualRef.current ? p.province : (data.province || vHist?.province || p.province),
         notes:          p.notes          || data.notes    || '',
       }))
       // The scan banner promises "we'll auto-fill ... & a note" — if OCR
       // actually filled notes or a vendor tax #, expand that section instead
       // of leaving what it captured hidden behind "More details" by default.
       if ((data.notes && !form.notes) || (data.vendor_tax_id && !form.vendor_tax_id)) setShowMoreFields(true)
+      applyLowConfidence(data.low_confidence, { union: isSubsequent })
+
+      // Only a genuinely FRESH single-photo scan is page-continuable — the
+      // second-document (invoice vs. card slip) case already represents two
+      // different documents merged by value, so "add another page" to IT
+      // wouldn't mean anything. Offered as a follow-up action on the notice
+      // set above, rather than threading it through that ternary.
+      if (!isSubsequent && file.type !== 'application/pdf') {
+        scanPagesRef.current = [file]
+        setScanNotice(prev => prev ? { ...prev, actions: [...(prev.actions || []), { label: '+ Add another page', onClick: () => pageRef.current?.click() }] } : prev)
+      } else {
+        scanPagesRef.current = []
+      }
 
       // The upload kicked off at the very top of this function has likely
       // already finished by now (it ran the whole time OCR was in flight) —
@@ -983,10 +1183,13 @@ export default function ExpensesClient() {
     taxManualRef.current = false
     provinceManualRef.current = false
     dupAckSigRef.current = null
+    scanPagesRef.current = []
     setScanNotice(null)
     setFormErr(null)
+    setLowConfidenceFields(new Set())
     if (fileRef.current) fileRef.current.value = ''
     if (scanRef.current) scanRef.current.value = ''
+    if (pageRef.current) pageRef.current.value = ''
     setShowAdd(false)
   }
 
@@ -1064,7 +1267,9 @@ export default function ExpensesClient() {
       taxManualRef.current = false
       provinceManualRef.current = false
       dupAckSigRef.current = null
+      scanPagesRef.current = []
       setScanNotice(null)
+      setLowConfidenceFields(new Set())
       if (fileRef.current) fileRef.current.value = ''
     } catch { setFormErr('Network error.') }
     finally { setSubmitting(false) }
@@ -1444,6 +1649,10 @@ export default function ExpensesClient() {
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleScan} />
           {/* File / library picker — for an existing photo or a PDF */}
           <input ref={scanRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf" style={{ display: 'none' }} onChange={handleScan} />
+          {/* "+ Add another page" capture — separate from cameraRef so its onChange
+              can pass appendPage:true without changing the normal Take-photo flow */}
+          <input ref={pageRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files?.[0]; if (pageRef.current) pageRef.current.value = ''; if (f) runScan(f, { appendPage: true }) }} />
           <button type="button" ref={scanBtnRef} className={`exp-tap exp-scan-btn${scanHighlight ? ' exp-scan-pulse' : ''}`} onClick={() => cameraRef.current?.click()} disabled={scanning}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', fontSize: '12px', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 600, padding: '12px 22px', border: 'none', borderRadius: '8px', background: scanning ? 'rgba(15,30,20,0.55)' : '#0F1E14', color: '#F5F1EC', cursor: scanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -1461,7 +1670,19 @@ export default function ExpensesClient() {
             background: scanNotice.type === 'warn' ? 'rgba(147,51,62,0.06)' : 'rgba(59,107,47,0.07)',
             border: scanNotice.type === 'warn' ? '0.5px solid rgba(147,51,62,0.3)' : '0.5px solid rgba(59,107,47,0.25)',
             color: scanNotice.type === 'warn' ? '#93333E' : '#3B6B2F' }}>
-            {scanNotice.text}
+            <div>{scanNotice.text}</div>
+            {scanNotice.actions?.length > 0 && (
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                {scanNotice.actions.map(a => (
+                  <button key={a.label} type="button" onClick={a.onClick}
+                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 11px', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif',
+                      background: 'none', border: `0.5px solid ${scanNotice.type === 'warn' ? 'rgba(147,51,62,0.4)' : 'rgba(59,107,47,0.4)'}`,
+                      color: scanNotice.type === 'warn' ? '#93333E' : '#3B6B2F' }}>
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -1469,8 +1690,8 @@ export default function ExpensesClient() {
         <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '0.6rem', marginBottom: '0.6rem' }}>
           <div>
             <L>Date</L>
-            <input type="date" style={inp} max={today} value={form.expense_date}
-              onChange={e => setForm(p => ({ ...p, expense_date: e.target.value }))} required />
+            <input type="date" style={withLowConfidence(inp, 'expense_date', lowConfidenceFields)} max={today} value={form.expense_date}
+              onChange={e => { clearLowConfidence('expense_date'); setForm(p => ({ ...p, expense_date: e.target.value })) }} required />
           </div>
           <div>
             <L>Event / Label</L>
@@ -1479,13 +1700,13 @@ export default function ExpensesClient() {
           </div>
           <div>
             <L>Vendor</L>
-            <input style={inp} value={form.vendor} placeholder="e.g. Costco" list="exp-vendor-names"
-              onChange={e => setForm(p => ({ ...p, vendor: e.target.value }))} maxLength={100} />
+            <input style={withLowConfidence(inp, 'vendor', lowConfidenceFields)} value={form.vendor} placeholder="e.g. Costco" list="exp-vendor-names"
+              onChange={e => { clearLowConfidence('vendor'); setForm(p => ({ ...p, vendor: e.target.value })) }} maxLength={100} />
           </div>
           <div>
             <L>Category</L>
             <div style={{ position: 'relative' }}>
-              <select style={sel} value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}>
+              <select style={withLowConfidence(sel, 'category', lowConfidenceFields)} value={form.category} onChange={e => { clearLowConfidence('category'); setForm(p => ({ ...p, category: e.target.value })) }}>
                 <option value="">Select…</option>
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -1499,7 +1720,7 @@ export default function ExpensesClient() {
           <div>
             <L>Payment</L>
             <div style={{ position: 'relative' }}>
-              <select style={sel} value={form.payment_method} onChange={e => setForm(p => ({ ...p, payment_method: e.target.value }))}>
+              <select style={withLowConfidence(sel, 'payment_method', lowConfidenceFields)} value={form.payment_method} onChange={e => { clearLowConfidence('payment_method'); setForm(p => ({ ...p, payment_method: e.target.value })) }}>
                 <option value="">How paid…</option>
                 {PAYMENT_METHODS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
               </select>
@@ -1509,7 +1730,7 @@ export default function ExpensesClient() {
           <div>
             <L>Province</L>
             <div style={{ position: 'relative' }}>
-              <select style={sel} value={form.province}
+              <select style={withLowConfidence(sel, 'province', lowConfidenceFields)} value={form.province}
                 onChange={e => {
                   // Only re-arm auto-split if there's no real tax on the form
                   // yet. Unconditionally resetting here used to mean: scan a
@@ -1523,6 +1744,7 @@ export default function ExpensesClient() {
                   const hasTax = (parseFloat(form.gst_amount) || 0) > 0 || (parseFloat(form.qst_amount) || 0) > 0
                   if (!hasTax) taxManualRef.current = false
                   provinceManualRef.current = true
+                  clearLowConfidence('province')
                   setForm(p => ({ ...p, province: e.target.value }))
                 }}>
                 {PROVINCES.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
@@ -1538,23 +1760,23 @@ export default function ExpensesClient() {
                 silently overwrite that manual entry with the auto-calculated
                 split. Auto-split still applies normally when GST/QST haven't
                 been touched, since taxManualRef starts false. */}
-            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.paid} placeholder="tax + tip incl."
-              onChange={e => setForm(p => ({ ...p, paid: e.target.value }))} required />
+            <input style={withLowConfidence(inp, 'paid', lowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={form.paid} placeholder="tax + tip incl."
+              onChange={e => { clearLowConfidence('paid'); setForm(p => ({ ...p, paid: e.target.value })) }} required />
           </div>
           <div>
             <L>GST ($)</L>
-            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.gst_amount} placeholder="0.00"
-              onChange={e => { taxManualRef.current = true; setForm(p => ({ ...p, gst_amount: e.target.value })) }} />
+            <input style={withLowConfidence(inp, 'gst_amount', lowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={form.gst_amount} placeholder="0.00"
+              onChange={e => { taxManualRef.current = true; clearLowConfidence('gst_amount'); setForm(p => ({ ...p, gst_amount: e.target.value })) }} />
           </div>
           <div>
             <L>{provLabelOf(form.province)} ($)</L>
-            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.qst_amount} placeholder="0.00"
-              onChange={e => { taxManualRef.current = true; setForm(p => ({ ...p, qst_amount: e.target.value })) }} />
+            <input style={withLowConfidence(inp, 'qst_amount', lowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={form.qst_amount} placeholder="0.00"
+              onChange={e => { taxManualRef.current = true; clearLowConfidence('qst_amount'); setForm(p => ({ ...p, qst_amount: e.target.value })) }} />
           </div>
           <div>
             <L>Tip ($)</L>
-            <input style={inp} type="number" inputMode="decimal" min="0" step="0.01" value={form.tip} placeholder="0.00"
-              onChange={e => setForm(p => ({ ...p, tip: e.target.value }))} />
+            <input style={withLowConfidence(inp, 'tip', lowConfidenceFields)} type="number" inputMode="decimal" min="0" step="0.01" value={form.tip} placeholder="0.00"
+              onChange={e => { clearLowConfidence('tip'); setForm(p => ({ ...p, tip: e.target.value })) }} />
           </div>
         </div>
 
@@ -1574,7 +1796,7 @@ export default function ExpensesClient() {
           <div>
             <L>Currency</L>
             <div style={{ position: 'relative' }}>
-              <select style={sel} value={form.currency} onChange={e => setForm(p => ({ ...p, currency: e.target.value }))}>
+              <select style={withLowConfidence(sel, 'currency', lowConfidenceFields)} value={form.currency} onChange={e => { clearLowConfidence('currency'); setForm(p => ({ ...p, currency: e.target.value })) }}>
                 {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
               <SelectChevron />
@@ -1652,13 +1874,13 @@ export default function ExpensesClient() {
             <div className="exp-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '0.6rem' }}>
               <div>
                 <L>Notes (optional)</L>
-                <input style={inp} value={form.notes} placeholder="e.g. reimbursed by Jerry, bought for spare tires"
-                  onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} maxLength={1000} />
+                <input style={withLowConfidence(inp, 'notes', lowConfidenceFields)} value={form.notes} placeholder="e.g. reimbursed by Jerry, bought for spare tires"
+                  onChange={e => { clearLowConfidence('notes'); setForm(p => ({ ...p, notes: e.target.value })) }} maxLength={1000} />
               </div>
               <div>
                 <L>Vendor tax # (opt.)</L>
-                <input style={inp} value={form.vendor_tax_id} placeholder="GST/QST reg. #" maxLength={40}
-                  onChange={e => setForm(p => ({ ...p, vendor_tax_id: e.target.value }))} />
+                <input style={withLowConfidence(inp, 'vendor_tax_id', lowConfidenceFields)} value={form.vendor_tax_id} placeholder="GST/QST reg. #" maxLength={40}
+                  onChange={e => { clearLowConfidence('vendor_tax_id'); setForm(p => ({ ...p, vendor_tax_id: e.target.value })) }} />
               </div>
             </div>
           </div>
