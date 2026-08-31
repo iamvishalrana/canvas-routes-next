@@ -752,7 +752,8 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   // drill-down modal shows, surfaced at the top level for the whole range so
   // the mix is visible without opening anything.
   const memberSplit = useMemo(() => {
-    const revOf = arr => arr.reduce((s, p) => s + exTaxOf(p), 0)
+    // Net of tax AND Stripe fees — the true amount kept per group.
+    const revOf = arr => arr.reduce((s, p) => s + exTaxOf(p) - (p.fee || 0), 0)
     const members = filteredPayments.filter(p => p.isMember === true)
     const nonMembers = filteredPayments.filter(p => p.isMember === false)
     const unknown = filteredPayments.filter(p => p.isMember == null)
@@ -767,7 +768,8 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   }, [filteredPayments])
 
   const methodSplit = useMemo(() => {
-    const revOf = arr => arr.reduce((s, p) => s + exTaxOf(p), 0)
+    // Net of tax AND Stripe fees — the true amount kept per method.
+    const revOf = arr => arr.reduce((s, p) => s + exTaxOf(p) - (p.fee || 0), 0)
     const card = filteredPayments.filter(p => !p.manual)
     const etransfer = filteredPayments.filter(p => p.manual)
     return {
@@ -878,18 +880,19 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
         ))}
       </div>
 
-      {/* Revenue split donuts — member status + payment method, ex-tax, for the
-          whole selected range. Only shown when there's a real mix to split. */}
+      {/* Revenue split donuts — member status + payment method, NET of tax AND
+          Stripe fees (the true amount kept), for the whole selected range. Only
+          shown when there's a real mix to split. */}
       {(memberSplit.show || methodSplit.show) && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           {memberSplit.show && (
-            <ChartCard title="Revenue by Member Status" note="Ex-tax revenue in range">
-              <Donut data={memberSplit.data} centerTop={fmt(totalRevenue)} centerBottom="ex-tax" />
+            <ChartCard title="Revenue by Member Status" note="Net in range — after tax & Stripe fees">
+              <Donut data={memberSplit.data} centerTop={fmt(netAfterFees)} centerBottom="net" />
             </ChartCard>
           )}
           {methodSplit.show && (
-            <ChartCard title="Revenue by Payment Method" note="Card vs e-transfer, ex-tax">
-              <Donut data={methodSplit.data} centerTop={fmt(totalRevenue)} centerBottom="ex-tax" />
+            <ChartCard title="Revenue by Payment Method" note="Card vs e-transfer — net after tax & fees">
+              <Donut data={methodSplit.data} centerTop={fmt(netAfterFees)} centerBottom="net" />
             </ChartCard>
           )}
         </div>
