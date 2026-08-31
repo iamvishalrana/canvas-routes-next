@@ -344,6 +344,10 @@ export default function EventsClient() {
   // Past events section
   const [pastOpen, setPastOpen] = useState(false)
 
+  // New event form — collapsed by default so the page opens on the event
+  // list, not a full add-event form nobody asked to see
+  const [newEventOpen, setNewEventOpen] = useState(false)
+
   // Remove registrant (key = `${eventId}::${email}`)
   const [deleteRegConfirm, setDeleteRegConfirm] = useState(null)
   const [deletingReg, setDeletingReg] = useState({})
@@ -1052,9 +1056,17 @@ export default function EventsClient() {
         <h1 style={{ fontFamily: 'var(--font-cormorant), serif', fontSize: '30px', fontWeight: '300', color: '#1a1a1a', margin: 0, letterSpacing: '-0.01em', lineHeight: 1.1 }}>Meets &amp; Events</h1>
       </div>
 
-      {/* ── New event form ─────────────────────────────────────────────────── */}
-      <div style={{ marginBottom: '2rem', padding: '1.75rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-        <div style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888', marginBottom: '1.25rem' }}>New Event</div>
+      {/* ── New event form — collapsed until clicked ─────────────────────── */}
+      <div style={{ marginBottom: '2rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
+        <button
+          onClick={() => setNewEventOpen(v => !v)}
+          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '1.1rem 1.75rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif' }}
+        >
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5" style={{ transform: newEventOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
+          <span style={{ fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#888' }}>+ New Event</span>
+        </button>
+        {newEventOpen && (
+        <div style={{ padding: '0 1.75rem 1.75rem' }}>
         <form onSubmit={post}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.3fr 0.9fr 140px 150px', gap: '0.75rem', marginBottom: '0.75rem' }}>
             <div><L>Event Name *<InfoTip field="name" /></L><input style={inp} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Into the Laurentians" maxLength={200} /></div>
@@ -1104,6 +1116,8 @@ export default function EventsClient() {
           <PrimaryBtn type="submit" disabled={posting}>{posting ? 'Adding…' : 'Add Event'}</PrimaryBtn>
           <Err msg={postError} />
         </form>
+        </div>
+        )}
       </div>
 
       {/* ── Event list ────────────────────────────────────────────────────── */}
