@@ -188,6 +188,21 @@ export async function POST(request) {
       try { return JSON.parse(match[0]) } catch { return null }
     }
   }
+  // A handful of fields matter enough that even the model's OWN "best guess"
+  // on them is worth a second, stronger read — a fuzzy vendor spelling is a
+  // minor inconvenience, but a fuzzy amount/total/tax is a real bookkeeping
+  // error. This is what actually makes low_confidence load-bearing instead
+  // of purely informational — without this check, the cheap model could flag
+  // "I'm not sure about this total" and that uncertainty would just be shown
+  // to the admin as-is, never triggering the stronger model that might
+  // actually read it correctly.
+  // "date" is included too — it decides which GST/QST recoverable-tax
+  // quarter this expense lands in and is one of the three fields the
+  // duplicate-scan check matches on, so a fuzzy read there has the same
+  // real bookkeeping consequences as a fuzzy amount.
+  const CRITICAL_LOW_CONFIDENCE_FIELDS = new Set(['amount', 'total', 'gst', 'qst', 'tip', 'other_charges', 'date'])
+  const hasCriticalLowConfidence = (p) => Array.isArray(p?.low_confidence) && p.low_confidence.some(k => CRITICAL_LOW_CONFIDENCE_FIELDS.has(k))
+
   const usableParse = (p) => p && (p.is_receipt === false || toNum(p.amount) != null || toNum(p.total) != null)
   // Do the numbers add up? subtotal + fees + taxes + tip should equal total.
   // Only meaningful when both a subtotal and a total were read; otherwise we
@@ -208,16 +223,22 @@ export async function POST(request) {
     if (!parsed) parsed = await runModel(PRIMARY_MODEL)
 
     // Escalate to the stronger model when the cheap pass(es) either couldn't
-    // produce a usable answer OR produced numbers that don't reconcile
-    // (subtotal + fees + taxes + tip ≠ total) — a mismatch on a real receipt
-    // usually means a misread of a busy/complex layout, which the stronger
-    // model reads better. A confident is_receipt:false is trusted as-is
-    // (no escalation) so non-receipt uploads stay cheap.
-    const needsEscalation = !usableParse(parsed) || (parsed.is_receipt !== false && !reconciles(parsed))
+    // produce a usable answer, produced numbers that don't reconcile
+    // (subtotal + fees + taxes + tip ≠ total), OR the model itself flagged a
+    // money field as a best guess rather than a clear read — all three
+    // usually mean a misread of a busy/complex/faded layout, which the
+    // stronger model reads better. A confident is_receipt:false is trusted
+    // as-is (no escalation) so non-receipt uploads stay cheap.
+    const needsEscalation = !usableParse(parsed)
+      || (parsed.is_receipt !== false && (!reconciles(parsed) || hasCriticalLowConfidence(parsed)))
     if (needsEscalation) {
       const retry = await runModel(FALLBACK_MODEL)
       // Prefer the retry when the cheap pass was unusable, or when the retry
-      // actually reconciles (and so is the more trustworthy read).
+      // itself reconciles (true in the vast majority of escalated cases,
+      // including a pure low-confidence escalation where the cheap pass
+      // already reconciled fine — the stronger model's read still wins
+      // there since it's the more trustworthy one). Only sticks with the
+      // cheap pass when the retry reconciles WORSE than what's already had.
       if (retry && usableParse(retry) && (!usableParse(parsed) || reconciles(retry))) parsed = retry
     }
 
