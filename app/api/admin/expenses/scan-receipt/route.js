@@ -40,7 +40,7 @@ const FALLBACK_MODEL = 'claude-sonnet-5'
 const SYSTEM_PROMPT = `You extract structured data from a receipt or invoice image for a Montreal (Quebec, Canada) automotive club's expense tracker. You always respond with a single minified JSON object and nothing else — no explanation, no markdown fences.`
 
 const EXTRACT_PROMPT = `Read this image and return ONLY minified JSON with exactly these keys:
-{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"other_charges":number|null,"total":number|null,"currency":string|null,"vendor_tax_id":string|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null}
+{"is_receipt":boolean,"vendor":string|null,"date":"YYYY-MM-DD"|null,"amount":number|null,"gst":number|null,"qst":number|null,"tip":number|null,"other_charges":number|null,"total":number|null,"currency":string|null,"vendor_tax_id":string|null,"category":string|null,"payment_method":string|null,"province":string|null,"notes":string|null,"low_confidence":string[]|null}
 
 Rules:
 - The receipt or invoice may be printed in French (common for Québec merchants) or English — read and extract accurately from either language, and don't let unfamiliar French wording lower your confidence. Common French terms you'll see: "Facture"/"Reçu" (invoice/receipt), "Sous-total" (subtotal), "Pourboire"/"Service" (tip), "Total"/"Montant total" (total), "TPS" (GST/federal tax), "TVQ" (QST/provincial tax), "Date", "Espèces"/"Comptant" (cash), "Débit" (debit), "Crédit" (credit). Write "vendor" and "notes" in whichever language is clearer/shorter — don't force a translation.
@@ -58,7 +58,13 @@ Rules:
 - "payment_method" MUST be exactly one of: cash, credit, debit, etransfer, other. Map the tender shown on the receipt, checking in this order: "CASH"/"ESPÈCES"/"COMPTANT" → "cash"; "Interac e-Transfer"/"Virement Interac" → "etransfer"; "INTERAC"/"DEBIT"/"DÉBIT"/"Débit"/debit card → "debit" (Interac by itself always means a debit card); VISA/Mastercard/Amex/Discover/"CREDIT"/"CRÉDIT" → "credit"; anything else → "other". null if not shown.
 - "province" = the code for the MERCHANT's address (one of: ${PROVINCES.join(', ')} — Canadian provinces/territories plus VT/NH/ME/NY for US border-state purchases), or null if the address doesn't match any of those.
 - "notes" = a short (max ~90 chars) plain-text OVERVIEW of the purchase — what it was, at a glance — NOT a list of the line items on the receipt. Never enumerate individual items/quantities/prices; give the gist a reader would want at a glance instead. Good: "Fuel fill-up", "Team lunch, 4 people", "Office supplies", "Car detailing". Bad (too itemized, don't do this): "42.1L Premium + car wash $8", "2x Burger, 1x Fries, 2x Poutine, 4x Soda", "Pens, paper, tape, stapler". If the receipt is a single specific purchase (one part, one tool), name that briefly instead. null if there's nothing worth summarizing beyond the vendor name.
+- "low_confidence" = an array of the JSON key names above (e.g. ["amount","date"]) that you were NOT fully sure about — faded thermal print, handwriting, glare, a cut-off edge, or anything else that made a value a best guess rather than a clear read. Empty array or null if everything was clearly legible. Only include keys you actually returned a non-null value for — don't flag something you already set to null.
 - Use null for anything not clearly present. All numbers must be plain decimals with no currency symbols (e.g. 12.34).`
+
+// Extraction JSON keys eligible for the low_confidence flag — everything
+// except is_receipt and low_confidence itself. Used to sanitize the model's
+// own list before it reaches the client (never trust a model-invented key).
+const CONFIDENCE_FIELDS = new Set(['vendor', 'date', 'amount', 'gst', 'qst', 'tip', 'other_charges', 'total', 'currency', 'vendor_tax_id', 'category', 'payment_method', 'province', 'notes'])
 
 const round2 = (n) => Math.round(n * 100) / 100
 
@@ -127,31 +133,47 @@ export async function POST(request) {
   let formData
   try { formData = await request.formData() } catch { return Response.json({ error: 'Invalid request.' }, { status: 400 }) }
 
-  const file = formData.get('file')
-  if (!file || typeof file === 'string') return Response.json({ error: 'No file provided.' }, { status: 400 })
-  if (file.type === 'image/heic' || file.type === 'image/heif') {
-    return Response.json({ error: 'HEIC photos can’t be scanned. Please use a JPEG or PNG.' }, { status: 400 })
-  }
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return Response.json({ error: 'Only JPEG, PNG, WebP images or PDFs can be scanned.' }, { status: 400 })
+  // Usually one file. Multiple files means multiple photos of the SAME
+  // physical receipt (a long receipt, or one split across shots) — the
+  // client only ever sends >1 for that case, never for unrelated documents
+  // (a second, different document goes through its own separate scan +
+  // client-side reconciliation instead). Capped at 4 pages.
+  const files = formData.getAll('file').filter(f => f && typeof f !== 'string')
+  if (!files.length) return Response.json({ error: 'No file provided.' }, { status: 400 })
+  if (files.length > 4) return Response.json({ error: 'Too many pages — scan up to 4 at a time.' }, { status: 400 })
+  for (const f of files) {
+    if (f.type === 'image/heic' || f.type === 'image/heif') {
+      return Response.json({ error: 'HEIC photos can’t be scanned. Please use a JPEG or PNG.' }, { status: 400 })
+    }
+    if (!ALLOWED_TYPES.includes(f.type)) {
+      return Response.json({ error: 'Only JPEG, PNG, WebP images or PDFs can be scanned.' }, { status: 400 })
+    }
   }
 
-  const arrayBuffer = await file.arrayBuffer()
-  if (arrayBuffer.byteLength > MAX_BYTES) return Response.json({ error: 'File too large to scan (max 4 MB) — attach it below instead and enter the details manually.' }, { status: 400 })
-  const b64 = Buffer.from(arrayBuffer).toString('base64')
+  const buffers = await Promise.all(files.map(f => f.arrayBuffer()))
+  const totalBytes = buffers.reduce((s, b) => s + b.byteLength, 0)
+  if (totalBytes > MAX_BYTES) return Response.json({ error: 'File too large to scan (max 4 MB total) — attach it below instead and enter the details manually.' }, { status: 400 })
 
-  const mediaBlock = file.type === 'application/pdf'
-    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }
-    : { type: 'image',    source: { type: 'base64', media_type: file.type, data: b64 } }
+  const mediaBlocks = files.map((f, i) => {
+    const b64 = Buffer.from(buffers[i]).toString('base64')
+    return f.type === 'application/pdf'
+      ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } }
+      : { type: 'image',    source: { type: 'base64', media_type: f.type, data: b64 } }
+  })
+  // Only added when there's more than one page — keeps the single-image
+  // (overwhelmingly common) case's prompt text identical to before.
+  const promptText = files.length > 1
+    ? `These ${files.length} images are multiple photos of the SAME physical receipt or invoice (e.g. a long receipt, or one split across shots) — read them together and extract ONE unified answer, not multiple. ${EXTRACT_PROMPT}`
+    : EXTRACT_PROMPT
 
   // One extraction pass with a given model — returns the parsed JSON object, or
   // null if the model didn't return parseable JSON.
   const runModel = async (model) => {
     const response = await anthropic.messages.create({
       model,
-      max_tokens: 500,
+      max_tokens: 600,
       system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: [mediaBlock, { type: 'text', text: EXTRACT_PROMPT }] }],
+      messages: [{ role: 'user', content: [...mediaBlocks, { type: 'text', text: promptText }] }],
     })
     const text = response.content.filter(b => b.type === 'text').map(b => b.text).join('').trim()
     const stripped = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
@@ -221,6 +243,10 @@ export async function POST(request) {
     // 3-letter currency code (uppercase); default CAD.
     const currency = (typeof parsed.currency === 'string' && /^[A-Za-z]{3}$/.test(parsed.currency.trim())) ? parsed.currency.trim().toUpperCase() : 'CAD'
     const vendor_tax_id = (typeof parsed.vendor_tax_id === 'string' && parsed.vendor_tax_id.trim()) ? parsed.vendor_tax_id.trim().slice(0, 40) : null
+    // Never trust a model-invented key — intersect against the real field set.
+    const low_confidence = Array.isArray(parsed.low_confidence)
+      ? [...new Set(parsed.low_confidence.filter(k => typeof k === 'string' && CONFIDENCE_FIELDS.has(k)))]
+      : []
 
     // A "receipt" with no usable numbers is another non-receipt signal
     if (amount == null && total == null) {
@@ -256,6 +282,7 @@ export async function POST(request) {
       vendor: typeof parsed.vendor === 'string' ? parsed.vendor.slice(0, 100) : null,
       date, amount: outAmount, gst, qst, tip, other_charges, total: outTotal,
       currency, vendor_tax_id, category, payment_method, province, notes, mismatch, residual,
+      low_confidence,
     })
   } catch (err) {
     captureException(err, { context: 'expenses-scan-receipt' })
