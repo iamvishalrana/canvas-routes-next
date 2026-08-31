@@ -1956,18 +1956,18 @@ export default function ExpensesClient() {
                 <div className="exp-batch-item-actions" style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                   {item.status === 'ok' && (
                     <button type="button" onClick={() => loadBatchItemIntoForm(item)}
-                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 12px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', background: '#0F1E14', color: '#F5F1EC', border: 'none', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                       Add
                     </button>
                   )}
                   {item.status === 'error' && (
                     <button type="button" onClick={() => scanOneForBatch(item)}
-                      style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                      style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '99px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                       Retry
                     </button>
                   )}
                   <button type="button" onClick={() => dismissBatchItem(item)} disabled={item.status === 'scanning'}
-                    style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '6px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '6px', color: item.status === 'scanning' ? '#ccc' : '#888', cursor: item.status === 'scanning' ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '99px', color: item.status === 'scanning' ? '#ccc' : '#888', cursor: item.status === 'scanning' ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                     Dismiss
                   </button>
                 </div>
@@ -2263,7 +2263,7 @@ export default function ExpensesClient() {
           <input ref={fileRef} type="file" accept="image/*,.pdf" multiple style={{ display: 'none' }} onChange={handleFileChange} />
           <button type="button" className="exp-tap" onClick={() => fileRef.current?.click()} disabled={uploadingFile}
             title="Attaches the file without running receipt scanning/auto-fill"
-            style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '6px', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
+            style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', border: '0.5px solid rgba(0,0,0,0.2)', borderRadius: '99px', background: 'none', cursor: uploadingFile ? 'default' : 'pointer', color: '#777', fontFamily: 'var(--font-inter),sans-serif' }}>
             {uploadingFile ? 'Uploading…' : `↑ Attach only, no scan${attachments.length ? ' — more' : ''}`}
           </button>
           {attachments.map(a => (
@@ -2361,24 +2361,27 @@ export default function ExpensesClient() {
               {filterEvent !== 'all' && <span style={{ color: '#c5a882' }}> · {filterEvent}</span>}
               {(hasDateFilter || filterCategory !== 'all' || filterPayment !== 'all' || filterProvince !== 'all' || filterCurrency !== 'all' || filterMissing || filterUnreconciled || searchTerm) && <span style={{ color: '#c5a882' }}> · filtered</span>}
             </div>
+            {/* Same pill shape/size as the FilterMenu buttons above (99px
+                radius, 30px minHeight, 0.08em tracking) — these used to be a
+                visibly different, shorter, square-cornered style. */}
             <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginLeft: isMobile ? 0 : 'auto' }}>
               <button onClick={() => setShowSummary(s => !s)} className="exp-tap"
-                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid', borderRadius: '6px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', background: showSummary ? '#0F1E14' : 'none', color: showSummary ? '#F5F1EC' : '#555', borderColor: showSummary ? '#0F1E14' : 'rgba(0,0,0,0.18)' }}>
+                style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', border: '0.5px solid', borderRadius: '99px', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif', background: showSummary ? '#0F1E14' : 'none', color: showSummary ? '#F5F1EC' : '#555', borderColor: showSummary ? '#0F1E14' : 'rgba(0,0,0,0.18)' }}>
                 {showSummary ? 'Hide summary' : 'Summary'}
               </button>
               <button onClick={exportCSV} className="exp-tap"
-                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
+                style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '99px', background: 'none', cursor: 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif' }}>
                 Export CSV
               </button>
               <button onClick={exportPDF} disabled={exportingPdf} className="exp-tap"
                 title="Formal report with a Canvas Routes header, category/payment/tax breakdowns, and clickable receipt links — same filters as what's on screen"
-                style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: exportingPdf ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: exportingPdf ? 0.6 : 1 }}>
+                style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '99px', background: 'none', cursor: exportingPdf ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: exportingPdf ? 0.6 : 1 }}>
                 {exportingPdf ? 'Building PDF…' : 'Export PDF'}
               </button>
               {visibleReceiptCount > 0 && (
                 <button onClick={() => downloadReceiptsZip(visibleExpenses, `canvas-routes-receipts-${today}`)} disabled={!!zippingReceipts} className="exp-tap"
                   title="Download all receipt files in view as a .zip (for your accountant)"
-                  style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', padding: '0.35rem 0.8rem', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', background: 'none', cursor: zippingReceipts ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: zippingReceipts ? 0.6 : 1 }}>
+                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '99px', background: 'none', cursor: zippingReceipts ? 'default' : 'pointer', color: '#555', fontFamily: 'var(--font-inter),sans-serif', opacity: zippingReceipts ? 0.6 : 1 }}>
                   {zippingReceipts ? `Zipping ${zippingReceipts.done}/${zippingReceipts.total}…` : `⬇ Receipts (${visibleReceiptCount})`}
                 </button>
               )}
@@ -2894,18 +2897,18 @@ export default function ExpensesClient() {
                               </div>
                               <div className="exp-btn-row-stack" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                                 <button type="button" onClick={applyEditTax}
-                                  style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '99px', color: '#8a7a5c', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   Auto tax ({editForm.province})
                                 </button>
                                 <input ref={editScanRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,application/pdf" style={{ display: 'none' }} onChange={handleEditScan} />
                                 <button type="button" onClick={() => editScanRef.current?.click()} disabled={editScanning}
                                   title="Read a receipt and reconcile it against these fields — for a card slip that arrives after the fact"
-                                  style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '6px', color: '#8a7a5c', cursor: editScanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', background: 'none', border: '0.5px solid rgba(197,168,130,0.6)', borderRadius: '99px', color: '#8a7a5c', cursor: editScanning ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   {editScanning ? 'Scanning…' : '⎙ Scan'}
                                 </button>
                                 <input ref={editFileRef} type="file" accept="image/*,.pdf" multiple style={{ display: 'none' }} onChange={handleEditFileChange} />
                                 <button type="button" onClick={() => editFileRef.current?.click()} disabled={editUploading}
-                                  style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '7px 12px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '6px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                                  style={{ fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 11px', minHeight: '30px', background: 'none', border: '0.5px solid rgba(0,0,0,0.18)', borderRadius: '99px', color: '#777', cursor: editUploading ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
                                   {editUploading ? 'Uploading…' : `↑ Attach${editAttachments.length ? ' more' : ' receipt'}`}
                                 </button>
                               </div>
