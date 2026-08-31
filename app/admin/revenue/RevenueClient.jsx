@@ -641,12 +641,11 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
   const totalTaxCollected = totalCollected - totalRevenue
 
   // Stripe processing fees across the selected range (all-time by default,
-  // since no date filter = every payment ever). Only card charges carry a fee;
-  // e-transfers and fee-unknown rows contribute nothing.
+  // since no date filter = every payment ever). Only card charges carry a fee
+  // (a flat 2.9% + $0.30/txn, computed in page.jsx's toPaymentRow); e-transfers
+  // and manual rows contribute nothing.
   const feePayments = filteredPayments.filter(p => (p.fee || 0) > 0)
   const totalFees = feePayments.reduce((s, p) => s + p.fee, 0)
-  const feeCardGross = feePayments.reduce((s, p) => s + p.gross, 0)
-  const effectiveFeeRate = feeCardGross > 0 ? (totalFees / feeCardGross) * 100 : 0
 
   // The true bottom line: ex-tax revenue minus Stripe's cut — what's actually
   // left after remitting the tax you collected on the government's behalf AND
@@ -801,7 +800,7 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
     { label: 'Collected (incl. tax)', value: fmt(totalCollected), color: '#1a1a1a', big: false, sub: 'before Stripe fees', info: 'Everything that actually hit your Stripe balance, taxes included, before Stripe fees. Use it to reconcile against your bank — it is not your earnings.' },
     ...(totalTaxCollected > 0 ? [{ label: 'Tax Collected', value: fmt(totalTaxCollected), color: '#1a1a1a', big: false, sub: 'GST + QST, owed to gov’t', info: 'GST + QST charged on top of your prices. This is owed to Revenu Québec / the CRA — not money you keep.' }] : []),
     ...(feePayments.length ? [
-      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: `${effectiveFeeRate.toFixed(1)}% of card volume`, info: 'Stripe’s processing cut, taken from each card charge. Stripe keeps it even if the payment is later refunded.' },
+      { label: 'Stripe Fees', value: '−' + fmt(totalFees), color: '#93333E', big: false, sub: '2.9% + $0.30/txn', info: 'Stripe’s standard card fee — 2.9% of each charge plus $0.30 per transaction — applied to every card payment. E-transfers have no fee.' },
       { label: 'Net After Fees', value: fmt(netAfterFees), color: '#3B6B2F', big: false, sub: 'ex-tax, what you actually keep', info: 'Your true take-home for the range: ex-tax revenue minus Stripe fees.' },
     ] : []),
     { label: 'Routes Member Revenue', value: fmt(routesRevenue), color: '#1a1a1a', big: false },
@@ -1069,11 +1068,11 @@ export default function RevenueClient({ payments = [], pendingPayments = [], str
             <div style={{ minWidth: 0 }}>
               <div style={{ ...SECTION_LABEL, display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                 Stripe Processing Fees {(dateFrom || dateTo) ? '(in range)' : '(all time)'}
-                <InfoTip text="What Stripe actually deducted from each card charge, read straight from the balance transaction. Stripe keeps this even on refunded payments, so it's never added back. E-transfers have no fee." />
+                <InfoTip text="Stripe's standard card fee — 2.9% of each charge plus $0.30 per transaction — applied to every card payment. E-transfers have no fee." />
               </div>
               <div style={{ fontFamily: "'Bebas Neue',var(--font-bebas),sans-serif", fontSize: '2rem', letterSpacing: '0.03em', color: '#93333E', lineHeight: 1.05 }}>−{fmt(totalFees)}</div>
               <div style={{ fontSize: '11px', color: '#999', marginTop: '0.35rem', lineHeight: 1.6 }}>
-                {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · {effectiveFeeRate.toFixed(1)}% of card volume · net after tax + fees <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
+                {feePayments.length} card payment{feePayments.length === 1 ? '' : 's'} · 2.9% + $0.30/txn · net after tax + fees <span style={{ color: '#3B6B2F' }}>{fmt(netAfterFees)}</span>
               </div>
             </div>
             <div style={{ fontSize: '11px', color: '#8A6535', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', whiteSpace: 'nowrap' }}>
