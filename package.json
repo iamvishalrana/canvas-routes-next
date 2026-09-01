@@ -9,7 +9,8 @@
     "health": "playwright test tests/health.spec.js"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0"
+    "@playwright/test": "^1.60.0",
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.101.0",
