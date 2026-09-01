@@ -590,6 +590,7 @@ Standing operating rules — they apply on every task unless the user says other
 - **Never add `Co-Authored-By: Claude` (or any Claude trailer) to commit messages.**
 - **Don't spin up dev servers or Playwright screenshots unless asked.** Careful code review + a green build is the default bar. (A visual check is fine when the user explicitly asks to confirm how something looks.)
 - **Paste full migration SQL as a code block in chat, every time** — not just a file reference. There's no migration runner; the user runs it by hand in the Supabase SQL Editor.
+- **Also save every migration as a file in `supabase/migrations/` (`YYYYMMDD_description.sql`), in the same commit as the code that depends on it.** Found 2026-09-01: two tables/columns from earlier this session (`member_activity_log`, `broadcasts.canceled_at`) were pasted to chat and run, but never saved as files — real drift between the live DB and what git tracks. Pasting to chat and saving the file are both required, not either/or.
 - **Mobile-first, iOS-first, always.** Every UI change must work on mobile: 16px min font on inputs (prevents iOS zoom), `env(safe-area-inset-*)`, `@media (hover:hover)` guards on hover styles, and never introduce horizontal scroll (`overflow-x:hidden` on BOTH `html` and `body`).
 - **Don't proactively touch WTET** (`app/wtet*`, "Whips to Eastern Townships") — it's a past event with no live traffic. Change it only if explicitly asked.
 
