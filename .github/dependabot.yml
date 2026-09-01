@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # npm dependencies — security-relevant updates open immediately;
+  # everything else is grouped weekly to avoid a flood of individual PRs
+  # for routine minor/patch bumps.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions used by the health-check workflow.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
