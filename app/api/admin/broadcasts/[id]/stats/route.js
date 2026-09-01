@@ -32,7 +32,7 @@ export async function GET(request, { params }) {
     typesByMessageId.get(e.resend_message_id).add(e.event_type)
   }
 
-  const counts = { total: (recipients || []).length, sendFailed: 0, pending: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, complained: 0 }
+  const counts = { total: (recipients || []).length, sendFailed: 0, deliveryFailed: 0, pending: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, complained: 0 }
   const detail = (recipients || []).map(r => {
     if (!r.resend_message_id) {
       counts.sendFailed++
@@ -44,6 +44,7 @@ export async function GET(request, { params }) {
     const clicked = types.has('email.clicked')
     const opened = types.has('email.opened')
     const delivered = types.has('email.delivered')
+    const deliveryFailed = types.has('email.failed')
     // Independent flags in the aggregate (a bounce can still show as
     // "delivered" if it later hard-bounced after acceptance) — but the
     // per-recipient badge picks ONE status, the strongest milestone reached.
@@ -52,15 +53,25 @@ export async function GET(request, { params }) {
     if (clicked) counts.clicked++
     if (opened) counts.opened++
     if (delivered) counts.delivered++
-    if (types.size === 0) counts.pending++
+    if (deliveryFailed) counts.deliveryFailed++
+    // 'email.scheduled' just confirms Resend accepted the schedule request —
+    // it isn't a delivery milestone, so a recipient whose only event is that
+    // one should still read as pending, not as "sent" (which the plain
+    // types.size > 0 check below would otherwise wrongly report).
+    const meaningfulTypes = [...types].filter(t => t !== 'email.scheduled')
+    if (meaningfulTypes.length === 0) counts.pending++
     // Status keys mirror EVENT_META in app/admin/email-activity/EmailActivityClient.jsx
     // (email.bounced / email.complained / email.clicked / email.opened /
-    // email.delivered / email.sent) plus two pseudo-states EVENT_META has no
-    // use for: 'pending' (message accepted by Resend, no webhook event yet)
-    // and 'send_failed' (Resend never created a message at all).
+    // email.delivered / email.failed / email.sent) plus two pseudo-states
+    // EVENT_META has no use for: 'pending' (message accepted/scheduled by
+    // Resend, no further webhook event yet) and 'send_failed' (Resend never
+    // created a message at all — a different failure point than
+    // email.failed, which means Resend accepted it but sending itself
+    // later failed).
     const status = bounced ? 'email.bounced' : complained ? 'email.complained'
       : clicked ? 'email.clicked' : opened ? 'email.opened' : delivered ? 'email.delivered'
-      : types.size > 0 ? 'email.sent' : 'pending'
+      : deliveryFailed ? 'email.failed'
+      : meaningfulTypes.length > 0 ? 'email.sent' : 'pending'
     return { email: r.email, name: r.name, status }
   })
 

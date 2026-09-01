@@ -13,6 +13,8 @@ const ACTION_LABELS = {
   'member.delete':                 'Deleted member',
   'member.status_or_tier_change':  'Changed member status / tier',
   'broadcast.send':                'Sent broadcast',
+  'broadcast.schedule':             'Scheduled broadcast',
+  'broadcast.cancel_scheduled':     'Canceled scheduled broadcast',
   'promo.create':                  'Created promo code',
   'promo.edit':                    'Edited promo code',
   'promo.deactivate':              'Deactivated promo code',

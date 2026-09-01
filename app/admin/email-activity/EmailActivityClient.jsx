@@ -4,17 +4,21 @@ import { useRouter } from 'next/navigation'
 import { inp, CopyBtn, Pagination, FilterMenu, DateRangeMenu, CountUp, KebabMenu } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { broadcastPhase } from '../../../lib/broadcastPhase'
 
 const EVENT_META = {
-  'email.sent':             { label: 'Sent',      color: '#888',    bg: 'rgba(0,0,0,0.04)' },
-  'email.delivered':        { label: 'Delivered', color: '#3B6B2F', bg: 'rgba(59,107,47,0.1)' },
-  'email.delivery_delayed': { label: 'Delayed',   color: '#8A6535', bg: 'rgba(197,168,130,0.15)' },
-  'email.bounced':          { label: 'Bounced',   color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
-  'email.complained':       { label: 'Complaint', color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
-  'email.opened':           { label: 'Opened',    color: '#4FA3A5', bg: 'rgba(79,163,165,0.1)' },
-  'email.clicked':          { label: 'Clicked',   color: '#4FA3A5', bg: 'rgba(79,163,165,0.1)' },
+  'email.sent':             { label: 'Sent',       color: '#888',    bg: 'rgba(0,0,0,0.04)' },
+  'email.scheduled':        { label: 'Scheduled',  color: '#8A6535', bg: 'rgba(197,168,130,0.15)' },
+  'email.delivered':        { label: 'Delivered',  color: '#3B6B2F', bg: 'rgba(59,107,47,0.1)' },
+  'email.delivery_delayed': { label: 'Delayed',    color: '#8A6535', bg: 'rgba(197,168,130,0.15)' },
+  'email.bounced':          { label: 'Bounced',    color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
+  'email.complained':       { label: 'Complaint',  color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
+  'email.failed':           { label: 'Failed',     color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
+  'email.suppressed':       { label: 'Suppressed', color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
+  'email.opened':           { label: 'Opened',     color: '#4FA3A5', bg: 'rgba(79,163,165,0.1)' },
+  'email.clicked':          { label: 'Clicked',    color: '#4FA3A5', bg: 'rgba(79,163,165,0.1)' },
 }
-const PROBLEM_TYPES = new Set(['email.bounced', 'email.complained'])
+const PROBLEM_TYPES = new Set(['email.bounced', 'email.complained', 'email.failed', 'email.suppressed'])
 const PAGE_SIZE = 40
 
 const TYPE_FILTER_OPTIONS = [
@@ -29,6 +33,7 @@ const TYPE_FILTER_OPTIONS = [
 const SOURCE_FILTER_OPTIONS = [
   { id: 'all',           label: 'All Sources' },
   { id: 'broadcast',     label: 'Broadcasts Only' },
+  { id: 'scheduled',     label: 'Scheduled Only' },
   { id: 'transactional', label: 'Transactional Only' },
 ]
 
@@ -60,6 +65,12 @@ function fmtAsOf(iso) {
 
 function audienceLabel(b) {
   return b.audience === 'specific_emails' ? `${b.specific_emails?.length ?? 0} emails` : AUDIENCE_LABELS[b.audience] || b.audience
+}
+
+const PHASE_META = {
+  scheduled: { label: 'Scheduled', color: '#8A6535', bg: 'rgba(197,168,130,0.15)' },
+  canceled:  { label: 'Canceled',  color: '#999',    bg: 'rgba(0,0,0,0.05)' },
+  sent:      { label: 'Broadcast', color: '#8A6535', bg: 'rgba(197,168,130,0.12)' },
 }
 
 // Timeline for one recipient — chronological, so "did they get it" reads as
@@ -171,7 +182,7 @@ function DomainHealthCard({ domains, loading, error }) {
 export default function EmailActivityClient({
   events, counts, configured, loadError, fetchedAt,
   broadcasts = [], broadcastsLoading, broadcastsError,
-  onViewDelivery, onReuseBroadcast, onRetryFailedBroadcast, onDeleteBroadcast,
+  onViewDelivery, onReuseBroadcast, onRetryFailedBroadcast, onDeleteBroadcast, onCancelScheduled,
 }) {
   const router = useRouter()
   const [refreshing, setRefreshing] = useState(false)
@@ -257,6 +268,7 @@ export default function EmailActivityClient({
     return mergedRows.filter(row => {
       if (sourceFilter === 'broadcast' && row.kind !== 'broadcast') return false
       if (sourceFilter === 'transactional' && row.kind !== 'event') return false
+      if (sourceFilter === 'scheduled' && (row.kind !== 'broadcast' || broadcastPhase(row.broadcast) !== 'scheduled')) return false
       // A broadcast row aggregates many recipients' event types at once, so
       // it only makes sense to show it under "All Events" — a specific type
       // filter (e.g. Bounced) narrows to individual events, not summaries.
@@ -293,16 +305,29 @@ export default function EmailActivityClient({
   const bounceRate    = sentCount ? Math.round((bouncedCount / sentCount) * 100) : null
   const openRate       = deliveredCount ? Math.round((openedCount / deliveredCount) * 100) : null
 
-  const exportRows = filtered.map(row => row.kind === 'broadcast'
-    ? [fmtDate(row.broadcast.sent_at), 'Broadcast', `${row.broadcast.sent_count} sent${row.broadcast.failed_count ? `, ${row.broadcast.failed_count} failed` : ''}`, row.broadcast.subject || '', '', '']
-    : [fmtDate(row.event.occurred_at), EVENT_META[row.event.event_type]?.label || row.event.event_type, row.event.recipient || '', row.event.subject || '', row.event.bounce_type || '', row.event.resend_message_id || ''])
+  const exportRows = filtered.map(row => {
+    if (row.kind === 'broadcast') {
+      const b = row.broadcast
+      const phase = broadcastPhase(b)
+      const summary = phase === 'canceled'
+        ? `Canceled — was scheduled for ${fmtDate(b.sent_at)}`
+        : `${b.sent_count} ${phase === 'scheduled' ? 'queued' : 'sent'}${b.failed_count ? `, ${b.failed_count} failed` : ''}`
+      return [fmtDate(b.sent_at), PHASE_META[phase].label, summary, b.subject || '', '', '']
+    }
+    const e = row.event
+    return [fmtDate(e.occurred_at), EVENT_META[e.event_type]?.label || e.event_type, e.recipient || '', e.subject || '', e.bounce_type || '', e.resend_message_id || '']
+  })
 
   function broadcastKebabItems(b) {
+    const phase = broadcastPhase(b)
     return [
+      phase === 'scheduled' ? { label: 'Cancel', danger: true, onClick: () => onCancelScheduled(b) } : null,
       { label: 'View Delivery', onClick: () => onViewDelivery(b) },
       { label: 'Re-use', onClick: () => onReuseBroadcast(b) },
       b.failed_recipients?.length > 0 ? { label: 'Retry Failed', onClick: () => onRetryFailedBroadcast(b) } : null,
-      { label: 'Delete', danger: true, onClick: () => onDeleteBroadcast(b) },
+      // A still-scheduled broadcast can't be deleted directly — its history
+      // row is what makes canceling possible at all. Must cancel first.
+      phase !== 'scheduled' ? { label: 'Delete', danger: true, onClick: () => onDeleteBroadcast(b) } : null,
     ]
   }
 
@@ -421,17 +446,25 @@ export default function EmailActivityClient({
           {pageRows.map(row => {
             if (row.kind === 'broadcast') {
               const b = row.broadcast
+              const phase = broadcastPhase(b)
+              const meta = PHASE_META[phase]
               return (
                 <div key={row.id} style={{ ...CARD, marginBottom: '0.5rem', padding: '0.9rem 1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: 'rgba(197,168,130,0.12)', color: '#8A6535', flexShrink: 0 }}>Broadcast</span>
+                    <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: meta.bg, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
                     <span style={{ fontSize: '11px', color: '#aaa', whiteSpace: 'nowrap' }}>{fmtDate(b.sent_at)}</span>
                   </div>
                   <div style={{ fontSize: '12.5px', color: '#333', marginBottom: '0.3rem' }}>{b.subject}</div>
                   <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.5rem' }}>
-                    <span style={{ color: '#3B6B2F' }}>{b.sent_count} sent</span>
-                    {b.failed_count > 0 && <span style={{ color: '#93333E' }}> · {b.failed_count} failed</span>}
-                    {' · '}{audienceLabel(b)}
+                    {phase === 'canceled' ? (
+                      <>Canceled · was scheduled for {fmtDate(b.sent_at)}</>
+                    ) : (
+                      <>
+                        <span style={{ color: '#3B6B2F' }}>{b.sent_count} {phase === 'scheduled' ? 'queued' : 'sent'}</span>
+                        {b.failed_count > 0 && <span style={{ color: '#93333E' }}> · {b.failed_count} {phase === 'scheduled' ? 'failed to queue' : 'failed'}</span>}
+                        {' · '}{audienceLabel(b)}
+                      </>
+                    )}
                   </div>
                   <KebabMenu items={broadcastKebabItems(b)} />
                 </div>
@@ -476,15 +509,23 @@ export default function EmailActivityClient({
                 {pageRows.map(row => {
                   if (row.kind === 'broadcast') {
                     const b = row.broadcast
+                    const phase = broadcastPhase(b)
+                    const meta = PHASE_META[phase]
                     return (
                       <tr key={row.id} style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                         <td style={{ padding: '0.65rem 1rem', color: '#888', whiteSpace: 'nowrap' }}>{fmtDate(b.sent_at)}</td>
                         <td style={{ padding: '0.65rem 1rem', whiteSpace: 'nowrap' }}>
-                          <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: 'rgba(197,168,130,0.12)', color: '#8A6535' }}>Broadcast</span>
+                          <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: meta.bg, color: meta.color }}>{meta.label}</span>
                         </td>
                         <td style={{ padding: '0.65rem 1rem', color: '#333', whiteSpace: 'nowrap' }}>
-                          <span style={{ color: '#3B6B2F' }}>{b.sent_count} sent</span>
-                          {b.failed_count > 0 && <span style={{ color: '#93333E' }}> · {b.failed_count} failed</span>}
+                          {phase === 'canceled' ? (
+                            <span style={{ color: '#999' }}>was for {fmtDate(b.sent_at)}</span>
+                          ) : (
+                            <>
+                              <span style={{ color: '#3B6B2F' }}>{b.sent_count} {phase === 'scheduled' ? 'queued' : 'sent'}</span>
+                              {b.failed_count > 0 && <span style={{ color: '#93333E' }}> · {b.failed_count} {phase === 'scheduled' ? 'failed to queue' : 'failed'}</span>}
+                            </>
+                          )}
                         </td>
                         <td style={{ padding: '0.65rem 1rem', color: '#666', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.subject || '—'}</td>
                         <td style={{ padding: '0.65rem 1rem', color: '#bbb', whiteSpace: 'nowrap' }}>{audienceLabel(b)}</td>

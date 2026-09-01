@@ -4,6 +4,8 @@ import { logAdminAction } from '../../../../lib/adminAudit.js'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { captureMessage } from '../../../../lib/sentry'
 import { buildBulkEmail, filterUnsubscribed } from '../../../../lib/emailUnsubscribe.js'
+import { mtlDatetimeLocalToISO } from '../../../../lib/mtlTime.js'
+import { broadcastPhase } from '../../../../lib/broadcastPhase.js'
 
 const MAX_RECIPIENTS = 2000
 const RESEND_BATCH_SIZE = 100 // Resend /emails/batch max per call
@@ -14,7 +16,7 @@ export async function GET() {
   const supabase = createAdminClient()
   const { data, error } = await supabase
     .from('broadcasts')
-    .select('id, subject, body_html, audience, specific_emails, sent_count, failed_count, failed_recipients, sent_at')
+    .select('id, subject, body_html, audience, specific_emails, sent_count, failed_count, failed_recipients, sent_at, canceled_at')
     .order('sent_at', { ascending: false })
     .limit(100)
   if (error) {
@@ -30,6 +32,15 @@ export async function DELETE(request) {
   const { id } = await request.json().catch(() => ({}))
   if (!id) return Response.json({ error: 'ID required.' }, { status: 400 })
   const supabase = createAdminClient()
+
+  // A still-scheduled broadcast's history row is the only place its
+  // Resend message ids live — deleting it before canceling would orphan a
+  // pending send with no way left to cancel it from this UI.
+  const { data: existing } = await supabase.from('broadcasts').select('sent_at, canceled_at').eq('id', id).maybeSingle()
+  if (existing && broadcastPhase(existing) === 'scheduled') {
+    return Response.json({ error: 'This broadcast is still scheduled to send — cancel it first.' }, { status: 400 })
+  }
+
   const { error } = await supabase.from('broadcasts').delete().eq('id', id)
   if (error) {
     captureMessage('Broadcast history delete failed', { error: error.message, id })
@@ -44,7 +55,19 @@ export async function POST(request) {
   const ip = getClientIp(request)
   if (await checkRateLimit(ip, 10, 60)) return Response.json({ error: 'Too many requests' }, { status: 429 })
 
-  const { subject, html, body_html, audience, specificEmails, excludeEmails, includeEmails, fromEmail, attachments } = await request.json()
+  const { subject, html, body_html, audience, specificEmails, excludeEmails, includeEmails, fromEmail, attachments, scheduledAt } = await request.json()
+
+  // Schedule for later instead of sending immediately — audience resolution
+  // still happens now (below), Resend just holds and delivers each email at
+  // this time. A 2-minute floor avoids a same-instant race with "now".
+  let scheduledAtISO = null
+  if (scheduledAt) {
+    scheduledAtISO = mtlDatetimeLocalToISO(scheduledAt)
+    if (!scheduledAtISO) return Response.json({ error: 'Invalid scheduled time.' }, { status: 400 })
+    if (new Date(scheduledAtISO).getTime() < Date.now() + 2 * 60 * 1000) {
+      return Response.json({ error: 'Scheduled time must be at least 2 minutes from now.' }, { status: 400 })
+    }
+  }
 
   // Validate attachments: base64 payloads passed straight to Resend. The 3 MB
   // original-size cap (≈4.1 MB base64) keeps the request under Vercel's limit.
@@ -216,7 +239,7 @@ export async function POST(request) {
   const recipientRows = []
 
   const emailFor = recipient =>
-    buildBulkEmail({ from: fromHeader, recipient, subject: subject.trim(), html, attachments: cleanAttachments })
+    buildBulkEmail({ from: fromHeader, recipient, subject: subject.trim(), html, attachments: cleanAttachments, scheduledAt: scheduledAtISO || undefined })
 
   if (cleanAttachments.length > 0) {
     // Resend's batch endpoint does NOT support attachments — send one email
@@ -323,6 +346,10 @@ export async function POST(request) {
     sent_count: sent,
     failed_count: failed,
     failed_recipients: failedRecipients.length > 0 ? failedRecipients : null,
+    // For a scheduled broadcast this is the future delivery time, not "now" —
+    // a broadcast's phase (sent / scheduled / canceled) is derived from this
+    // plus canceled_at rather than tracked in a separate status column.
+    sent_at: scheduledAtISO || new Date().toISOString(),
   })
   if (historyError) {
     captureMessage('Broadcast history insert failed', { error: historyError.message, audience, sent, failed })
@@ -337,14 +364,16 @@ export async function POST(request) {
   }
 
   await logAdminAction(supabase, adminUser?.email, {
-    action: 'broadcast.send', entityType: 'broadcast', entityName: subject.trim(),
-    metadata: { audience, sent, failed, ...(cleanAttachments.length ? { attachments: cleanAttachments.length } : {}) },
+    action: scheduledAtISO ? 'broadcast.schedule' : 'broadcast.send', entityType: 'broadcast', entityName: subject.trim(),
+    metadata: { audience, sent, failed, ...(scheduledAtISO ? { scheduledFor: scheduledAtISO } : {}), ...(cleanAttachments.length ? { attachments: cleanAttachments.length } : {}) },
   })
 
-  // Emails already went out — report the history failure but don't fail the response
+  // Emails already went out (or were queued) — report the history failure
+  // but don't fail the response.
   return Response.json({
     sent, failed, truncated, totalRecipients,
     historySaved: !historyError,
     ...(historyError ? { historyError: historyError.message } : {}),
+    ...(scheduledAtISO ? { scheduledFor: scheduledAtISO } : {}),
   })
 }

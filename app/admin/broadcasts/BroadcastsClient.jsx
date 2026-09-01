@@ -11,6 +11,7 @@ import Link from '@tiptap/extension-link'
 import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { EMAIL_SIGNATURE_HTML } from '../../../lib/emailSignature.js'
+import { mtlDatetimeLocalToISO } from '../../../lib/mtlTime.js'
 import EmailActivityClient from '../email-activity/EmailActivityClient'
 
 const MAX_RECIPIENTS = 2000
@@ -37,6 +38,10 @@ const DELIVERY_STATUS_META = {
   'email.clicked':     { label: 'Clicked',    color: '#4FA3A5' },
   'email.bounced':     { label: 'Bounced',    color: '#93333E' },
   'email.complained':  { label: 'Complaint',  color: '#93333E' },
+  // 'email.scheduled' isn't listed here — the stats route collapses a
+  // recipient whose only event is that one into 'pending' below it, since
+  // scheduling isn't a delivery milestone.
+  'email.failed':      { label: 'Failed',     color: '#93333E' },
   pending:             { label: 'Pending',    color: '#bbb' },
   send_failed:         { label: 'Failed',     color: '#93333E' },
 }
@@ -416,6 +421,8 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
   const [emailMode, setEmailMode]               = useState(null)        // null | 'exclude' | 'include' — field greyed until one is picked
   const [subject, setSubject]                   = useState('')
   const [bodyHtml, setBodyHtml]                 = useState('')          // explicit state for draft save
+  const [sendMode, setSendMode]                 = useState('now')       // 'now' | 'schedule'
+  const [scheduledAtLocal, setScheduledAtLocal] = useState('')          // raw datetime-local value, interpreted as Montreal time server-side
   const [sending, setSending]                   = useState(false)
   const [error, setError]                       = useState(null)
   const [result, setResult]                     = useState(null)
@@ -427,6 +434,9 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null)
   const [deletingHistory, setDeletingHistory]   = useState(false)
   const [historyActionErr, setHistoryActionErr] = useState(null)
+  const [cancelConfirm, setCancelConfirm]       = useState(null)       // broadcast row pending cancel confirmation
+  const [cancelingScheduled, setCancelingScheduled] = useState(false)
+  const [cancelActionErr, setCancelActionErr]   = useState(null)
   const [recipientCount, setRecipientCount]     = useState(null)
   const [countLoading, setCountLoading]         = useState(false)
   const [testEmail, setTestEmail]               = useState('')
@@ -509,6 +519,14 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
         editor.commands.setContent(saved.bodyHtml)
         setBodyHtml(saved.bodyHtml)
       }
+      // Only restore a "schedule for later" draft if the saved time is still
+      // in the future — a stale past time from a session days ago would just
+      // fail validation silently sitting in the field otherwise.
+      const savedISO = saved.scheduledAtLocal ? mtlDatetimeLocalToISO(saved.scheduledAtLocal) : null
+      if (saved.sendMode === 'schedule' && savedISO && new Date(savedISO) > new Date()) {
+        setSendMode('schedule')
+        setScheduledAtLocal(saved.scheduledAtLocal)
+      }
     } catch {}
   }, [editor])
 
@@ -531,8 +549,8 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
   // 4. Auto-save draft to localStorage on any change
   useEffect(() => {
     if (!draftRestoredRef.current) return
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, extraEmails, emailMode, fromEmail })) } catch {}
-  }, [subject, bodyHtml, audience, chipEmails, extraEmails, emailMode, fromEmail])
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ subject, bodyHtml, audience, chipEmails, extraEmails, emailMode, fromEmail, sendMode, scheduledAtLocal })) } catch {}
+  }, [subject, bodyHtml, audience, chipEmails, extraEmails, emailMode, fromEmail, sendMode, scheduledAtLocal])
 
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true)
@@ -570,6 +588,22 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
       setHistoryActionErr('Network error — entry not deleted.')
     } finally {
       setDeletingHistory(false)
+    }
+  }
+
+  async function cancelScheduled(id) {
+    setCancelingScheduled(true)
+    setCancelActionErr(null)
+    try {
+      const res = await fetch(`/api/admin/broadcasts/${id}/cancel`, { method: 'POST' })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { setCancelActionErr(d.error || 'Failed to cancel.'); return }
+      setHistory(prev => prev.map(h => h.id === id ? { ...h, canceled_at: new Date().toISOString() } : h))
+      setCancelConfirm(null)
+    } catch {
+      setCancelActionErr('Network error — not canceled.')
+    } finally {
+      setCancelingScheduled(false)
     }
   }
 
@@ -692,17 +726,40 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
     ? `${parsedEmails.length} specific email${parsedEmails.length !== 1 ? 's' : ''}`
     : AUDIENCE_OPTIONS.find(o => o.value === audience)?.label || audience
 
+  function fmtScheduledLocal(localStr) {
+    const iso = mtlDatetimeLocalToISO(localStr)
+    if (!iso) return ''
+    return new Date(iso).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Toronto' })
+  }
+
+  // Soft UX floor for the datetime-local picker's `min` — server validation
+  // (2-minute floor, converted correctly for DST) is what's actually
+  // authoritative. Expressed in Montreal wall-clock terms so it lines up
+  // with how the picked value itself gets interpreted.
+  function minScheduleLocal() {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Toronto', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+    }).formatToParts(new Date(Date.now() + 3 * 60 * 1000))
+    const get = t => parts.find(p => p.type === t)?.value
+    return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`
+  }
+
   async function handleSendClick() {
     setError(null)
     if (!subject.trim()) { setError('Subject is required.'); return }
     if (bodyEmpty) { setError('Message body is required.'); return }
     if (audience === 'specific_emails' && parsedEmails.length === 0) { setError('Enter at least one valid email.'); return }
+    const isSchedule = sendMode === 'schedule'
+    if (isSchedule && !scheduledAtLocal) { setError('Pick a date and time to schedule for.'); return }
     const countStr = recipientCount !== null ? `${recipientCount} recipient${recipientCount !== 1 ? 's' : ''}` : null
+    const scheduledLabel = isSchedule ? fmtScheduledLocal(scheduledAtLocal) : null
     if (!(await confirm({
-      title: 'Send this broadcast?',
-      message: `This emails everyone in the selected audience and cannot be undone.`,
-      details: <>To: <strong>{audienceLabel}</strong>{countStr ? <> · {countStr}</> : null}<br />Subject: {subject.trim() || '—'}</>,
-      confirmLabel: 'Yes, send broadcast',
+      title: isSchedule ? 'Schedule this broadcast?' : 'Send this broadcast?',
+      message: isSchedule
+        ? 'This queues the email to go out at the chosen time. You can cancel it any time before then from Email Activity.'
+        : 'This emails everyone in the selected audience and cannot be undone.',
+      details: <>To: <strong>{audienceLabel}</strong>{countStr ? <> · {countStr}</> : null}<br />Subject: {subject.trim() || '—'}{isSchedule && scheduledLabel ? <><br />Sends: <strong>{scheduledLabel}</strong></> : null}</>,
+      confirmLabel: isSchedule ? 'Yes, schedule broadcast' : 'Yes, send broadcast',
     }))) return
     confirmSend()
   }
@@ -726,6 +783,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
           ...(emailMode === 'exclude' && extraEmails.length > 0 ? { excludeEmails: extraEmails } : {}),
           ...(emailMode === 'include' && extraEmails.length > 0 ? { includeEmails: extraEmails } : {}),
           ...(attachments.length > 0 ? { attachments: attachmentPayload() } : {}),
+          ...(sendMode === 'schedule' && scheduledAtLocal ? { scheduledAt: scheduledAtLocal } : {}),
         }),
       })
       const data = await res.json()
@@ -740,6 +798,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
       setAttachErr(null)
       setFromEmail('jerry@canvasroutes.com')
       setAudience('specific_emails')
+      setSendMode('now'); setScheduledAtLocal('')
       try { localStorage.removeItem(DRAFT_KEY) } catch {}  // 4. clear draft on send
     } catch {
       setError('Network error. Please try again.')
@@ -918,6 +977,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
           onReuseBroadcast={reuseHistory}
           onRetryFailedBroadcast={retryFailed}
           onDeleteBroadcast={h => setDeleteHistoryConfirm(h)}
+          onCancelScheduled={h => { setCancelActionErr(null); setCancelConfirm(h) }}
         />
       )}
 
@@ -1002,9 +1062,11 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
           {result && (
             <div style={{ background: 'rgba(59,107,47,0.07)', border: '0.5px solid rgba(59,107,47,0.3)', padding: '1.25rem 1.5rem', marginBottom: '1.5rem' }}>
               <div style={{ fontSize: '14px', fontWeight: '500', color: '#3B6B2F', marginBottom: (result.failed > 0 || result.truncated || result.historySaved === false) ? '0.35rem' : 0 }}>
-                ✓ Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.
+                {result.scheduledFor
+                  ? <>✓ Broadcast scheduled for {new Date(result.scheduledFor).toLocaleString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'America/Toronto' })} — {result.sent} recipient{result.sent !== 1 ? 's' : ''} queued.</>
+                  : <>✓ Broadcast sent — {result.sent} email{result.sent !== 1 ? 's' : ''} delivered.</>}
               </div>
-              {result.failed > 0 && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.25rem' }}>{result.failed} failed to deliver.</div>}
+              {result.failed > 0 && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.25rem' }}>{result.failed} failed to {result.scheduledFor ? 'queue' : 'deliver'}.</div>}
               {result.truncated && <div style={{ fontSize: '12px', color: '#8A6535', marginTop: '0.25rem' }}>⚠ List capped at {MAX_RECIPIENTS} — {result.totalRecipients - MAX_RECIPIENTS} recipients not reached.</div>}
               {result.historySaved === false && <div style={{ fontSize: '12px', color: '#93333E', marginTop: '0.25rem' }}>⚠ Emails were sent, but this broadcast could not be saved to History{result.historyError ? ` — ${result.historyError}` : ''}.</div>}
               <button onClick={() => setResult(null)} style={{ marginTop: '0.75rem', background: 'none', border: '0.5px solid rgba(0,0,0,0.15)', padding: '0.35rem 0.85rem', cursor: 'pointer', fontSize: '10px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -1208,6 +1270,29 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
                   </div>
                 </div>
 
+                {/* When to send */}
+                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
+                  <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>When to Send</div>
+                  </div>
+                  <div style={{ padding: '1rem 1.25rem' }}>
+                    <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '7px', overflow: 'hidden', marginBottom: sendMode === 'schedule' ? '0.85rem' : 0 }}>
+                      {[['now', 'Send now'], ['schedule', 'Schedule for later']].map(([m, label]) => (
+                        <button key={m} type="button" className="bc-seg-btn" onClick={() => setSendMode(m)}
+                          style={{ padding: '5px 13px', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', transition: 'background 0.18s, color 0.18s', background: sendMode === m ? '#0F1E14' : '#fff', color: sendMode === m ? '#F5F1EC' : '#888' }}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {sendMode === 'schedule' && (
+                      <>
+                        <input type="datetime-local" style={INP} min={minScheduleLocal()} value={scheduledAtLocal} onChange={e => setScheduledAtLocal(e.target.value)} />
+                        <div style={{ fontSize: '10px', color: '#999', marginTop: '0.4rem' }}>Times are Montreal time (America/Toronto).</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+
                 {/* Save as template */}
                 {!showSaveTemplate ? (
                   <button
@@ -1296,6 +1381,23 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
         />
       )}
 
+      {cancelConfirm && (
+        <ConfirmDialog
+          title="Cancel this scheduled broadcast?"
+          message="Stops it from going out. The recipients who would have gotten it are unaffected — nothing was sent."
+          details={<>
+            <strong>{cancelConfirm.subject}</strong><br />
+            Scheduled for {new Date(cancelConfirm.sent_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })} · {cancelConfirm.sent_count} queued
+            {cancelActionErr && <><br /><span style={{ color: '#93333E' }}>{cancelActionErr}</span></>}
+          </>}
+          confirmLabel="Yes, cancel it"
+          danger
+          busy={cancelingScheduled}
+          onConfirm={() => cancelScheduled(cancelConfirm.id)}
+          onCancel={() => { setCancelConfirm(null); setCancelActionErr(null) }}
+        />
+      )}
+
       {/* Per-broadcast delivery detail */}
       {deliveryModalBroadcast && (
         <div className="bc-preview-overlay" onClick={() => setDeliveryModalId(null)}>
@@ -1334,6 +1436,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
                       {c.bounced > 0 && <span style={{ color: '#93333E' }}>{c.bounced} bounced</span>}
                       {c.complained > 0 && <span style={{ color: '#93333E' }}>{c.complained} complained</span>}
                       {c.pending > 0 && <span style={{ color: '#bbb' }}>{c.pending} pending</span>}
+                      {c.deliveryFailed > 0 && <span style={{ color: '#93333E' }}>{c.deliveryFailed} delivery failed</span>}
                       {c.sendFailed > 0 && <span style={{ color: '#93333E' }}>{c.sendFailed} failed to send</span>}
                     </div>
                     {ds.recipients?.length > 0 && (
