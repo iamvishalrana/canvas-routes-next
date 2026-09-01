@@ -13,6 +13,7 @@ import { convertTiffIfNeeded, isTiffFile } from '../../../../../../lib/convertTi
 import { formatMbps } from '../../../../../../lib/formatMbps'
 import { MIME_TO_EXT } from '../../../../../../lib/allowedImageTypes'
 import { sha256Hex } from '../../../../../../lib/hashFile'
+import { MONTREAL_TZ } from '../../../../../../lib/mtlTime'
 
 const ALLOWED = MIME_TO_EXT
 
@@ -23,7 +24,7 @@ function daysLeft(expiresAt) {
   return Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000)
 }
 function fmtDate(d) {
-  return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
 }
 
 export default function FolderClient() {

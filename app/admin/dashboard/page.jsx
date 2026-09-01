@@ -2,23 +2,29 @@ import { createAdminClient } from '../../../lib/supabase/admin'
 import Link from 'next/link'
 import StatNumber from './StatNumber'
 import DeviceChart from './DeviceChart'
+import { montrealTodayStr, montrealTodayDate, montrealStartOfDay } from '../../../lib/mtlTime'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Dashboard' }
 
 const PAGE_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '14px', boxShadow: '0 2px 16px rgba(0,0,0,0.05), 0 1px 4px rgba(0,0,0,0.03)' }
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 
 export default async function DashboardPage() {
   const supabase = createAdminClient()
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  // This runs server-side on Vercel (UTC) — `todayStr` feeds a DB query for
+  // the Upcoming Events widget below. Anchoring "today" to the server's own
+  // UTC clock instead of Montreal meant that widget silently dropped
+  // today's own event for several hours every Montreal evening, once UTC
+  // had already rolled to tomorrow while Montreal hadn't.
+  const today = montrealTodayDate()
   const in180 = new Date(today)
   in180.setDate(in180.getDate() + 180)
-  const todayStr = today.toISOString().slice(0, 10)
-  const in180Str = in180.toISOString().slice(0, 10)
-  const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7)
+  const todayStr = montrealTodayStr()
+  const in180Str = ymd(in180)
+  const weekAgo = montrealStartOfDay(); weekAgo.setDate(weekAgo.getDate() - 7)
 
   let totalMembers = 0, activeMembers = 0, totalContacts = 0, newMembersWeek = 0, authorizedHolds = 0
   let recentMembers = [], recentContacts = [], upcomingEvents = [], deviceRows = [], birthdayRows = []
@@ -54,14 +60,12 @@ export default async function DashboardPage() {
   // Upcoming birthdays in the next 21 days (active members), so the club can
   // send a note. dob_year isn't needed — just month/day.
   const birthdays = (() => {
-    const now = new Date()
+    const t0 = today // Montreal's actual today, already computed above
     const out = []
     for (const m of birthdayRows || []) {
       if (!m.dob_month || !m.dob_day) continue
-      let next = new Date(now.getFullYear(), m.dob_month - 1, m.dob_day)
-      next.setHours(0, 0, 0, 0)
-      const t0 = new Date(now); t0.setHours(0, 0, 0, 0)
-      if (next < t0) next = new Date(now.getFullYear() + 1, m.dob_month - 1, m.dob_day)
+      let next = new Date(t0.getFullYear(), m.dob_month - 1, m.dob_day)
+      if (next < t0) next = new Date(t0.getFullYear() + 1, m.dob_month - 1, m.dob_day)
       const days = Math.round((next - t0) / 86400000)
       if (days <= 21) out.push({ name: m.name, days, month: m.dob_month, day: m.dob_day })
     }

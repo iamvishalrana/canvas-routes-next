@@ -6,6 +6,7 @@ import { inp, sel, L, PrimaryBtn, GhostBtn, Err, CopyBtn } from '../../_componen
 import { useConfirm } from '../../_components/ConfirmProvider'
 import ContactSearchSelect from '../../_components/ContactSearchSelect'
 import { isValidEmail } from '../../../../lib/emailValidation'
+import { MONTREAL_TZ } from '../../../../lib/mtlTime'
 
 const EMPTY_FORM = { name: '', email: '' }
 
@@ -16,7 +17,7 @@ function fmtViewed(d) {
   if (days <= 0) return 'Opened today'
   if (days === 1) return 'Opened 1 day ago'
   if (days < 30) return `Opened ${days}d ago`
-  return `Opened ${new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  return `Opened ${new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })}`
 }
 
 export default function SharesPeopleClient() {

@@ -14,6 +14,7 @@ import { useLanguage } from '../lib/i18n/LanguageContext'
 import { homepageT } from '../lib/i18n/homepage'
 import { routesT } from '../lib/i18n/routes'
 import { isValidEmail } from '../lib/emailValidation'
+import { montrealTodayDate } from '../lib/mtlTime'
 
 const CAR_MAKES = ['Acura','Alfa Romeo','Allard','Aston Martin','Audi','Bentley','BMW','Bugatti','Buick','Cadillac','Chevrolet','Chrysler','Dodge','Ferrari','Fiat','Ford','Genesis','GMC','Honda','Hyundai','Infiniti','Isuzu','Jaguar','Jeep','Kia','Koenigsegg','Lamborghini','Land Rover','Lexus','Lincoln','Lotus','Maserati','Mazda','McLaren','Mercedes-Benz','Mercury','MINI','Mitsubishi','Nissan','Pagani','Pontiac','Porsche','Ram','Rimac','Rolls-Royce','Subaru','Toyota','Volkswagen','Volvo','Zenvo','Other']
 
@@ -36,6 +37,16 @@ function parseEventDate(str) {
   if (/^\d{4}-\d{2}$/.test(s)) {
     const [y, m] = s.split('-').map(Number)
     return new Date(y, m, 0)
+  }
+  // Exact calendar date (ev.date) — build from local components, not a
+  // string parse. `new Date("2026-09-05")` parses as UTC midnight, which
+  // the generic fallback below would do, and comparing that against a
+  // locally-constructed "today" misfires "is this event past" by up to a
+  // full day for any visitor west of UTC (an event reads as already over
+  // hours before its own day even starts for them).
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d)
   }
   const d = new Date(s)
   return isNaN(d) ? null : d
@@ -195,8 +206,10 @@ function PopupCardInner({ card, t, onDismiss, showMaybeLater }) {
 function isEventPast(ev) {
   const d = parseEventDate(ev.date || ev.date_display)
   if (!d) return false
-  const now = new Date(); now.setHours(0, 0, 0, 0)
-  return d < now
+  // Montreal's calendar day, not the visitor's own browser timezone — a
+  // visitor west of Montreal would otherwise see today's events flip to
+  // "past" hours before Montreal's own day is even over.
+  return d < montrealTodayDate()
 }
 
 function formatEventDate(isoDate) {

@@ -6,7 +6,7 @@ import EventRegisterButton from '../../../../../components/EventRegisterButton'
 import EventFreeRegister from '../../../../../components/EventFreeRegister'
 import LocationMap from '../../../../../components/LocationMap'
 import AddToCalendar from '../../../../../components/AddToCalendar'
-import { MONTREAL_TZ } from '../../../../../lib/mtlTime'
+import { MONTREAL_TZ, montrealTodayDate } from '../../../../../lib/mtlTime'
 import { membersEventsT } from '../../../../../lib/i18n/membersEvents'
 import { EVENT_TIME_OVERRIDES } from '../../../../../lib/eventMeta'
 
@@ -57,12 +57,16 @@ export default async function EventDetailPage({ params }) {
     const s = str.trim()
     if (/^[A-Za-z]+ \d{4}$/.test(s)) { const d = new Date(s.replace(/^([A-Za-z]+) (\d{4})$/, '$1 1, $2')); return isNaN(d) ? null : new Date(d.getFullYear(), d.getMonth() + 1, 0) }
     if (/^\d{4}-\d{2}$/.test(s)) { const [y, m] = s.split('-').map(Number); return new Date(y, m, 0) }
+    // Exact calendar date (ev.date) — local components, not a string parse.
+    // See app/page.jsx's parseEventDate for why the generic fallback below
+    // would otherwise misfire this evening's own event as already past.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d) }
     const d = new Date(s); return isNaN(d) ? null : d
   }
   // Prefer the precise `date` field — date_display ("July 2026") parses to
   // the last day of that month, keeping already-past events looking upcoming.
   const evDate = parseEvDate(ev.date || ev.date_display)
-  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const today = montrealTodayDate()
   const isPast = evDate ? evDate < today : false
 
   // For upcoming events with a full registration URL, redirect there directly

@@ -14,7 +14,7 @@ import { useConfirm } from '../_components/ConfirmProvider'
 import { ExportButton } from '../_components/ExportModal'
 import ActivityTimeline from '../_components/ActivityTimeline'
 import MemberProfilePreview from '../../../components/MemberProfilePreview'
-import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { MONTREAL_TZ, montrealTodayStr } from '../../../lib/mtlTime'
 import { formatCarLabel } from '../../../lib/carLabel'
 import { attendanceKey, normalizeEventName } from '../../../lib/eventMeta.js'
 import { formatForDisplay } from '../../../lib/memberNumber.js'
@@ -52,8 +52,8 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
   const memberSinceStr = memberSinceRaw ? new Date(memberSinceRaw).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: MONTREAL_TZ }) : null
   const cars = m.cars?.length > 0 ? m.cars : (m.car_year || m.car_make || m.car_model ? [{ year: m.car_year, make: m.car_make, model: m.car_model, license_plate: '' }] : [])
   const validCars = cars.filter(c => c.year || c.make || c.model)
-  const today = new Date(); today.setHours(0, 0, 0, 0)
-  const pastEvents = events.filter(ev => new Date(ev.date) <= today)
+  const todayStr = montrealTodayStr()
+  const pastEvents = events.filter(ev => ev.date && ev.date <= todayStr)
   const attendedCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === true).length
   const noShowCount = pastEvents.filter(ev => m.event_attendance?.[attendanceKey(ev.name)] === false).length
   // N/A is the catch-all, not just an explicit 'na' — attendance is opt-in,
@@ -61,7 +61,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
   // this always summing to pastEvents.length instead of leaving some past
   // events uncounted in any bucket.
   const naCount = pastEvents.length - attendedCount - noShowCount
-  const upcomingCount = events.filter(ev => new Date(ev.date) > today).length
+  const upcomingCount = events.filter(ev => ev.date && ev.date > todayStr).length
   const dobStr = m.dob_month ? `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m.dob_month - 1]} ${m.dob_day}${m.dob_year ? `, ${m.dob_year}` : ''}` : null
 
   const sep = { borderBottom: '0.5px solid rgba(0,0,0,0.06)' }
@@ -184,7 +184,7 @@ function MemberExpandedPanel({ m, events, onToggleAttendance, isMobile, editingN
           {events.map(ev => {
             const key = attendanceKey(ev.name)
             const attended = m.event_attendance?.[key]
-            const isPast = new Date(ev.date) <= today
+            const isPast = ev.date && ev.date <= todayStr
             return (
               <div key={ev.name} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '12px', color: '#444', flex: 1, minWidth: '140px' }}>{ev.name}</span>

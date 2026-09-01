@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { inp, sel, L, PrimaryBtn, GhostBtn, DangerBtn, Err, CopyBtn } from '../../../_components/shared'
 import { useConfirm } from '../../../_components/ConfirmProvider'
 import { isValidEmail } from '../../../../../lib/emailValidation'
+import { MONTREAL_TZ } from '../../../../../lib/mtlTime'
 
 const LIFETIME_OPTIONS = [7, 14, 30, 60, 90]
 
@@ -18,7 +19,7 @@ function daysLeft(expiresAt) {
 }
 
 function fmtDate(d) {
-  return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
+  return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ })
 }
 
 function fmtViewed(d) {

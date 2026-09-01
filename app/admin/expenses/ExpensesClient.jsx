@@ -5,6 +5,7 @@ import { inp, sel, L, GhostBtn, DangerBtn, Err, DateRangeMenu, FilterMenu } from
 import { EXPENSE_CATEGORIES, MEALS_ENTERTAINMENT_CATEGORY, MEALS_ENTERTAINMENT_DEDUCTIBLE_RATE } from '../../../lib/expenseCategories'
 import { EXPENSE_PAYMENT_METHODS, EXPENSE_PAYMENT_LABELS } from '../../../lib/expensePaymentMethods'
 import { EXPENSE_PROVINCES, EXPENSE_PROVINCE_MAP } from '../../../lib/expenseProvinces'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import { uploadToR2 } from '../../../lib/uploadToR2'
 import { compressImageClient } from '../../../lib/compressImageClient'
 import { convertHeicIfNeeded } from '../../../lib/convertHeicIfNeeded'
@@ -1708,7 +1709,7 @@ export default function ExpensesClient() {
         yearGroups,
         provinceLabelOf: provinceNameOf,
         paymentLabelOf,
-        generatedAt: new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' }),
+        generatedAt: new Date().toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', timeZone: MONTREAL_TZ }),
       })
       setPdfErr(null)
     } catch {

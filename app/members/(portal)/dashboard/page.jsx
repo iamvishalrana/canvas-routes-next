@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { PARTNERS } from '../../../../lib/partners'
 import { attendanceKeyToEventName, normalizeEventName as resolveEventName } from '../../../../lib/eventMeta.js'
-import { MONTREAL_TZ } from '../../../../lib/mtlTime'
+import { MONTREAL_TZ, montrealTodayDate } from '../../../../lib/mtlTime'
 import { normalizeEmail } from '../../../../lib/normalizeEmail'
 import FadeUp from '../../../../components/FadeUp'
 import CountUp from '../../../../components/CountUp'
@@ -137,7 +137,7 @@ export default async function DashboardPage() {
   const isInnerCircle = tier === 'inner_circle'
   const carPhotoUrl = member?.car_photo_url || null
 
-  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const today = montrealTodayDate()
 
   function parseEventDate(str) {
     if (!str) return null
@@ -149,6 +149,13 @@ export default async function DashboardPage() {
     if (/^\d{4}-\d{2}$/.test(s)) {
       const [y, m] = s.split('-').map(Number)
       return new Date(y, m, 0)
+    }
+    // Exact calendar date (ev.date) — local components, not a string parse.
+    // See app/page.jsx's parseEventDate for why the generic fallback below
+    // would otherwise misfire this evening's own event as already past.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, m, d] = s.split('-').map(Number)
+      return new Date(y, m - 1, d)
     }
     const d = new Date(s)
     return isNaN(d) ? null : d

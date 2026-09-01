@@ -1,7 +1,7 @@
 'use client'
 import { useState, useMemo, useEffect } from 'react'
 import { inp, sel } from '../_components/shared'
-import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { MONTREAL_TZ, montrealStartOfDay } from '../../../lib/mtlTime'
 
 // Every logged action rendered as a plain sentence — new actions that aren't
 // mapped yet fall back to "verb noun" from the dotted key, so nothing shows
@@ -158,8 +158,17 @@ function fmtDate(iso) {
   return `${date} · ${time}`
 }
 
-function startOfDay(date) { const d = new Date(date); d.setHours(0, 0, 0, 0); return d }
-function startOfWeek(date) { const d = startOfDay(date); d.setDate(d.getDate() - d.getDay()); return d }
+// Both compared against real timestamps (created_at) below, so these need
+// the actual Montreal-midnight instant, not just a runtime-local placeholder
+// — this page runs in the admin's own browser, which isn't necessarily
+// Montreal, and "Today"/"This week" should mean Montreal's today/this week
+// consistently for every admin regardless of where they happen to be.
+function startOfDay(date) { return montrealStartOfDay(date) }
+function startOfWeek(date) {
+  const weekday = new Intl.DateTimeFormat('en-US', { timeZone: MONTREAL_TZ, weekday: 'short' }).format(date)
+  const dayIndex = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(weekday)
+  return new Date(montrealStartOfDay(date).getTime() - dayIndex * 86400000)
+}
 
 const META_LABELS = {
   amount: 'Amount', audience: 'Audience', sent: 'Sent', failed: 'Failed',

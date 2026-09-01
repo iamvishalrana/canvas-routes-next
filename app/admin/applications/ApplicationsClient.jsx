@@ -10,7 +10,7 @@ import {
 import { ExportButton } from '../_components/ExportModal'
 import { useConfirm } from '../_components/ConfirmProvider'
 import ActivityTimeline from '../_components/ActivityTimeline'
-import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { MONTREAL_TZ, montrealTodayStr } from '../../../lib/mtlTime'
 import { isValidEmail } from '../../../lib/emailValidation'
 
 // Montreal calendar date (YYYY-MM-DD) an application was submitted, for the
@@ -949,8 +949,7 @@ export default function ApplicationsClient() {
                   <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
                     {(() => {
-                      const today = new Date()
-                      today.setHours(0, 0, 0, 0)
+                      const todayStr = montrealTodayStr()
                       const canonicalNames = new Set(CANONICAL_EVENTS.map(e => e.name))
                       const extraRegs = (a.registrations || []).filter(r => !canonicalNames.has(normalizeEventName(r.event)) && r.event !== 'Canvas Routes Membership')
                       const allRows = [
@@ -961,7 +960,7 @@ export default function ApplicationsClient() {
                         ...extraRegs.map(r => ({ eventName: r.event, eventDate: null, reg: r })),
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
-                        const isPast = eventDate ? new Date(eventDate) <= today : true
+                        const isPast = eventDate ? eventDate <= todayStr : true
                         const detailKey = `${a.id}-${eventName}`
                         const detailOpen = expandedEventDetail === detailKey
                         return (

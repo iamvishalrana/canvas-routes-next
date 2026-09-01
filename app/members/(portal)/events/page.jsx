@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import EventsGrid from '../../../../components/EventsGrid'
 import { membersEventsT } from '../../../../lib/i18n/membersEvents'
 import { ROAD_TRIP_TYPE_TO_NAME } from '../../../../lib/eventMeta'
+import { montrealTodayDate } from '../../../../lib/mtlTime'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: { absolute: 'Meets & Events | Canvas Routes' } }
@@ -18,6 +19,16 @@ function parseEventDate(str) {
   if (/^\d{4}-\d{2}$/.test(s)) {
     const [y, m] = s.split('-').map(Number)
     return new Date(y, m, 0)
+  }
+  // Exact calendar date (ev.date) — local components, not a string parse.
+  // This runs server-side (Vercel/UTC); `new Date("2026-09-05")` parses as
+  // UTC midnight, and the generic fallback below compared against a
+  // server-local (UTC) "today" would drop today's own event from the
+  // upcoming list for several hours every Montreal evening, once UTC has
+  // already rolled to tomorrow while Montreal hasn't.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, d] = s.split('-').map(Number)
+    return new Date(y, m - 1, d)
   }
   const d = new Date(s)
   return isNaN(d) ? null : d
@@ -63,7 +74,7 @@ export default async function EventsPage() {
   }
 
   const tier = member?.tier || 'routes_member'
-  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const today = montrealTodayDate()
 
   // Route-type events (WTET, Into the Laurentians) live in the Routes
   // section (/members/routes) now, not here.

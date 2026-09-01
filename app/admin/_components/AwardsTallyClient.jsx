@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { Err, ToggleSwitch, CopyBtn } from './shared'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }
 const RANK_COLORS = ['#c5a882', '#999', '#a97142'] // gold, silver, bronze
@@ -211,7 +212,7 @@ export default function AwardsTallyClient({ eventId }) {
               <div key={v.email} style={{ borderBottom: '0.5px solid rgba(0,0,0,0.05)', paddingBottom: '0.75rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#555', marginBottom: '0.4rem' }}>
                   <span style={{ fontWeight: '500', color: '#1a1a1a', display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{v.name} <span style={{ color: '#bbb', fontWeight: '400' }}>· {v.email}</span><CopyBtn value={v.email} /></span>
-                  <span style={{ color: '#bbb', flexShrink: 0 }}>{new Date(v.votedAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                  <span style={{ color: '#bbb', flexShrink: 0 }}>{new Date(v.votedAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: MONTREAL_TZ })}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                   {v.picks.map(p => (

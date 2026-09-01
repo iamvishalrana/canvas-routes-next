@@ -10,7 +10,7 @@ import {
 } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import ActivityTimeline from '../_components/ActivityTimeline'
-import { MONTREAL_TZ } from '../../../lib/mtlTime'
+import { MONTREAL_TZ, montrealTodayStr } from '../../../lib/mtlTime'
 import { isValidEmail } from '../../../lib/emailValidation'
 
 // ─── App sources (shared with Applications tab) ───────────────────────────────
@@ -855,8 +855,7 @@ export default function ContactsClient() {
                   <div style={{ marginTop: '1rem', paddingTop: '0.75rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                     <div style={{ fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#bbb', marginBottom: '0.6rem' }}>Event Registrations</div>
                     {(() => {
-                      const today = new Date()
-                      today.setHours(0, 0, 0, 0)
+                      const todayStr = montrealTodayStr()
                       const canonicalNames = new Set(CANONICAL_EVENTS.map(e => e.name))
                       const extraRegs = (c.registrations || []).filter(r => !canonicalNames.has(normalizeEventName(r.event)))
                       const allRows = [
@@ -867,7 +866,7 @@ export default function ContactsClient() {
                         ...extraRegs.map(r => ({ eventName: r.event, eventDate: null, reg: r })),
                       ]
                       return allRows.map(({ eventName, eventDate, reg }) => {
-                        const isPast = eventDate ? new Date(eventDate) <= today : true
+                        const isPast = eventDate ? eventDate <= todayStr : true
                         return (
                           <div key={eventName} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '12px', color: '#444', minWidth: isMobile ? '0' : '260px' }}>{eventName}</span>

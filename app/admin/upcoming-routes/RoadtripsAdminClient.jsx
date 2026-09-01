@@ -4,6 +4,7 @@ import { inp, L, PrimaryBtn, GhostBtn, DangerBtn, Err, KebabMenu, ToggleSwitch, 
 import { useConfirm } from '../_components/ConfirmProvider'
 import RouteEventConfigClient from '../_components/RouteEventConfigClient'
 import WtetClient from '../wtet/WtetClient'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 import WtetAwardsClient from '../wtet-awards/WtetAwardsClient'
 
 // WTET is still on its own frozen, bespoke check-in/waiver/lunch/awards
@@ -1103,7 +1104,7 @@ export default function RoadtripsAdminClient() {
           ['Hotel', prefs.hotel || '—'],
           ['Activities', prefs.activities?.length ? prefs.activities.join(', ') : '—'],
           ['Notes', prefs.notes || '—'],
-          ['Registered', p.created_at ? new Date(p.created_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' }) : '—'],
+          ['Registered', p.created_at ? new Date(p.created_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short', timeZone: MONTREAL_TZ }) : '—'],
         ]
         return (
           <div onClick={() => setPerson(null)}

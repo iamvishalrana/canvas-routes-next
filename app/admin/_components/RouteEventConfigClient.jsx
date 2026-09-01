@@ -5,6 +5,7 @@ import CheckinStatusClient from './CheckinStatusClient'
 import AwardsTallyClient from './AwardsTallyClient'
 import { useRealtimeSync } from './useRealtimeSync'
 import { formatCarLabel } from '../../../lib/carLabel'
+import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
 const smallTextarea = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem', height: '90px', resize: 'vertical' }
 const smallInput = { ...inp, fontSize: '12px', padding: '0.55rem 0.7rem' }
@@ -228,7 +229,7 @@ export default function RouteEventConfigClient({ eventId }) {
     if (!active.length) return
     const rows = buildLunchRows(participants, form.checkin_lunch_extras)
     const esc = v => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-    const today = new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
+    const today = new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric', timeZone: MONTREAL_TZ })
     const html = `<!doctype html><html><head><title>Lunch Selections</title><style>
       @page{margin:28px}
       *{box-sizing:border-box}
