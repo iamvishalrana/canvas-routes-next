@@ -110,6 +110,64 @@ function RecipientTimeline({ recipient, events, onClose }) {
   )
 }
 
+const DOMAIN_STATUS_META = {
+  verified:            { label: 'Verified',    color: '#3B6B2F', bg: 'rgba(59,107,47,0.1)' },
+  pending:             { label: 'Pending',     color: '#8A6535', bg: 'rgba(197,168,130,0.15)' },
+  not_started:         { label: 'Not Started', color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
+  failed:              { label: 'Failed',      color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
+  temporary_failure:   { label: 'Temp. Failure', color: '#93333E', bg: 'rgba(147,51,62,0.1)' },
+}
+
+// Domain/DNS verification straight from Resend — this is a separate signal
+// from email_events (which only shows what already happened to sends). A
+// domain that quietly drops from "verified" (a DNS record got removed,
+// registrar migration, etc.) explains a bounce spike before it even shows up
+// as one. Collapsed to a one-line pill when everything's fine; expands to
+// the individual SPF/DKIM/DMARC record statuses when something isn't.
+function DomainHealthCard({ domains, loading, error }) {
+  if (loading) return null // avoid a layout flash while this loads in the background
+  if (error) {
+    return (
+      <div style={{ padding: '0.75rem 1rem', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', borderRadius: '10px', fontSize: '12px', color: '#93333E', marginBottom: '1.1rem' }}>
+        Couldn't check domain health — {error}
+      </div>
+    )
+  }
+  if (!domains || domains.length === 0) return null
+
+  return (
+    <div style={{ ...CARD, padding: '0.85rem 1.1rem', marginBottom: '1.1rem' }}>
+      <div style={{ fontSize: '9px', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#999', marginBottom: '0.6rem' }}>Domain Health</div>
+      {domains.map(d => {
+        const meta = DOMAIN_STATUS_META[d.status] || { label: d.status, color: '#888', bg: 'rgba(0,0,0,0.04)' }
+        const allVerified = d.status === 'verified'
+        return (
+          <div key={d.id} style={{ marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '12.5px', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif' }}>{d.name}</span>
+              <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '2px 8px', borderRadius: '99px', background: meta.bg, color: meta.color }}>{meta.label}</span>
+            </div>
+            {!allVerified && d.records?.length > 0 && (
+              <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                {d.records.map((r, i) => {
+                  const rMeta = DOMAIN_STATUS_META[r.status] || { label: r.status, color: '#888', bg: 'rgba(0,0,0,0.04)' }
+                  return (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '11px', color: '#666', flexWrap: 'wrap' }}>
+                      <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: rMeta.color, flexShrink: 0 }} />
+                      <span style={{ fontFamily: 'monospace', fontSize: '10.5px' }}>{r.record}{r.type ? ` (${r.type})` : ''}</span>
+                      <span style={{ color: rMeta.color }}>{rMeta.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function EmailActivityClient({
   events, counts, configured, loadError, fetchedAt,
   broadcasts = [], broadcastsLoading, broadcastsError,
@@ -125,11 +183,27 @@ export default function EmailActivityClient({
   const [page, setPage] = useState(1)
   const [isMobile, setIsMobile] = useState(false)
   const [timelineRecipient, setTimelineRecipient] = useState(null)
+  const [domains, setDomains] = useState(null)
+  const [domainsLoading, setDomainsLoading] = useState(true)
+  const [domainsError, setDomainsError] = useState(null)
 
   useEffect(() => {
     function check() { setIsMobile(window.innerWidth < 768) }
     check(); window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
+  }, [])
+
+  // Domain/DNS verification health — fetched once on mount, separate from
+  // the email_events data (a different Resend API surface entirely).
+  useEffect(() => {
+    fetch('/api/admin/resend-domains')
+      .then(r => r.json().then(d => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (!ok) { setDomainsError(d.error || 'Failed to load.'); return }
+        setDomains(d.domains || [])
+      })
+      .catch(() => setDomainsError('Network error.'))
+      .finally(() => setDomainsLoading(false))
   }, [])
 
   // router.refresh() re-runs the server component's fetch (revalidate=30
@@ -243,6 +317,8 @@ export default function EmailActivityClient({
           {fetchedAt && !refreshing && <span style={{ color: '#bbb', marginLeft: '2px' }}>· as of {fmtAsOf(fetchedAt)}</span>}
         </button>
       </div>
+
+      <DomainHealthCard domains={domains} loading={domainsLoading} error={domainsError} />
 
       {!configured && (
         <div style={{ padding: '0.9rem 1.1rem', background: 'rgba(197,168,130,0.12)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '10px', fontSize: '13px', color: '#8A6535', marginBottom: '1.25rem' }}>
