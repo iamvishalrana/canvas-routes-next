@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { inp, CopyBtn, Pagination, FilterMenu, DateRangeMenu, CountUp } from '../_components/shared'
+import { inp, CopyBtn, Pagination, FilterMenu, DateRangeMenu, CountUp, KebabMenu } from '../_components/shared'
 import { ExportButton } from '../_components/ExportModal'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
 
@@ -23,14 +23,25 @@ const TYPE_FILTER_OPTIONS = [
   ...Object.entries(EVENT_META).map(([type, meta]) => ({ id: type, label: meta.label })),
 ]
 
-// Every event here is sitewide (transactional + broadcast) — this lets an
-// admin isolate just broadcast sends, or just everything else, without
-// leaving the flat table for the separate Past Broadcasts list.
+// A broadcast send is one row here (aggregate counts), not one row per
+// recipient event — this filter lets an admin isolate just those aggregate
+// rows, or just the individual transactional sends, from the merged feed.
 const SOURCE_FILTER_OPTIONS = [
   { id: 'all',           label: 'All Sources' },
   { id: 'broadcast',     label: 'Broadcasts Only' },
   { id: 'transactional', label: 'Transactional Only' },
 ]
+
+const AUDIENCE_LABELS = {
+  canvas_routes_member: 'Canvas Routes Member',
+  inner_circle:         'Inner Circle',
+  all_active_members:   'All Active Members',
+  pending_members:      'Pending Applications',
+  all_contacts:         'All Contacts',
+  contacts_non_members: 'Contacts (Non-Members)',
+  everyone:             'Everyone',
+  specific_emails:      'Specific Emails',
+}
 
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.1rem 1.35rem' }
 
@@ -45,6 +56,10 @@ function fmtDate(iso) {
 function fmtAsOf(iso) {
   if (!iso) return null
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: MONTREAL_TZ }).toLowerCase()
+}
+
+function audienceLabel(b) {
+  return b.audience === 'specific_emails' ? `${b.specific_emails?.length ?? 0} emails` : AUDIENCE_LABELS[b.audience] || b.audience
 }
 
 // Timeline for one recipient — chronological, so "did they get it" reads as
@@ -95,7 +110,11 @@ function RecipientTimeline({ recipient, events, onClose }) {
   )
 }
 
-export default function EmailActivityClient({ events, counts, configured, loadError, fetchedAt }) {
+export default function EmailActivityClient({
+  events, counts, configured, loadError, fetchedAt,
+  broadcasts = [], broadcastsLoading, broadcastsError,
+  onViewDelivery, onReuseBroadcast, onRetryFailedBroadcast, onDeleteBroadcast,
+}) {
   const router = useRouter()
   const [refreshing, setRefreshing] = useState(false)
   const [search, setSearch] = useState('')
@@ -122,26 +141,69 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
     setTimeout(() => setRefreshing(false), 600)
   }
 
+  // Merge broadcast sends into ONE row each (using the broadcasts table's own
+  // aggregate counts) instead of showing every one of their underlying
+  // per-recipient email_events rows individually — otherwise a 50-recipient
+  // broadcast shows up as 50+ near-duplicate rows here on top of its own
+  // summary. Transactional (non-broadcast) emails still show one row per event,
+  // same as before, since they have no higher-level grouping to collapse into.
+  const mergedRows = useMemo(() => {
+    const byBroadcastId = new Map(broadcasts.map(b => [b.id, b]))
+    const seen = new Set()
+    const rows = []
+    for (const e of events) {
+      if (e.broadcast_id) {
+        const b = byBroadcastId.get(e.broadcast_id)
+        if (b) {
+          if (seen.has(e.broadcast_id)) continue
+          seen.add(e.broadcast_id)
+          rows.push({ kind: 'broadcast', id: `b-${b.id}`, broadcast: b, ts: b.sent_at })
+          continue
+        }
+        // Tagged with a broadcast_id but no matching row in `broadcasts` (its
+        // history entry was deleted, or broadcasts hasn't loaded yet) — fall
+        // through and show it as a plain event rather than dropping it.
+      }
+      rows.push({ kind: 'event', id: e.id, event: e, ts: e.occurred_at })
+    }
+    // A broadcast just sent may have no email_events row yet (Resend's
+    // webhook lands async) — without this it would be invisible until the
+    // first delivery event arrives. Add any broadcast not already shown.
+    for (const b of broadcasts) {
+      if (!seen.has(b.id)) { rows.push({ kind: 'broadcast', id: `b-${b.id}`, broadcast: b, ts: b.sent_at }); seen.add(b.id) }
+    }
+    rows.sort((a, b) => new Date(b.ts) - new Date(a.ts))
+    return rows
+  }, [events, broadcasts])
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const fromTs = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null
     const toTs = dateTo ? new Date(`${dateTo}T23:59:59`).getTime() : null
-    return events.filter(e => {
-      if (typeFilter === 'problems') { if (!PROBLEM_TYPES.has(e.event_type)) return false }
-      else if (typeFilter !== 'all' && e.event_type !== typeFilter) return false
-      if (sourceFilter === 'broadcast' && !e.broadcast_subject) return false
-      if (sourceFilter === 'transactional' && e.broadcast_subject) return false
+    return mergedRows.filter(row => {
+      if (sourceFilter === 'broadcast' && row.kind !== 'broadcast') return false
+      if (sourceFilter === 'transactional' && row.kind !== 'event') return false
+      // A broadcast row aggregates many recipients' event types at once, so
+      // it only makes sense to show it under "All Events" — a specific type
+      // filter (e.g. Bounced) narrows to individual events, not summaries.
+      if (typeFilter !== 'all' && row.kind === 'broadcast') return false
+      if (row.kind === 'event') {
+        const e = row.event
+        if (typeFilter === 'problems') { if (!PROBLEM_TYPES.has(e.event_type)) return false }
+        else if (typeFilter !== 'all' && e.event_type !== typeFilter) return false
+      }
       if (fromTs || toTs) {
-        const ts = e.occurred_at ? new Date(e.occurred_at).getTime() : null
+        const ts = row.ts ? new Date(row.ts).getTime() : null
         if (!ts || (fromTs && ts < fromTs) || (toTs && ts > toTs)) return false
       }
       if (!q) return true
+      if (row.kind === 'broadcast') return (row.broadcast.subject || '').toLowerCase().includes(q)
+      const e = row.event
       return (e.recipient || '').toLowerCase().includes(q)
         || (e.subject || '').toLowerCase().includes(q)
         || (e.resend_message_id || '').toLowerCase().includes(q)
-        || (e.broadcast_subject || '').toLowerCase().includes(q)
     })
-  }, [events, search, typeFilter, sourceFilter, dateFrom, dateTo])
+  }, [mergedRows, search, typeFilter, sourceFilter, dateFrom, dateTo])
 
   useEffect(() => { setPage(1) }, [search, typeFilter, sourceFilter, dateFrom, dateTo])
 
@@ -157,15 +219,23 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
   const bounceRate    = sentCount ? Math.round((bouncedCount / sentCount) * 100) : null
   const openRate       = deliveredCount ? Math.round((openedCount / deliveredCount) * 100) : null
 
-  const exportRows = filtered.map(e => [
-    fmtDate(e.occurred_at), EVENT_META[e.event_type]?.label || e.event_type,
-    e.recipient || '', e.subject || '', e.broadcast_subject || '', e.bounce_type || '', e.resend_message_id || '',
-  ])
+  const exportRows = filtered.map(row => row.kind === 'broadcast'
+    ? [fmtDate(row.broadcast.sent_at), 'Broadcast', `${row.broadcast.sent_count} sent${row.broadcast.failed_count ? `, ${row.broadcast.failed_count} failed` : ''}`, row.broadcast.subject || '', '', '']
+    : [fmtDate(row.event.occurred_at), EVENT_META[row.event.event_type]?.label || row.event.event_type, row.event.recipient || '', row.event.subject || '', row.event.bounce_type || '', row.event.resend_message_id || ''])
+
+  function broadcastKebabItems(b) {
+    return [
+      { label: 'View Delivery', onClick: () => onViewDelivery(b) },
+      { label: 'Re-use', onClick: () => onReuseBroadcast(b) },
+      b.failed_recipients?.length > 0 ? { label: 'Retry Failed', onClick: () => onRetryFailedBroadcast(b) } : null,
+      { label: 'Delete', danger: true, onClick: () => onDeleteBroadcast(b) },
+    ]
+  }
 
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-        <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Delivery, bounce, and complaint events from Resend — last 500 events.</p>
+        <p style={{ fontSize: '13px', color: '#888', margin: 0 }}>Delivery, bounce, and complaint events from Resend — last 500 events, plus every broadcast ever sent.</p>
         <button onClick={refresh} disabled={refreshing} title="Reload the latest events"
           style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', minHeight: '36px', background: 'transparent', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '8px', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', color: '#555', cursor: refreshing ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', flexShrink: 0 }}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: refreshing ? 'rotate(180deg)' : 'none', transition: 'transform 0.4s' }}><polyline points="23 4 23 10 17 10" /><polyline points="1 20 1 14 7 14" /><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" /></svg>
@@ -182,6 +252,11 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
       {loadError && (
         <div style={{ padding: '0.9rem 1.1rem', background: 'rgba(147,51,62,0.08)', border: '0.5px solid rgba(147,51,62,0.3)', borderRadius: '10px', fontSize: '13px', color: '#93333E', marginBottom: '1.25rem' }}>
           Couldn't load events — the email_events table may not exist yet (run the pending migration).
+        </div>
+      )}
+      {broadcastsError && (
+        <div style={{ padding: '0.9rem 1.1rem', background: 'rgba(147,51,62,0.08)', border: '0.5px solid rgba(147,51,62,0.3)', borderRadius: '10px', fontSize: '13px', color: '#93333E', marginBottom: '1.25rem' }}>
+          Couldn't load broadcast history — {broadcastsError}
         </div>
       )}
 
@@ -257,9 +332,9 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
         <FilterMenu options={SOURCE_FILTER_OPTIONS} value={sourceFilter} onChange={setSourceFilter} />
         <DateRangeMenu label="Date range" from={dateFrom} to={dateTo} onFromChange={setDateFrom} onToChange={setDateTo} />
         {filtered.length > 0 && (
-          <ExportButton filename="email-activity" title="Email Activity" headers={['Time', 'Event', 'Recipient', 'Subject', 'Broadcast', 'Bounce Type', 'Message ID']} rows={exportRows} />
+          <ExportButton filename="email-activity" title="Email Activity" headers={['Time', 'Event', 'Recipient', 'Subject', 'Bounce Type', 'Message ID']} rows={exportRows} />
         )}
-        <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto', fontFamily: 'var(--font-inter),sans-serif' }}>{filtered.length} of {events.length}{problemCount > 0 ? ` · ${problemCount} problem${problemCount !== 1 ? 's' : ''}` : ''}</span>
+        <span style={{ fontSize: '11px', color: '#bbb', marginLeft: 'auto', fontFamily: 'var(--font-inter),sans-serif' }}>{filtered.length} of {mergedRows.length}{problemCount > 0 ? ` · ${problemCount} problem${problemCount !== 1 ? 's' : ''}` : ''}{broadcastsLoading ? ' · loading broadcasts…' : ''}</span>
       </div>
 
       {isMobile ? (
@@ -267,21 +342,34 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
           {pageRows.length === 0 && (
             <div style={{ ...CARD, textAlign: 'center', color: '#bbb', fontSize: '13px' }}>No events{search || typeFilter !== 'all' || sourceFilter !== 'all' || dateFrom || dateTo ? ' match this filter' : ' yet'}.</div>
           )}
-          {pageRows.map(e => {
+          {pageRows.map(row => {
+            if (row.kind === 'broadcast') {
+              const b = row.broadcast
+              return (
+                <div key={row.id} style={{ ...CARD, marginBottom: '0.5rem', padding: '0.9rem 1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: 'rgba(197,168,130,0.12)', color: '#8A6535', flexShrink: 0 }}>Broadcast</span>
+                    <span style={{ fontSize: '11px', color: '#aaa', whiteSpace: 'nowrap' }}>{fmtDate(b.sent_at)}</span>
+                  </div>
+                  <div style={{ fontSize: '12.5px', color: '#333', marginBottom: '0.3rem' }}>{b.subject}</div>
+                  <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.5rem' }}>
+                    <span style={{ color: '#3B6B2F' }}>{b.sent_count} sent</span>
+                    {b.failed_count > 0 && <span style={{ color: '#93333E' }}> · {b.failed_count} failed</span>}
+                    {' · '}{audienceLabel(b)}
+                  </div>
+                  <KebabMenu items={broadcastKebabItems(b)} />
+                </div>
+              )
+            }
+            const e = row.event
             const meta = EVENT_META[e.event_type] || { label: e.event_type, color: '#888', bg: 'rgba(0,0,0,0.04)' }
             return (
-              <div key={e.id} style={{ ...CARD, marginBottom: '0.5rem', padding: '0.9rem 1rem' }}>
+              <div key={row.id} style={{ ...CARD, marginBottom: '0.5rem', padding: '0.9rem 1rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', gap: '0.5rem' }}>
                   <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: meta.bg, color: meta.color, flexShrink: 0 }}>{meta.label}</span>
                   <span style={{ fontSize: '11px', color: '#aaa', whiteSpace: 'nowrap' }}>{fmtDate(e.occurred_at)}</span>
                 </div>
                 <div style={{ fontSize: '12.5px', color: '#333', wordBreak: 'break-all', display: 'inline-flex', alignItems: 'center', gap: '0.15rem', marginBottom: '0.2rem' }}>{e.recipient || '—'}<CopyBtn value={e.recipient} /></div>
-                {e.broadcast_subject && (
-                  <button onClick={() => { setSearch(e.broadcast_subject); setSourceFilter('broadcast') }} title="Filter to just this broadcast"
-                    style={{ display: 'inline-block', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', color: '#8A6535', fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: '99px', marginBottom: '0.3rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                    Broadcast
-                  </button>
-                )}
                 {e.subject && <div style={{ fontSize: '12px', color: '#888', marginBottom: '0.4rem' }}>{e.subject}</div>}
                 {e.bounce_type && <div style={{ fontSize: '11px', color: '#93333E', marginBottom: '0.4rem' }}>{e.bounce_type}</div>}
                 {e.recipient && (
@@ -309,10 +397,31 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
                 {pageRows.length === 0 && (
                   <tr><td colSpan={6} style={{ padding: '2rem 1rem', textAlign: 'center', color: '#bbb' }}>No events{search || typeFilter !== 'all' || sourceFilter !== 'all' || dateFrom || dateTo ? ' match this filter' : ' yet'}.</td></tr>
                 )}
-                {pageRows.map(e => {
+                {pageRows.map(row => {
+                  if (row.kind === 'broadcast') {
+                    const b = row.broadcast
+                    return (
+                      <tr key={row.id} style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                        <td style={{ padding: '0.65rem 1rem', color: '#888', whiteSpace: 'nowrap' }}>{fmtDate(b.sent_at)}</td>
+                        <td style={{ padding: '0.65rem 1rem', whiteSpace: 'nowrap' }}>
+                          <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: 'rgba(197,168,130,0.12)', color: '#8A6535' }}>Broadcast</span>
+                        </td>
+                        <td style={{ padding: '0.65rem 1rem', color: '#333', whiteSpace: 'nowrap' }}>
+                          <span style={{ color: '#3B6B2F' }}>{b.sent_count} sent</span>
+                          {b.failed_count > 0 && <span style={{ color: '#93333E' }}> · {b.failed_count} failed</span>}
+                        </td>
+                        <td style={{ padding: '0.65rem 1rem', color: '#666', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.subject || '—'}</td>
+                        <td style={{ padding: '0.65rem 1rem', color: '#bbb', whiteSpace: 'nowrap' }}>{audienceLabel(b)}</td>
+                        <td style={{ padding: '0.65rem 1rem', whiteSpace: 'nowrap' }}>
+                          <KebabMenu items={broadcastKebabItems(b)} />
+                        </td>
+                      </tr>
+                    )
+                  }
+                  const e = row.event
                   const meta = EVENT_META[e.event_type] || { label: e.event_type, color: '#888', bg: 'rgba(0,0,0,0.04)' }
                   return (
-                    <tr key={e.id} style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                    <tr key={row.id} style={{ borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
                       <td style={{ padding: '0.65rem 1rem', color: '#888', whiteSpace: 'nowrap' }}>{fmtDate(e.occurred_at)}</td>
                       <td style={{ padding: '0.65rem 1rem', whiteSpace: 'nowrap' }}>
                         <span style={{ fontSize: '10px', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '3px 9px', borderRadius: '99px', background: meta.bg, color: meta.color }}>{meta.label}</span>
@@ -321,15 +430,7 @@ export default function EmailActivityClient({ events, counts, configured, loadEr
                       <td style={{ padding: '0.65rem 1rem', color: '#333', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.1rem' }}>{e.recipient || '—'}<CopyBtn value={e.recipient} /></span>
                       </td>
-                      <td style={{ padding: '0.65rem 1rem', color: '#666', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {e.broadcast_subject && (
-                          <button onClick={() => { setSearch(e.broadcast_subject); setSourceFilter('broadcast') }} title="Filter to just this broadcast"
-                            style={{ display: 'inline-block', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', color: '#8A6535', fontSize: '9px', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '1px 6px', borderRadius: '99px', marginRight: '0.4rem', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
-                            Broadcast
-                          </button>
-                        )}
-                        {e.subject || '—'}
-                      </td>
+                      <td style={{ padding: '0.65rem 1rem', color: '#666', maxWidth: '260px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.subject || '—'}</td>
                       <td style={{ padding: '0.65rem 1rem', color: '#bbb', whiteSpace: 'nowrap' }}>
                         <span style={{ fontFamily: 'monospace', fontSize: '11px' }}>{(e.resend_message_id || '').slice(0, 8)}…</span>
                         <CopyBtn value={e.resend_message_id} />

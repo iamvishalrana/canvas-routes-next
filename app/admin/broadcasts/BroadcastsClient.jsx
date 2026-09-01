@@ -8,7 +8,7 @@ import TextAlign from '@tiptap/extension-text-align'
 import { TextStyle, FontFamily, FontSize } from '@tiptap/extension-text-style'
 import Underline from '@tiptap/extension-underline'
 import Link from '@tiptap/extension-link'
-import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn, KebabMenu } from '../_components/shared'
+import { sel, L, PrimaryBtn, GhostBtn, Err, ConfirmDialog, CopyBtn } from '../_components/shared'
 import { useConfirm } from '../_components/ConfirmProvider'
 import { EMAIL_SIGNATURE_HTML } from '../../../lib/emailSignature.js'
 import EmailActivityClient from '../email-activity/EmailActivityClient'
@@ -422,10 +422,8 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
   const [history, setHistory]                   = useState([])
   const [historyLoading, setHistoryLoading]     = useState(false)
   const [historyError, setHistoryError]         = useState(null)
-  const [pastBroadcastsOpen, setPastBroadcastsOpen] = useState(false)  // collapsed until clicked
   const [deliveryModalId, setDeliveryModalId]   = useState(null)       // which broadcast's delivery modal is open
   const [deliveryStats, setDeliveryStats]       = useState({})        // { [broadcastId]: { loading, error, counts, recipients, showList } }
-  const [historySearch, setHistorySearch]       = useState('')
   const [deleteHistoryConfirm, setDeleteHistoryConfirm] = useState(null)
   const [deletingHistory, setDeletingHistory]   = useState(false)
   const [historyActionErr, setHistoryActionErr] = useState(null)
@@ -811,12 +809,6 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
     loadDeliveryStats(h.id)
   }
 
-  // Filter → sort — this is now just the compact "Past Broadcasts" list
-  // (management actions: re-use / retry / delete). Delivery browsing lives
-  // in the Email Activity table below, which already has its own filters.
-  const filteredHistory = history
-    .filter(h => !historySearch.trim() || (h.subject || '').toLowerCase().includes(historySearch.trim().toLowerCase()))
-  const sortedHistory = [...filteredHistory].sort((a, b) => new Date(b.sent_at) - new Date(a.sent_at))
   const deliveryModalBroadcast = deliveryModalId ? history.find(h => h.id === deliveryModalId) : null
 
   return (
@@ -909,75 +901,24 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
         ))}
       </div>
 
-      {/* ── Email Activity — merges the old History tab in as a compact,
-           collapsed-by-default "Past Broadcasts" management list (re-use /
-           retry-failed / delete), with the flat sitewide delivery table
-           (every Resend event, broadcast or not) as the main view below ── */}
+      {/* ── Email Activity — one merged feed. A broadcast's send appears as a
+           single aggregate row (not once per recipient event) alongside
+           individual transactional email rows, so nothing shows twice. ── */}
       {tab === 'activity' && (
-        <div>
-          <div style={{ marginBottom: '1.5rem', border: '0.5px solid rgba(0,0,0,0.08)', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', overflow: 'hidden' }}>
-            <button
-              onClick={() => setPastBroadcastsOpen(v => !v)}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', width: '100%', padding: '0.85rem 1.25rem', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-inter),sans-serif' }}
-            >
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2.5" style={{ transform: pastBroadcastsOpen ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', flexShrink: 0 }}><polyline points="9 18 15 12 9 6"/></svg>
-              <span style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#888' }}>Past Broadcasts</span>
-              {history.length > 0 && <span style={{ fontSize: '10px', color: '#bbb' }}>({history.length})</span>}
-            </button>
-            {pastBroadcastsOpen && (
-              <div style={{ padding: '0 1.25rem 1.25rem' }}>
-                <input
-                  value={historySearch}
-                  onChange={e => setHistorySearch(e.target.value)}
-                  placeholder="Search subject…"
-                  style={{ ...INP, maxWidth: '260px', padding: '0.45rem 0.65rem', fontSize: '12px', marginBottom: '0.75rem' }}
-                />
-                {historyActionErr && (
-                  <div style={{ padding: '0.6rem 1rem', fontSize: '12px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)', marginBottom: '0.75rem' }}>{historyActionErr}</div>
-                )}
-                {historyLoading ? (
-                  <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>Loading…</div>
-                ) : historyError ? (
-                  <div style={{ padding: '1rem', fontSize: '13px', color: '#93333E', background: 'rgba(147,51,62,0.06)', border: '0.5px solid rgba(147,51,62,0.2)' }}>{historyError}</div>
-                ) : sortedHistory.length === 0 ? (
-                  <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '13px', color: '#ccc' }}>
-                    {history.length === 0 ? 'No broadcasts sent yet.' : 'No broadcasts match this search.'}
-                  </div>
-                ) : (
-                  <div>
-                    {sortedHistory.map((h, idx) => (
-                      <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', padding: '0.5rem 0', borderTop: idx > 0 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', flexWrap: 'wrap' }}>
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '12px', fontWeight: '500', color: '#1a1a1a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.subject}</div>
-                          <div style={{ fontSize: '10px', color: '#bbb', marginTop: '1px' }}>
-                            {new Date(h.sent_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', timeZone: 'America/Toronto' })}
-                            {' · '}{h.audience === 'specific_emails' ? `${h.specific_emails?.length ?? 0} emails` : AUDIENCE_LABELS[h.audience] || h.audience}
-                            {' · '}<span style={{ color: '#3B6B2F' }}>{h.sent_count} sent</span>
-                            {h.failed_count > 0 && <span style={{ color: '#93333E' }}> · {h.failed_count} failed</span>}
-                          </div>
-                        </div>
-                        <KebabMenu items={[
-                          { label: 'View Delivery', onClick: () => openDeliveryModal(h) },
-                          { label: 'Re-use', onClick: () => reuseHistory(h) },
-                          h.failed_recipients?.length > 0 ? { label: 'Retry Failed', onClick: () => retryFailed(h) } : null,
-                          { label: 'Delete', danger: true, onClick: () => setDeleteHistoryConfirm(h) },
-                        ]} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <EmailActivityClient
-            events={emailEvents}
-            counts={emailCounts}
-            configured={emailConfigured}
-            loadError={emailLoadError}
-            fetchedAt={emailFetchedAt}
-          />
-        </div>
+        <EmailActivityClient
+          events={emailEvents}
+          counts={emailCounts}
+          configured={emailConfigured}
+          loadError={emailLoadError}
+          fetchedAt={emailFetchedAt}
+          broadcasts={history}
+          broadcastsLoading={historyLoading}
+          broadcastsError={historyError}
+          onViewDelivery={openDeliveryModal}
+          onReuseBroadcast={reuseHistory}
+          onRetryFailedBroadcast={retryFailed}
+          onDeleteBroadcast={h => setDeleteHistoryConfirm(h)}
+        />
       )}
 
       {/* ── Templates ── */}
@@ -1342,16 +1283,20 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
         <ConfirmDialog
           title="Delete this broadcast from history?"
           message="This only removes the history entry — the emails were already sent. This cannot be undone."
-          details={<><strong>{deleteHistoryConfirm.subject}</strong><br />{new Date(deleteHistoryConfirm.sent_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })} · {deleteHistoryConfirm.sent_count} sent</>}
+          details={<>
+            <strong>{deleteHistoryConfirm.subject}</strong><br />
+            {new Date(deleteHistoryConfirm.sent_at).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Toronto' })} · {deleteHistoryConfirm.sent_count} sent
+            {historyActionErr && <><br /><span style={{ color: '#93333E' }}>{historyActionErr}</span></>}
+          </>}
           confirmLabel="Yes, delete"
           danger
           busy={deletingHistory}
           onConfirm={() => deleteHistory(deleteHistoryConfirm.id)}
-          onCancel={() => setDeleteHistoryConfirm(null)}
+          onCancel={() => { setDeleteHistoryConfirm(null); setHistoryActionErr(null) }}
         />
       )}
 
-      {/* Per-broadcast delivery detail — from the compact Past Broadcasts list */}
+      {/* Per-broadcast delivery detail */}
       {deliveryModalBroadcast && (
         <div className="bc-preview-overlay" onClick={() => setDeliveryModalId(null)}>
           <div className="bc-preview-modal" onClick={e => e.stopPropagation()}>
