@@ -349,11 +349,13 @@ export default function AdminShell({ children }) {
     setRefreshKey(k => k + 1)
   }, [router])
 
-  // The login page lives inside the /admin segment so it carries the PWA
-  // manifest + apple-web-app meta (Add to Home Screen must always capture a
-  // web app, never a Safari bookmark) — but it renders without the shell.
-  // (After all hooks, so navigation to/from it never changes hook order.)
-  if (pathname === '/admin/login') return children
+  // The login page (and the two-factor challenge page, same reasoning) lives
+  // inside the /admin segment so it carries the PWA manifest + apple-web-app
+  // meta (Add to Home Screen must always capture a web app, never a Safari
+  // bookmark) — but both render without the shell: nothing under the nav is
+  // safe to expose before an admin has actually finished signing in.
+  // (After all hooks, so navigation to/from either never changes hook order.)
+  if (pathname === '/admin/login' || pathname === '/admin/mfa-challenge') return children
 
   return (
     <ConfirmProvider>
