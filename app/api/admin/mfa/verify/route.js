@@ -10,17 +10,27 @@ import { ADMIN_MFA_COOKIE_NAME, ADMIN_MFA_SESSION_TTL_SEC } from '../../../../..
 // check always (a) marks MFA enabled on the account — a no-op if it already
 // was — and (b) mints a fresh session cookie, since proving control of the
 // code sent to your own account email means the same thing either way.
+// useRecovery mirrors send-code/route.js: checks the code against the
+// account's own (trusted, server-read) recovery email instead of the
+// primary one, but the resulting session is still tied to user.id/user.email
+// either way — the delivery channel doesn't change what the session means.
 export async function POST(request) {
   const user = await requireAdmin()
   if (!user) return Response.json({ error: 'Forbidden' }, { status: 403 })
 
-  const { code } = await request.json().catch(() => ({}))
+  const { code, useRecovery } = await request.json().catch(() => ({}))
   const candidate = String(code ?? '').trim()
   if (!/^\d{6}$/.test(candidate)) {
     return Response.json({ error: 'Please enter the 6-digit code.' }, { status: 400 })
   }
 
-  const result = await checkCode(user.id, user.email, candidate)
+  let target = user.email
+  if (useRecovery) {
+    target = user.app_metadata?.mfa_recovery_email
+    if (!target) return Response.json({ error: 'No recovery email is set on this account.' }, { status: 400 })
+  }
+
+  const result = await checkCode(user.id, target, candidate)
   if (result === 'invalid') return Response.json({ error: 'Incorrect code. Please try again.' }, { status: 400 })
   if (result === 'expired') return Response.json({ error: 'That code has expired. Request a new one.' }, { status: 400 })
   if (result === 'locked') return Response.json({ error: 'Too many incorrect attempts. Request a new code.' }, { status: 400 })

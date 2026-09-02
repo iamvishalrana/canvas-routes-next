@@ -72,6 +72,10 @@ function TextSetting({ label, description, value, onChange, onSave, saving, plac
   )
 }
 
+function maskEmail(email) {
+  return String(email || '').replace(/^(.)(.*)(@.*)$/, (_, a, b, c) => `${a}${'*'.repeat(Math.min(b.length, 4))}${c}`)
+}
+
 function MfaCard() {
   const [enabled, setEnabled] = useState(null) // null = loading
   const [loadError, setLoadError] = useState(false)
@@ -82,10 +86,19 @@ function MfaCard() {
   const [showDisableConfirm, setShowDisableConfirm] = useState(false)
   const [disabling, setDisabling] = useState(false)
 
+  const [recoveryEmail, setRecoveryEmail] = useState(null)
+  const [recoveryStep, setRecoveryStep] = useState('idle') // idle | editing | sending | code | saving
+  const [recoveryInput, setRecoveryInput] = useState('')
+  const [recoveryCode, setRecoveryCode] = useState('')
+  const [recoveryError, setRecoveryError] = useState('')
+  const [recoveryCooldown, setRecoveryCooldown] = useState(0)
+  const [showRemoveRecoveryConfirm, setShowRemoveRecoveryConfirm] = useState(false)
+  const [removingRecovery, setRemovingRecovery] = useState(false)
+
   useEffect(() => {
     fetch('/api/admin/mfa/status')
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => setEnabled(!!data.enabled))
+      .then(data => { setEnabled(!!data.enabled); setRecoveryEmail(data.recoveryEmail || null) })
       .catch(() => setLoadError(true))
   }, [])
 
@@ -94,6 +107,12 @@ function MfaCard() {
     const id = setInterval(() => setCooldown(c => Math.max(0, c - 1)), 1000)
     return () => clearInterval(id)
   }, [cooldown])
+
+  useEffect(() => {
+    if (recoveryCooldown <= 0) return
+    const id = setInterval(() => setRecoveryCooldown(c => Math.max(0, c - 1)), 1000)
+    return () => clearInterval(id)
+  }, [recoveryCooldown])
 
   async function sendCode() {
     setError('')
@@ -140,6 +159,58 @@ function MfaCard() {
       setError('Network error.')
     } finally {
       setDisabling(false)
+    }
+  }
+
+  async function sendRecoveryCode() {
+    setRecoveryError('')
+    setRecoveryStep('sending')
+    try {
+      const res = await fetch('/api/admin/mfa/recovery-email/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recoveryInput }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setRecoveryError(data.error || 'Failed to send code.'); setRecoveryStep('editing'); return }
+      setRecoveryStep('code')
+      setRecoveryCooldown(30)
+    } catch {
+      setRecoveryError('Network error.')
+      setRecoveryStep('editing')
+    }
+  }
+
+  async function verifyRecoveryCode() {
+    setRecoveryError('')
+    setRecoveryStep('saving')
+    try {
+      const res = await fetch('/api/admin/mfa/recovery-email/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: recoveryInput, code: recoveryCode }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setRecoveryError(data.error || 'Verification failed.'); setRecoveryStep('code'); return }
+      setRecoveryEmail(data.recoveryEmail)
+      setRecoveryStep('idle')
+      setRecoveryInput(''); setRecoveryCode('')
+    } catch {
+      setRecoveryError('Network error.')
+      setRecoveryStep('code')
+    }
+  }
+
+  async function confirmRemoveRecovery() {
+    setRemovingRecovery(true)
+    try {
+      const res = await fetch('/api/admin/mfa/recovery-email/remove', { method: 'POST' })
+      if (res.ok) { setRecoveryEmail(null); setShowRemoveRecoveryConfirm(false) }
+      else setRecoveryError('Failed to remove. Please try again.')
+    } catch {
+      setRecoveryError('Network error.')
+    } finally {
+      setRemovingRecovery(false)
     }
   }
 
@@ -197,6 +268,98 @@ function MfaCard() {
       {error && <Err msg={error} />}
       {loadError && <Err msg="Could not load two-factor status." />}
 
+      {enabled && (
+        <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '0.25rem' }}>Recovery Email</div>
+          <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.5, marginBottom: '0.75rem' }}>
+            If you ever lose access to your primary inbox, this backup address can receive your verification code instead.
+          </div>
+
+          {recoveryStep === 'idle' && (
+            recoveryEmail ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', color: '#444', fontFamily: 'var(--font-inter),sans-serif' }}>{maskEmail(recoveryEmail)}</span>
+                <button type="button" onClick={() => { setRecoveryStep('editing'); setRecoveryInput('') }}
+                  style={{ background: 'none', border: 'none', fontSize: '11px', color: '#666', fontFamily: 'var(--font-inter),sans-serif', cursor: 'pointer', padding: 0 }}>
+                  Change
+                </button>
+                <button type="button" onClick={() => setShowRemoveRecoveryConfirm(true)}
+                  style={{ background: 'none', border: 'none', fontSize: '11px', color: '#93333E', fontFamily: 'var(--font-inter),sans-serif', cursor: 'pointer', padding: 0 }}>
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => { setRecoveryStep('editing'); setRecoveryInput('') }}
+                style={{ padding: '0.4rem 1rem', background: 'transparent', color: '#666', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                + Add recovery email
+              </button>
+            )
+          )}
+
+          {recoveryStep === 'editing' && (
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                style={{ ...inp, maxWidth: '220px' }}
+                type="email"
+                value={recoveryInput}
+                onChange={e => setRecoveryInput(e.target.value)}
+                placeholder="backup@example.com"
+                autoFocus
+              />
+              <button type="button" onClick={sendRecoveryCode} disabled={!recoveryInput.includes('@')}
+                style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: !recoveryInput.includes('@') ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: !recoveryInput.includes('@') ? 0.5 : 1 }}>
+                Send code
+              </button>
+              <button type="button" onClick={() => { setRecoveryStep('idle'); setRecoveryError('') }}
+                style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', cursor: 'pointer' }}>
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {(recoveryStep === 'sending') && (
+            <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif' }}>Sending code…</div>
+          )}
+
+          {(recoveryStep === 'code' || recoveryStep === 'saving') && (
+            <div>
+              <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.5, marginBottom: '0.65rem' }}>
+                Enter the 6-digit code sent to {recoveryInput}.
+              </div>
+              <input
+                style={{ ...inp, marginBottom: '0.5rem', maxWidth: '160px', letterSpacing: '0.2em' }}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={recoveryCode}
+                onChange={e => setRecoveryCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+              />
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={verifyRecoveryCode}
+                  disabled={recoveryCode.length !== 6 || recoveryStep === 'saving'}
+                  style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: recoveryCode.length !== 6 ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: recoveryCode.length !== 6 ? 0.5 : 1 }}
+                >
+                  {recoveryStep === 'saving' ? 'Saving…' : 'Verify'}
+                </button>
+                <button
+                  type="button"
+                  onClick={sendRecoveryCode}
+                  disabled={recoveryCooldown > 0}
+                  style={{ padding: '0.4rem 0.75rem', background: 'transparent', color: recoveryCooldown > 0 ? '#bbb' : '#666', border: 'none', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', cursor: recoveryCooldown > 0 ? 'default' : 'pointer' }}
+                >
+                  {recoveryCooldown > 0 ? `Resend in ${recoveryCooldown}s` : 'Resend code'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {recoveryError && <Err msg={recoveryError} />}
+        </div>
+      )}
+
       {showDisableConfirm && (
         <ConfirmDialog
           title="Turn off two-factor login?"
@@ -206,6 +369,18 @@ function MfaCard() {
           confirmLabel="Turn off"
           onConfirm={confirmDisable}
           onCancel={() => setShowDisableConfirm(false)}
+        />
+      )}
+
+      {showRemoveRecoveryConfirm && (
+        <ConfirmDialog
+          title="Remove recovery email?"
+          message="If you lose access to your primary inbox, you won't have a backup way to receive your verification code."
+          danger
+          busy={removingRecovery}
+          confirmLabel="Remove"
+          onConfirm={confirmRemoveRecovery}
+          onCancel={() => setShowRemoveRecoveryConfirm(false)}
         />
       )}
     </div>

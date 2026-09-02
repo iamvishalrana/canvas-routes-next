@@ -16,6 +16,8 @@ export default function AdminMfaChallengePage() {
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState(null)
   const [cooldown, setCooldown] = useState(0)
+  const [usingRecovery, setUsingRecovery] = useState(false)
+  const [hasRecoveryEmail, setHasRecoveryEmail] = useState(false)
   const sentOnce = useRef(false)
 
   useEffect(() => { document.title = 'Verify — CR Admin' }, [])
@@ -23,7 +25,7 @@ export default function AdminMfaChallengePage() {
   useEffect(() => {
     if (sentOnce.current) return // guards React StrictMode's double-invoked effect
     sentOnce.current = true
-    sendCode()
+    sendCode(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -33,14 +35,20 @@ export default function AdminMfaChallengePage() {
     return () => clearInterval(id)
   }, [cooldown])
 
-  async function sendCode() {
+  async function sendCode(useRecovery) {
     setError(null)
     setSending(true)
+    setCode('')
     try {
-      const res = await fetch('/api/admin/mfa/send-code', { method: 'POST' })
+      const res = await fetch('/api/admin/mfa/send-code', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ useRecovery }),
+      })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) { setError(data.error || 'Failed to send code.'); return }
       setEmail(data.email || '')
+      setHasRecoveryEmail(!!data.hasRecoveryEmail)
+      setUsingRecovery(useRecovery)
       setCooldown(30)
     } catch {
       setError('Connection error. Please check your network and try again.')
@@ -55,7 +63,7 @@ export default function AdminMfaChallengePage() {
     try {
       const res = await fetch('/api/admin/mfa/verify', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ code, useRecovery: usingRecovery }),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -133,13 +141,21 @@ export default function AdminMfaChallengePage() {
           </button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+        <div style={{ textAlign: 'center', marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
           <button
-            type="button" onClick={sendCode} disabled={cooldown > 0 || sending}
+            type="button" onClick={() => sendCode(usingRecovery)} disabled={cooldown > 0 || sending}
             style={{ background: 'none', border: 'none', fontSize: '11px', letterSpacing: '0.06em', color: cooldown > 0 ? 'rgba(245,241,236,0.25)' : 'rgba(245,241,236,0.5)', cursor: cooldown > 0 ? 'default' : 'pointer' }}
           >
             {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
           </button>
+          {(usingRecovery || hasRecoveryEmail) && (
+            <button
+              type="button" onClick={() => sendCode(!usingRecovery)} disabled={sending}
+              style={{ background: 'none', border: 'none', fontSize: '11px', letterSpacing: '0.02em', color: 'rgba(197,168,130,0.75)', cursor: sending ? 'default' : 'pointer' }}
+            >
+              {usingRecovery ? 'Use primary email instead' : "Can't access this email? Use recovery email"}
+            </button>
+          )}
         </div>
       </div>
     </div>

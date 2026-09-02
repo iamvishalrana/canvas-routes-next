@@ -102,7 +102,13 @@ export async function middleware(request) {
   const isMembers = (pathname.startsWith('/members') && !isLogin && !isReset) || isApiMember
   const isAdmin = (pathname.startsWith('/admin') && !isAdminLogin) || isApiAdmin
   const isAdminMfaChallenge = pathname === '/admin/mfa-challenge'
-  const isAdminMfaApi = pathname.startsWith('/api/admin/mfa')
+  // Deliberately narrow — only the two routes that actually complete a
+  // challenge. Everything else under /api/admin/mfa/* (disable,
+  // recovery-email management, etc.) must NOT be reachable pre-verification:
+  // an admin who has only the password (not the second factor) could
+  // otherwise call disable or add their own recovery email and fully
+  // bypass MFA without ever touching the real inbox.
+  const isAdminMfaApi = pathname === '/api/admin/mfa/send-code' || pathname === '/api/admin/mfa/verify'
 
   if (isLogin && user) {
     return NextResponse.redirect(new URL('/members/dashboard', request.url))
