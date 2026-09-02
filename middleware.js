@@ -3,6 +3,14 @@ import { NextResponse } from 'next/server'
 import { isAdminUser } from './lib/adminAccess.js'
 import { createAdminClient } from './lib/supabase/admin.js'
 import { isReservedSlug } from './lib/reservedSlugs.js'
+import { readSession } from './lib/otp.js'
+import { ADMIN_MFA_COOKIE_NAME } from './lib/adminMfa.js'
+
+// lib/otp.js pulls in Node's `crypto` (randomBytes etc.) — not available
+// under the default Edge runtime, so this middleware opts into Node.js
+// Middleware (supported since Next 15) to reuse it for the admin two-factor
+// session check below rather than duplicating OTP-session logic edge-safe.
+export const runtime = 'nodejs'
 
 // In-memory cache of events.slug -> id, so a bare short-link path (e.g.
 // /ccsept5-2026) doesn't cost a DB round trip on every request — refreshed
@@ -93,6 +101,8 @@ export async function middleware(request) {
   // relying entirely on each route's own requireAdmin() call as the only gate.
   const isMembers = (pathname.startsWith('/members') && !isLogin && !isReset) || isApiMember
   const isAdmin = (pathname.startsWith('/admin') && !isAdminLogin) || isApiAdmin
+  const isAdminMfaChallenge = pathname === '/admin/mfa-challenge'
+  const isAdminMfaApi = pathname.startsWith('/api/admin/mfa')
 
   if (isLogin && user) {
     return NextResponse.redirect(new URL('/members/dashboard', request.url))
@@ -117,6 +127,21 @@ export async function middleware(request) {
     if (!isAdminUser(user)) {
       if (isApiAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       return NextResponse.redirect(new URL('/members/dashboard', request.url))
+    }
+    // Self-serve two-factor (Settings → Security). Never touches the shared
+    // /api/auth/login route — this is a post-login gate only, and it exempts
+    // the challenge page/API themselves so a not-yet-verified admin can
+    // actually reach and complete the challenge.
+    if (user.app_metadata?.mfa_enabled && !isAdminMfaChallenge && !isAdminMfaApi) {
+      const cookieVal = request.cookies.get(ADMIN_MFA_COOKIE_NAME)?.value
+      const verifiedEmail = cookieVal ? await readSession(user.id, cookieVal) : null
+      if (!verifiedEmail || verifiedEmail !== user.email) {
+        if (isApiAdmin) return NextResponse.json({ error: 'MFA required' }, { status: 401 })
+        const url = request.nextUrl.clone()
+        url.pathname = '/admin/mfa-challenge'
+        url.searchParams.set('next', pathname)
+        return NextResponse.redirect(url)
+      }
     }
   }
 

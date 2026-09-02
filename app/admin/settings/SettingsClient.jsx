@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { inp, Err } from '../_components/shared'
+import { inp, Err, ConfirmDialog } from '../_components/shared'
 
 const SECTION_STYLE = { padding: 'clamp(1.5rem, 3vw, 2.5rem)' }
 const CARD = { background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1.5rem 1.75rem', marginBottom: '1.5rem' }
@@ -68,6 +68,146 @@ function TextSetting({ label, description, value, onChange, onSave, saving, plac
       >
         {saving ? 'Saving…' : 'Save'}
       </button>
+    </div>
+  )
+}
+
+function MfaCard() {
+  const [enabled, setEnabled] = useState(null) // null = loading
+  const [loadError, setLoadError] = useState(false)
+  const [step, setStep] = useState('idle') // idle | sending | code | verifying
+  const [code, setCode] = useState('')
+  const [error, setError] = useState('')
+  const [cooldown, setCooldown] = useState(0)
+  const [showDisableConfirm, setShowDisableConfirm] = useState(false)
+  const [disabling, setDisabling] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/admin/mfa/status')
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setEnabled(!!data.enabled))
+      .catch(() => setLoadError(true))
+  }, [])
+
+  useEffect(() => {
+    if (cooldown <= 0) return
+    const id = setInterval(() => setCooldown(c => Math.max(0, c - 1)), 1000)
+    return () => clearInterval(id)
+  }, [cooldown])
+
+  async function sendCode() {
+    setError('')
+    setStep('sending')
+    try {
+      const res = await fetch('/api/admin/mfa/send-code', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error || 'Failed to send code.'); setStep('idle'); return }
+      setStep('code')
+      setCooldown(30)
+    } catch {
+      setError('Network error.')
+      setStep('idle')
+    }
+  }
+
+  async function verifyCode() {
+    setError('')
+    setStep('verifying')
+    try {
+      const res = await fetch('/api/admin/mfa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setError(data.error || 'Verification failed.'); setStep('code'); return }
+      setEnabled(true)
+      setStep('idle')
+      setCode('')
+    } catch {
+      setError('Network error.')
+      setStep('code')
+    }
+  }
+
+  async function confirmDisable() {
+    setDisabling(true)
+    try {
+      const res = await fetch('/api/admin/mfa/disable', { method: 'POST' })
+      if (res.ok) { setEnabled(false); setShowDisableConfirm(false) }
+      else setError('Failed to disable. Please try again.')
+    } catch {
+      setError('Network error.')
+    } finally {
+      setDisabling(false)
+    }
+  }
+
+  return (
+    <div style={CARD}>
+      <div style={SECTION_LABEL}>Security</div>
+
+      <ToggleSetting
+        label="Two-Factor Login (Email Code)"
+        description="When on, signing in to the admin panel requires a 6-digit code sent to your account email, in addition to your password."
+        value={!!enabled}
+        saving={enabled === null}
+        onChange={v => {
+          if (loadError) return
+          if (v) sendCode()
+          else setShowDisableConfirm(true)
+        }}
+      />
+
+      {step === 'code' && (
+        <div style={{ paddingBottom: '1.25rem', marginBottom: '1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.5, marginBottom: '0.65rem' }}>
+            Enter the 6-digit code we just emailed you.
+          </div>
+          <input
+            style={{ ...inp, marginBottom: '0.5rem', maxWidth: '160px', letterSpacing: '0.2em' }}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            value={code}
+            onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            placeholder="000000"
+          />
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={verifyCode}
+              disabled={code.length !== 6 || step === 'verifying'}
+              style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: code.length !== 6 ? 'default' : 'pointer', fontFamily: 'var(--font-inter),sans-serif', opacity: code.length !== 6 ? 0.5 : 1 }}
+            >
+              {step === 'verifying' ? 'Verifying…' : 'Verify'}
+            </button>
+            <button
+              type="button"
+              onClick={sendCode}
+              disabled={cooldown > 0}
+              style={{ padding: '0.4rem 0.75rem', background: 'transparent', color: cooldown > 0 ? '#bbb' : '#666', border: 'none', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', cursor: cooldown > 0 ? 'default' : 'pointer' }}
+            >
+              {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && <Err msg={error} />}
+      {loadError && <Err msg="Could not load two-factor status." />}
+
+      {showDisableConfirm && (
+        <ConfirmDialog
+          title="Turn off two-factor login?"
+          message="Your account will only need a password to sign in to the admin panel."
+          danger
+          busy={disabling}
+          confirmLabel="Turn off"
+          onConfirm={confirmDisable}
+          onCancel={() => setShowDisableConfirm(false)}
+        />
+      )}
     </div>
   )
 }
@@ -184,6 +324,8 @@ export default function SettingsClient() {
           <SavedIndicator k="membership_closed_message" />
         </div>
       </div>
+
+      <MfaCard />
 
       {/* Admin banner */}
       <div style={CARD}>
