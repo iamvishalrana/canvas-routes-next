@@ -1270,29 +1270,6 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
                   </div>
                 </div>
 
-                {/* When to send */}
-                <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)' }}>
-                  <div style={{ padding: '1rem 1.25rem', borderBottom: '0.5px solid rgba(0,0,0,0.06)' }}>
-                    <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#aaa' }}>When to Send</div>
-                  </div>
-                  <div style={{ padding: '1rem 1.25rem' }}>
-                    <div style={{ display: 'inline-flex', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '7px', overflow: 'hidden', marginBottom: sendMode === 'schedule' ? '0.85rem' : 0 }}>
-                      {[['now', 'Send now'], ['schedule', 'Schedule for later']].map(([m, label]) => (
-                        <button key={m} type="button" className="bc-seg-btn" onClick={() => setSendMode(m)}
-                          style={{ padding: '5px 13px', border: 'none', cursor: 'pointer', fontSize: '10px', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-inter),sans-serif', transition: 'background 0.18s, color 0.18s', background: sendMode === m ? '#0F1E14' : '#fff', color: sendMode === m ? '#F5F1EC' : '#888' }}>
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-                    {sendMode === 'schedule' && (
-                      <>
-                        <input type="datetime-local" style={INP} min={minScheduleLocal()} value={scheduledAtLocal} onChange={e => setScheduledAtLocal(e.target.value)} />
-                        <div style={{ fontSize: '10px', color: '#999', marginTop: '0.4rem' }}>Times are Montreal time (America/Toronto).</div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
                 {/* Save as template */}
                 {!showSaveTemplate ? (
                   <button
@@ -1323,10 +1300,32 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
 
                 <Err msg={error} />
 
-                {/* Send — the Yes/No gate is a popup (see handleSendClick) */}
-                <PrimaryBtn onClick={handleSendClick} disabled={sending} className="bc-send-btn">
-                  {sending ? 'Sending…' : 'Send Broadcast'}
-                </PrimaryBtn>
+                {/* Send — two direct actions; the Yes/No gate is a popup either
+                    way (see handleSendClick). Picking "Send Later" reveals the
+                    datetime field inline instead of a separate now/later toggle. */}
+                {sendMode === 'now' ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                    <PrimaryBtn onClick={handleSendClick} disabled={sending} className="bc-send-btn">
+                      {sending ? 'Sending…' : 'Send Broadcast'}
+                    </PrimaryBtn>
+                    <GhostBtn onClick={() => setSendMode('schedule')} disabled={sending}>
+                      Send Later
+                    </GhostBtn>
+                  </div>
+                ) : (
+                  <div style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '12px', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', padding: '1rem 1.25rem' }}>
+                    <input type="datetime-local" style={INP} min={minScheduleLocal()} value={scheduledAtLocal} onChange={e => setScheduledAtLocal(e.target.value)} />
+                    <div style={{ fontSize: '10px', color: '#999', margin: '0.4rem 0 0.85rem' }}>Times are Montreal time (America/Toronto).</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem' }}>
+                      <PrimaryBtn onClick={handleSendClick} disabled={sending} className="bc-send-btn">
+                        {sending ? 'Scheduling…' : 'Schedule Broadcast'}
+                      </PrimaryBtn>
+                      <GhostBtn onClick={() => { setSendMode('now'); setScheduledAtLocal('') }} disabled={sending}>
+                        Cancel
+                      </GhostBtn>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ── Right column — live preview ── */}
