@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "health": "playwright test tests/health.spec.js"
+    "health": "playwright test tests/health.spec.js",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
