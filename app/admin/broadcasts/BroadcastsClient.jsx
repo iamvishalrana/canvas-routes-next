@@ -1308,7 +1308,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
                     <PrimaryBtn onClick={handleSendClick} disabled={sending} className="bc-send-btn">
                       {sending ? 'Sending…' : 'Send Broadcast'}
                     </PrimaryBtn>
-                    <GhostBtn onClick={() => setSendMode('schedule')} disabled={sending}>
+                    <GhostBtn onClick={() => { setSendMode('schedule'); setError(null) }} disabled={sending}>
                       Send Later
                     </GhostBtn>
                   </div>
@@ -1320,7 +1320,7 @@ export default function BroadcastsClient({ emailEvents, emailCounts, emailConfig
                       <PrimaryBtn onClick={handleSendClick} disabled={sending} className="bc-send-btn">
                         {sending ? 'Scheduling…' : 'Schedule Broadcast'}
                       </PrimaryBtn>
-                      <GhostBtn onClick={() => { setSendMode('now'); setScheduledAtLocal('') }} disabled={sending}>
+                      <GhostBtn onClick={() => { setSendMode('now'); setScheduledAtLocal(''); setError(null) }} disabled={sending}>
                         Cancel
                       </GhostBtn>
                     </div>

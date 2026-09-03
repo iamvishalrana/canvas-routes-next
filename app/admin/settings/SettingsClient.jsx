@@ -352,6 +352,13 @@ function MfaCard() {
                 >
                   {recoveryCooldown > 0 ? `Resend in ${recoveryCooldown}s` : 'Resend code'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => { setRecoveryStep('idle'); setRecoveryError(''); setRecoveryInput(''); setRecoveryCode('') }}
+                  style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
               </div>
             </div>
           )}
