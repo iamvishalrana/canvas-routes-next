@@ -657,6 +657,9 @@ export default function EventsClient() {
       setAddRegPayment(p => ({ ...p, [eventId]: '' }))
       setAddRegOpen(p => ({ ...p, [eventId]: false }))
       setAddRegErr(p => ({ ...p, [eventId]: null }))
+      // Clear any active search — otherwise the person just added can look
+      // like the add silently failed if they don't happen to match a stale query.
+      setRegSearch(p => ({ ...p, [eventId]: '' }))
       // Force-reload the registrants panel (stays open, shows updated list)
       const item = items.find(i => i.id === eventId)
       if (item) toggleRegistrants(eventId, item.name, { forceReload: true, eventType: item.type, eventPrice: item.member_price })
@@ -1422,7 +1425,7 @@ export default function EventsClient() {
                                 {regEmailOpen[item.id] ? 'Cancel' : 'Email All'}
                               </GhostBtn>
                             )}
-                            {(registrantsData[item.id] || []).length > 0 && (
+                            {visibleRegistrants(item.id).length > 0 && (
                               <GhostBtn small onClick={() => exportRegistrantsPdf(item.name, visibleRegistrants(item.id))}>
                                 Export PDF
                               </GhostBtn>
@@ -1577,7 +1580,7 @@ export default function EventsClient() {
                         {/* No matches for the current search — distinct from the
                             "no registrants at all" state above */}
                         {(registrantsData[item.id] || []).length > 0 && visibleRegistrants(item.id).length === 0 && (
-                          <div style={{ fontSize: '13px', color: '#ccc', paddingTop: '0.5rem' }}>No registrants match &ldquo;{regSearch[item.id]}&rdquo;.</div>
+                          <div style={{ fontSize: '13px', color: '#ccc', paddingTop: '0.5rem' }}>No registrants match &ldquo;{(regSearch[item.id] || '').trim()}&rdquo;.</div>
                         )}
 
                         {/* Registrants table — Status/Paid-Date columns widened
