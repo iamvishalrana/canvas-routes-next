@@ -9,6 +9,7 @@ import { computeTax } from '../../../lib/tax.js'
 import { buildMembershipConfirmHtml, buildMembershipConfirmText } from '../../../lib/membershipEmail.js'
 import { sendMetaCapiEvent } from '../../../lib/metaConversionsApi.js'
 import { isValidEmail } from '../../../lib/emailValidation'
+import { emailShell, infoCard, COLOR } from '../../../lib/emailLayout.js'
 
 function h(str) {
   return String(str ?? '')
@@ -22,43 +23,26 @@ function notifyHtml({ name, email, phone, dob_month, dob_day, dob_year, year, ca
   const TIER_PRICES = { 'Routes Member': '$99 CAD', 'Inner Circle': '$249 CAD' }
   const amountStr = TIER_PRICES[tier] || ''
   const paymentCell = paymentIntentId
-    ? `Authorized — ${amountStr} &nbsp;<a href="https://dashboard.stripe.com/payments/${paymentIntentId}" style="color:#8A6535;font-size:11px;">View in Stripe ↗</a>`
+    ? `Authorized — ${amountStr} &nbsp;<a href="https://dashboard.stripe.com/payments/${paymentIntentId}" style="color:${COLOR.gold};font-size:11px;">View in Stripe ↗</a>`
     : (amountStr ? `Pending — ${amountStr}` : '')
-  const row = (label, value) => value
-    ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
-    : ''
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Membership Registration</title></head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
-          <tr><td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">Membership Registration</td></tr>
-          <tr>
-            <td>
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                ${row('Full name', `<strong>${h(name)}</strong>`)}
-                ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
-                ${row('Phone', phone ? h(phone) : '—')}
-                ${row('Date of birth', dobStr ? h(dobStr) : '')}
-                ${row('Year', h(year))}
-                ${row('Car', h(carModel))}
-                ${row('Tier', h(tier))}
-                ${row('Payment', paymentCell)}
-                ${row('How they heard', h(source))}
-                ${row('Referred by', referredBy ? h(referredBy) : '')}
-                ${row('Message', more ? h(more) : '')}
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+  return emailShell({
+    title: 'Membership Registration',
+    eyebrow: 'Canvas Routes &middot; Internal',
+    heading: 'Membership Registration',
+    body: infoCard([
+      ['Full name', `<strong>${h(name)}</strong>`],
+      ['Email', `<a href="mailto:${h(email)}" style="color:${COLOR.head};">${h(email)}</a>`],
+      ['Phone', h(phone || '—')],
+      dobStr && ['Date of birth', h(dobStr)],
+      year && ['Year', h(year)],
+      carModel && ['Car', h(carModel)],
+      tier && ['Tier', h(tier)],
+      paymentCell && ['Payment', paymentCell],
+      source && ['How they heard', h(source)],
+      referredBy && ['Referred by', h(referredBy)],
+      more && ['Message', h(more)],
+    ], { mb: '0' }),
+  })
 }
 
 export async function POST(request) {

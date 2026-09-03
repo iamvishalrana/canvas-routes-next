@@ -2,47 +2,23 @@ import { createAdminClient } from '../../../../../../lib/supabase/admin'
 import { requireAdmin } from '../../../../../../lib/supabase/authCheck'
 import { checkRateLimit, getClientIp } from '../../../../../../lib/rateLimit'
 import { captureException } from '../../../../../../lib/sentry.js'
+import { buildPlainEmailShell } from '../../../../../../lib/emailSignature.js'
+import { escapeEmail } from '../../../../../../lib/emailLayout.js'
 
-function h(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-}
-
-// Convert plain text (double-newline paragraphs) to HTML
+// Convert plain text (double-newline paragraphs) to HTML. Uses the same
+// plain, signature-bearing shell as the Broadcasts tool's own personal-note
+// emails (lib/emailSignature.js) — this is a free-form message typed by an
+// admin, not an official transactional send, so the branded masthead in
+// lib/emailLayout.js's emailShell() would read as an odd mismatch here.
 function textToHtml(text) {
   return text
     .split(/\n\n+/)
-    .map(p => `<p style="margin:0 0 1.2em 0;font-family:Georgia,serif;font-size:15px;line-height:1.85;color:#333;">${h(p).replace(/\n/g, '<br/>')}</p>`)
+    .map(para => `<p style="margin:0 0 1.2em 0;font-family:inherit;font-size:15px;line-height:1.85;color:#333;">${escapeEmail(para).replace(/\n/g, '<br/>')}</p>`)
     .join('')
 }
 
-function emailHtml({ subject, body, recipientEmail }) {
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${h(subject)}</title>
-</head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr>
-      <td style="padding:48px 40px 20px;">
-        ${textToHtml(body)}
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:20px 40px 40px;border-top:0.5px solid rgba(0,0,0,0.08);">
-        <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#bbb;line-height:1.6;">
-          Canvas Routes &nbsp;&middot;&nbsp; Montreal, QC &nbsp;&middot;&nbsp;
-          <a href="mailto:info@canvasroutes.com" style="color:#bbb;">info@canvasroutes.com</a>
-        </p>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+function emailHtml({ body }) {
+  return buildPlainEmailShell(textToHtml(body))
 }
 
 export async function POST(request, { params }) {

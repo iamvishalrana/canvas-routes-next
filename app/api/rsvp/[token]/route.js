@@ -3,6 +3,7 @@ import { captureException } from '../../../../lib/sentry'
 import { checkRateLimit, getClientIp } from '../../../../lib/rateLimit'
 import { buildEventConfirmHtml } from '../../../../lib/eventConfirmEmail'
 import { logMemberAction } from '../../../../lib/memberActivityLog'
+import { emailShell, infoCard, COLOR, escapeEmail } from '../../../../lib/emailLayout'
 
 async function getEvent(supabase, eventName) {
   const trimmed = eventName.trim()
@@ -119,39 +120,30 @@ export async function POST(request, { params }) {
   const isMember = appEmail ? !!(await supabase.from('members').select('id').eq('email', appEmail.toLowerCase()).maybeSingle()).data : false
   const profileUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://canvasroutes.com'}/rsvp/${token}/profile`
   if (process.env.RESEND_API_KEY) {
-    const row = (label, value) => value != null && value !== ''
-      ? `<tr><td width="160" style="width:160px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
-      : ''
     const arrivalLabel = { opening: 'Right at opening', first_hour: 'Within the first hour', later: 'Later on' }
-    const adminHtml = `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/></head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#ffffff;">
-  <tr><td align="center" style="padding:32px 16px;">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
-      <tr><td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">RSVP confirmed</td></tr>
-      <tr><td>
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-          ${row('Event', `<strong>${tokenRow.event_name}</strong>`)}
-          ${row('Name', `<strong>${appName}</strong>`)}
-          ${row('Email', `<a href="mailto:${appEmail}" style="color:#1a1a1a;">${appEmail}</a>`)}
-          ${row('Phone', tokenRow.applications?.phone || '')}
-          ${isRoadTrip ? `
-          ${row('Dietary', answers.dietary || 'None')}
-          ${row('People in car', answers.passengers != null ? String(answers.passengers) : '')}
-          ${row('WhatsApp group', answers.whatsapp != null ? (answers.whatsapp ? 'Yes' : 'No') : '')}
-          ` : `
-          ${row('Bringing a guest', answers.bringing_guest != null ? (answers.bringing_guest ? 'Yes' : 'No') : '')}
-          ${row('Car colour', answers.car_paint || '')}
-          ${row('Mods', answers.car_mods || '')}
-          ${row('Arrival', answers.arrival ? (arrivalLabel[answers.arrival] || answers.arrival) : '')}
-          `}
-        </table>
-      </td></tr>
-    </table>
-  </td></tr>
-</table>
-</body></html>`
+    const roadTripRows = [
+      ['Dietary', escapeEmail(answers.dietary || 'None')],
+      answers.passengers != null && ['People in car', String(answers.passengers)],
+      answers.whatsapp != null && ['WhatsApp group', answers.whatsapp ? 'Yes' : 'No'],
+    ]
+    const meetRows = [
+      answers.bringing_guest != null && ['Bringing a guest', answers.bringing_guest ? 'Yes' : 'No'],
+      answers.car_paint && ['Car colour', escapeEmail(answers.car_paint)],
+      answers.car_mods && ['Mods', escapeEmail(answers.car_mods)],
+      answers.arrival && ['Arrival', escapeEmail(arrivalLabel[answers.arrival] || answers.arrival)],
+    ]
+    const adminHtml = emailShell({
+      title: 'RSVP confirmed',
+      eyebrow: 'Canvas Routes &middot; Internal',
+      heading: 'RSVP confirmed',
+      body: infoCard([
+        ['Event', `<strong>${escapeEmail(tokenRow.event_name)}</strong>`],
+        ['Name', `<strong>${escapeEmail(appName)}</strong>`],
+        ['Email', `<a href="mailto:${escapeEmail(appEmail)}" style="color:${COLOR.head};">${escapeEmail(appEmail)}</a>`],
+        tokenRow.applications?.phone && ['Phone', escapeEmail(tokenRow.applications.phone)],
+        ...(isRoadTrip ? roadTripRows : meetRows),
+      ], { mb: '0' }),
+    })
 
     // Await both sends — fire-and-forget was causing ETIMEDOUT when the function terminated mid-write
     await fetch('https://api.resend.com/emails', {

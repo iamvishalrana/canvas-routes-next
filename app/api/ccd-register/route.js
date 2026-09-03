@@ -42,24 +42,22 @@ function confirmHtml(firstName, { year, carMake, carModel }) {
 }
 
 function notifyHtml({ name, email, year, carMake, carModel, phone, instagram, more, source }) {
-  const row = (label, value) => value
-    ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
-    : ''
   const fullCar = [year, carMake, carModel].filter(Boolean).join(' ')
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"/></head>
-<body style="margin:0;padding:32px 16px;background:#fff;font-family:Arial,sans-serif;">
-  <p style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888;margin:0 0 20px;">New CCD Registration</p>
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:520px;">
-    ${row('Event', `<strong>${h(EVENT_NAME)}</strong>`)}
-    ${row('Name', `<strong>${h(name)}</strong>`)}
-    ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
-    ${row('Car', h(fullCar))}
-    ${row('Phone', phone ? h(phone) : '')}
-    ${row('Instagram', instagram ? h(instagram) : '')}
-    ${row('About', more ? h(more) : '')}
-    ${row('Source', source ? h(source) : '')}
-  </table>
-</body></html>`
+  return emailShell({
+    title: 'New CCD Registration',
+    eyebrow: 'Canvas Routes &middot; Internal',
+    heading: 'New CCD Registration',
+    body: infoCard([
+      ['Event', `<strong>${h(EVENT_NAME)}</strong>`],
+      ['Name', `<strong>${h(name)}</strong>`],
+      ['Email', `<a href="mailto:${h(email)}" style="color:${COLOR.head};">${h(email)}</a>`],
+      fullCar && ['Car', h(fullCar)],
+      phone && ['Phone', h(phone)],
+      instagram && ['Instagram', h(instagram)],
+      more && ['About', h(more)],
+      source && ['Source', h(source)],
+    ], { mb: '0' }),
+  })
 }
 
 export async function POST(request) {

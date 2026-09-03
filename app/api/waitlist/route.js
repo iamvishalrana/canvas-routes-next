@@ -2,7 +2,7 @@ import { captureException, captureMessage } from '../../../lib/sentry.js'
 import { deviceType } from '../../../lib/deviceType'
 import { checkRateLimit, getClientIp } from '../../../lib/rateLimit.js'
 import { createAdminClient } from '../../../lib/supabase/admin'
-import { emailShell, p, accentCard, instagram, eyebrow, COLOR } from '../../../lib/emailLayout.js'
+import { emailShell, p, accentCard, instagram, eyebrow, infoCard, COLOR } from '../../../lib/emailLayout.js'
 import { isValidEmail } from '../../../lib/emailValidation'
 
 function h(str) {
@@ -46,49 +46,25 @@ If this email landed in your spam folder, please move it to your inbox and mark 
 function notifyHtml({ registerFor, name, email, year, carModel, dob_month, dob_day, dob_year, phone, instagram, more, source, downtown_cruise, ref }) {
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
   const dobStr = dob_month ? `${MONTHS[Number(dob_month)-1]} ${dob_day}${dob_year ? `, ${dob_year}` : ''}` : ''
-  const row = (label, value) => value
-    ? `<tr><td width="140" style="width:140px;padding:8px 12px 8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#888888;vertical-align:top;">${label}</td><td style="padding:8px 0;border-bottom:1px solid #eeeeee;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#1a1a1a;vertical-align:top;">${value}</td></tr>`
-    : ''
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <title>New application</title>
-</head>
-<body style="margin:0;padding:0;background-color:#ffffff;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#ffffff;">
-    <tr>
-      <td align="center" style="padding:32px 16px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="520" style="max-width:520px;width:100%;">
-          <tr>
-            <td style="padding-bottom:20px;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#888888;">
-              New application received
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-                ${row('Registering for', registerFor ? `<strong>${h(registerFor)}</strong>` : '')}
-                ${row('Full name', `<strong>${h(name)}</strong>`)}
-                ${row('Email', `<a href="mailto:${h(email)}" style="color:#1a1a1a;">${h(email)}</a>`)}
-                ${row('Year', h(year))}
-                ${row('Make & Model', h(carModel))}
-                ${row('Date of Birth', dobStr ? h(dobStr) : '')}
-                ${row('Phone', phone ? h(phone) : '')}
-                ${row('Instagram', instagram ? h(instagram) : '')}
-                ${row('Downtown cruise', downtown_cruise === 'yes' ? 'Yes' : downtown_cruise === 'no' ? 'No' : '')}
-                ${row('Tell us more', more ? h(more) : '')}
-                ${row('How they heard', source ? h(source) : '')}
-                ${row('Referred by', ref ? `<strong>${h(ref)}</strong>` : '')}
-              </table>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
+  return emailShell({
+    title: 'New application',
+    eyebrow: 'Canvas Routes &middot; Internal',
+    heading: 'New application received',
+    body: infoCard([
+      registerFor && ['Registering for', `<strong>${h(registerFor)}</strong>`],
+      ['Full name', `<strong>${h(name)}</strong>`],
+      ['Email', `<a href="mailto:${h(email)}" style="color:${COLOR.head};">${h(email)}</a>`],
+      year && ['Year', h(year)],
+      carModel && ['Make & Model', h(carModel)],
+      dobStr && ['Date of Birth', h(dobStr)],
+      phone && ['Phone', h(phone)],
+      instagram && ['Instagram', h(instagram)],
+      downtown_cruise && ['Downtown cruise', downtown_cruise === 'yes' ? 'Yes' : downtown_cruise === 'no' ? 'No' : ''],
+      more && ['Tell us more', h(more)],
+      source && ['How they heard', h(source)],
+      ref && ['Referred by', `<strong>${h(ref)}</strong>`],
+    ], { mb: '0' }),
+  })
 }
 
 export async function POST(request) {
