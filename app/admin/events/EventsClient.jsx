@@ -331,6 +331,7 @@ export default function EventsClient() {
   const [addRegPayment, setAddRegPayment] = useState({})
   const [addingReg, setAddingReg] = useState({})
   const [regSort, setRegSort] = useState({}) // per-event registrant sort
+  const [regSearch, setRegSearch] = useState({}) // per-event registrant search query
   const [viewingWaiver, setViewingWaiver] = useState(null) // { name, email, waiver }
   const [addRegErr, setAddRegErr] = useState({})
   const [addRegSearch, setAddRegSearch] = useState({})
@@ -894,6 +895,7 @@ export default function EventsClient() {
         return {
           name: r.members?.name || r.name || '—',
           email,
+          phone: contact.phone || null,
           type: 'Member',
           status: r.stripe_payment_status,
           amount: r.amount_paid,
@@ -952,6 +954,7 @@ export default function EventsClient() {
           return {
             name: c.name || '—',
             email: c.email || '—',
+            phone: c.phone || null,
             type: c.is_invited ? 'Member' : 'Public',
             status: paymentStatus ?? (isConfirmed ? 'confirmed' : 'registered'),
             amount: isRoadTripPayment ? (c.stripe_amount_paid || null) : isManualPaid ? (eventPrice || null) : null,
@@ -1033,6 +1036,26 @@ export default function EventsClient() {
     else if (sort === 'amount')        sorted.sort((a, b) => (b.amount || 0) - (a.amount || 0))
     else if (sort === 'members_first') sorted.sort((a, b) => ((a.type === 'Member' ? 0 : 1) - (b.type === 'Member' ? 0 : 1)) || byName(a, b))
     return sorted
+  }
+
+  // Search on top of sort — name/email/car via plain substring, phone via a
+  // digits-only comparison too (in addition to plain substring) so a query
+  // typed with dashes/spaces/parens still matches the stored digits-and-a-
+  // leading-space format ("+1 5145551234").
+  function visibleRegistrants(eventId) {
+    const rows = sortedRegistrants(eventId)
+    const q = (regSearch[eventId] || '').trim().toLowerCase()
+    if (!q) return rows
+    const qDigits = q.replace(/\D/g, '')
+    return rows.filter(r => {
+      if ((r.name || '').toLowerCase().includes(q)) return true
+      if ((r.email || '').toLowerCase().includes(q)) return true
+      if ((r.car || '').toLowerCase().includes(q)) return true
+      const phone = r.phone || ''
+      if (phone.toLowerCase().includes(q)) return true
+      if (qDigits && phone.replace(/\D/g, '').includes(qDigits)) return true
+      return false
+    })
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -1367,7 +1390,9 @@ export default function EventsClient() {
                         {/* Header row: count + action buttons — always visible */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                           <div style={{ fontSize: '12px', color: '#666' }}>
-                            {(registrantsData[item.id] || []).length} registrant{(registrantsData[item.id] || []).length !== 1 ? 's' : ''}
+                            {(regSearch[item.id] || '').trim()
+                              ? `${visibleRegistrants(item.id).length} of ${(registrantsData[item.id] || []).length} registrant${(registrantsData[item.id] || []).length !== 1 ? 's' : ''}`
+                              : `${(registrantsData[item.id] || []).length} registrant${(registrantsData[item.id] || []).length !== 1 ? 's' : ''}`}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                             {regEmailResult[item.id]?.sent != null && !regEmailOpen[item.id] && (
@@ -1398,12 +1423,35 @@ export default function EventsClient() {
                               </GhostBtn>
                             )}
                             {(registrantsData[item.id] || []).length > 0 && (
-                              <GhostBtn small onClick={() => exportRegistrantsPdf(item.name, sortedRegistrants(item.id))}>
+                              <GhostBtn small onClick={() => exportRegistrantsPdf(item.name, visibleRegistrants(item.id))}>
                                 Export PDF
                               </GhostBtn>
                             )}
                           </div>
                         </div>
+
+                        {/* Search — filters the table below by name, email, phone, or car */}
+                        {(registrantsData[item.id] || []).length > 1 && (
+                          <div style={{ position: 'relative', marginBottom: '1rem' }}>
+                            <input
+                              type="text"
+                              placeholder="Search name, email, phone, car…"
+                              value={regSearch[item.id] || ''}
+                              onChange={e => setRegSearch(p => ({ ...p, [item.id]: e.target.value }))}
+                              style={{ width: '100%', padding: '0.6rem 2.1rem 0.6rem 0.8rem', border: '1px solid rgba(0,0,0,0.14)', background: '#fff', fontSize: '13px', fontFamily: 'var(--font-inter),sans-serif', color: '#1a1a1a', outline: 'none', boxSizing: 'border-box' }}
+                            />
+                            {(regSearch[item.id] || '').length > 0 && (
+                              <button
+                                type="button"
+                                aria-label="Clear search"
+                                onClick={() => setRegSearch(p => ({ ...p, [item.id]: '' }))}
+                                style={{ position: 'absolute', right: '4px', top: '50%', transform: 'translateY(-50%)', width: '28px', height: '28px', background: 'none', border: 'none', cursor: 'pointer', color: '#bbb', fontSize: '16px', lineHeight: 1, fontFamily: 'var(--font-inter),sans-serif' }}
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        )}
 
                         {/* Manual add registrant form */}
                         {addRegOpen[item.id] && (
@@ -1526,12 +1574,21 @@ export default function EventsClient() {
                           <div style={{ fontSize: '13px', color: '#ccc', paddingTop: '0.5rem' }}>No registrants on record.</div>
                         )}
 
+                        {/* No matches for the current search — distinct from the
+                            "no registrants at all" state above */}
+                        {(registrantsData[item.id] || []).length > 0 && visibleRegistrants(item.id).length === 0 && (
+                          <div style={{ fontSize: '13px', color: '#ccc', paddingTop: '0.5rem' }}>No registrants match &ldquo;{regSearch[item.id]}&rdquo;.</div>
+                        )}
+
                         {/* Registrants table — Status/Paid-Date columns widened
                             from 70px (labels like "Pending review" were tight
                             enough to wrap awkwardly at that width); minWidth
                             below bumped by the same 30px so the horizontal-
                             scroll threshold still matches the real content width. */}
-                        {(registrantsData[item.id] || []).length > 0 && <div style={{ overflowX: 'auto' }}>
+                        {(() => {
+                          const visibleRows = visibleRegistrants(item.id)
+                          if (visibleRows.length === 0) return null
+                          return <div style={{ overflowX: 'auto' }}>
                           <div style={{ border: '0.5px solid rgba(0,0,0,0.08)', minWidth: isNarrow ? 'unset' : '710px' }}>
                             {!isMobile && (
                               <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 85px 85px 180px 100px', padding: '0.5rem 0.85rem', background: '#fafaf9', borderBottom: '0.5px solid rgba(0,0,0,0.07)' }}>
@@ -1540,7 +1597,7 @@ export default function EventsClient() {
                                 ))}
                               </div>
                             )}
-                            {sortedRegistrants(item.id).map((r, ri) => {
+                            {visibleRows.map((r, ri) => {
                               const indivKey = `${item.id}::${r.email}`
                               const sending = !!sendingConfirmEmail[indivKey]
                               const result = confirmEmailResult[indivKey]
@@ -1585,12 +1642,12 @@ export default function EventsClient() {
                               // that data shown under every OTHER event's registrant row too, since
                               // r.wtetCheckin is truthy regardless of which event is being viewed.
                               const hasOldCheckin = !!r.wtetCheckin && showWtetReg
-                              const isLastTableRow = ri === registrantsData[item.id].length - 1
+                              const isLastTableRow = ri === visibleRows.length - 1
                               const rsvpIsLastBlock = hasRsvp && !hasOldCheckin && !showWtetReg
                               const oldCheckinIsLastBlock = hasOldCheckin && !showWtetReg
                               return (
                                 <div key={ri}>
-                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 85px 85px 180px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < registrantsData[item.id].length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
+                                  <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: '1.4fr 1.4fr 0.8fr 85px 85px 180px 100px', padding: '0.55rem 0.85rem', borderBottom: ri < visibleRows.length - 1 ? '0.5px solid rgba(0,0,0,0.05)' : 'none', alignItems: 'center' }}>
                                     {isMobile ? (
                                       <div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1810,7 +1867,8 @@ export default function EventsClient() {
                               )
                             })}
                           </div>
-                        </div>}
+                          </div>
+                        })()}
                       </>
                     )}
                   </div>
