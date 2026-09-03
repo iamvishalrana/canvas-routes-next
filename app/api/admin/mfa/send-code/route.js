@@ -2,46 +2,21 @@ import { after } from 'next/server'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { canSendCode, issueCode } from '../../../../../lib/otp'
 import { captureException } from '../../../../../lib/sentry'
-
-function h(str) {
-  return String(str ?? '')
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;')
-}
+import { emailShell, p, codeBox } from '../../../../../lib/emailLayout'
 
 function otpEmailHtml({ code }) {
-  return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Your Canvas Routes Admin Verification Code</title>
-</head>
-<body style="margin:0;padding:0;background-color:#F5F1EC;">
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#F5F1EC;">
-    <tr><td align="center" style="padding:32px 16px 48px;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;">
-        <tr><td style="background:#ffffff;border:1px solid rgba(15,30,20,0.08);padding:40px 40px 32px;">
-          <img src="https://canvasroutes.com/logo-color.png" alt="Canvas Routes" width="150" style="display:block;width:150px;height:auto;border:0;outline:0;margin-bottom:24px;" />
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="40" style="margin-bottom:20px;"><tr><td height="1" style="height:1px;font-size:1px;line-height:1px;background:#c5a882;">&nbsp;</td></tr></table>
-          <p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:#8A6535;">Canvas Routes &middot; Admin</p>
-          <h1 style="margin:0 0 16px;font-family:Georgia,'Times New Roman',serif;font-size:28px;font-weight:300;line-height:1.2;color:#1a1a1a;">Verification code</h1>
-          <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:15px;line-height:1.85;color:#555;">Use this code to sign in to the Canvas Routes admin panel. It expires in 10 minutes.</p>
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-            <tr><td style="background:#F5F1EC;border:1px solid rgba(197,168,130,0.5);padding:16px 32px;">
-              <span style="font-family:Arial,Helvetica,sans-serif;font-size:32px;font-weight:700;letter-spacing:8px;color:#0F1E14;">${h(code)}</span>
-            </td></tr>
-          </table>
-          <p style="margin:28px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.7;color:#999;">Didn't request this? Someone may have your admin password &mdash; consider changing it.</p>
-        </td></tr>
-        <tr><td style="background:#EDE8E1;padding:16px 40px;">
-          <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#8a8378;">&copy; 2026 Canvas Routes Events Inc. &mdash; Montreal, QC.</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`
+  const body = `
+    ${p(`Use this code to sign in to the Canvas Routes admin panel. It expires in 10 minutes.`)}
+    ${codeBox(code)}
+    ${p(`Didn't request this? Someone may have your admin password &mdash; consider changing it.`, { tone: 'fine', mb: '0' })}
+  `
+  return emailShell({
+    title: 'Your Canvas Routes Admin Verification Code',
+    preheader: `Your admin verification code: ${code}`,
+    eyebrow: 'Canvas Routes &middot; Admin',
+    heading: `Verify it&rsquo;s you`,
+    body,
+  })
 }
 
 // Sends a 6-digit code to the currently authenticated admin's own account
