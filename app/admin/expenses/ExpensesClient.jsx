@@ -261,6 +261,12 @@ async function uploadReceipt(file, folderPath) {
   })
   const data = await res.json().catch(() => ({}))
   if (!res.ok) throw new Error(data.error || 'Upload failed.')
+  // A falsy public URL (e.g. R2_PUBLIC_URL not configured) must be treated as
+  // a failure, not a success — otherwise every caller's "ok" path attaches an
+  // empty URL that the save API silently drops, so a scanned receipt uploads
+  // to storage but never lands on the expense. Throw so the caller's failure
+  // branch fires and the admin is told to attach it manually.
+  if (!data.url) throw new Error('Upload saved but no link came back — check receipt storage config.')
   return data.url
 }
 
@@ -1838,7 +1844,13 @@ export default function ExpensesClient() {
            box-sizing) keeps iOS's native date control shrinking to its cell
            instead of overflowing, so no full-row span is needed to contain it. */
         @media (max-width: 640px) {
-          .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
+          /* minmax(0,1fr), not 1fr: a plain 1fr track's min size is the
+             child's min-content width, and iOS's native date input reports a
+             stubborn intrinsic min-width that exceeded half the row — so the
+             date field overflowed its track and shoved the Event field onto
+             the next line. minmax(0,...) lets the track shrink below that
+             intrinsic width so both fields sit cleanly side by side. */
+          .exp-form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
           .exp-actions-row { flex-wrap: wrap; }
           /* Search's own div and View's own div already set width:100% via
              inline style (isMobile) — no longer force EVERY direct child
@@ -2190,43 +2202,34 @@ export default function ExpensesClient() {
           </div>
         )}
 
-        {/* Folder selector */}
+        {/* Folder selector — a single searchable combobox (type to filter, or
+            open the list to pick an existing folder) instead of a wrapping row
+            of one-button-per-folder that grew unwieldy as folders piled up.
+            Uses the same datalist pattern as the Event / Label and Vendor
+            fields above. Typing marks the choice manual so it stops
+            auto-syncing from the Event field; clearing it reverts to that sync. */}
         {(() => {
           const existingNames = [...new Set(expenses.map(e => e.event_name?.trim()).filter(Boolean))]
-          const formName = form.event_name?.trim()
-          const options = ['General', ...existingNames, ...(formName && !existingNames.includes(formName) ? [formName] : [])]
+          const options = ['General', ...existingNames]
           return (
             <div style={{ marginBottom: '0.6rem' }}>
               <L>Save Receipt To</L>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.4rem' }}>
-                {options.map(name => {
-                  const active = folderEvent === name
-                  return (
-                    <button key={name} type="button" className="exp-tap"
-                      onClick={() => { folderManualRef.current = true; setFolderEvent(name) }}
-                      style={{
-                        fontSize: '11px', padding: '6px 12px', border: '0.5px solid', cursor: 'pointer',
-                        fontFamily: 'var(--font-inter),sans-serif', transition: 'all 0.15s', borderRadius: '6px',
-                        background: active ? '#0F1E14' : 'none',
-                        color:      active ? '#F5F1EC' : '#666',
-                        borderColor: active ? '#0F1E14' : 'rgba(0,0,0,0.18)',
-                      }}>
-                      {name}
-                    </button>
-                  )
-                })}
-                {/* Dropdown for any custom value not in the list */}
-                <div style={{ position: 'relative' }}>
-                  <select
-                    value={options.includes(folderEvent) ? '' : folderEvent}
-                    onChange={e => { if (e.target.value) { folderManualRef.current = true; setFolderEvent(e.target.value) } }}
-                    style={{ ...sel, fontSize: '11px', padding: '6px 28px 6px 10px', color: options.includes(folderEvent) ? '#bbb' : '#333' }}>
-                    <option value="">Other…</option>
-                    {existingNames.map(n => <option key={n} value={n}>{n}</option>)}
-                  </select>
-                  <SelectChevron />
-                </div>
-              </div>
+              <input
+                style={inp}
+                list="exp-folder-names"
+                value={folderEvent}
+                placeholder="Search or type a folder — defaults to General"
+                onChange={e => { folderManualRef.current = true; setFolderEvent(e.target.value) }}
+                onBlur={e => {
+                  // Left empty → fall back to auto-syncing with the Event field
+                  // (or General) rather than saving to a nameless folder.
+                  if (!e.target.value.trim()) { folderManualRef.current = false; setFolderEvent(form.event_name?.trim() || 'General') }
+                }}
+                maxLength={100}
+              />
+              <datalist id="exp-folder-names">
+                {options.map(n => <option key={n} value={n} />)}
+              </datalist>
             </div>
           )
         })()}
