@@ -261,6 +261,13 @@ function MfaCard() {
             >
               {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
             </button>
+            <button
+              type="button"
+              onClick={() => { setStep('idle'); setError(''); setCode('') }}
+              style={{ padding: '0.4rem 0.75rem', background: 'transparent', color: '#888', border: 'none', fontSize: '11px', fontFamily: 'var(--font-inter),sans-serif', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}
