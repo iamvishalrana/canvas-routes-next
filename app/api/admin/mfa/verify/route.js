@@ -1,9 +1,8 @@
-import { cookies } from 'next/headers'
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
-import { checkCode, createSession } from '../../../../../lib/otp'
+import { checkCode } from '../../../../../lib/otp'
 import { captureException } from '../../../../../lib/sentry'
-import { ADMIN_MFA_COOKIE_NAME, ADMIN_MFA_SESSION_TTL_SEC } from '../../../../../lib/adminMfa'
+import { mintAdminMfaSession } from '../../../../../lib/adminMfaSession'
 
 // Verifies the code sent by send-code/route.js. Handles both first-time
 // enrollment and every later login re-challenge identically: a successful
@@ -56,14 +55,6 @@ export async function POST(request) {
     return Response.json({ error: 'Something went wrong. Please try again in a moment.' }, { status: 500 })
   }
 
-  const sessionId = await createSession(user.id, user.email, ADMIN_MFA_SESSION_TTL_SEC)
-  const cookieStore = await cookies()
-  cookieStore.set(ADMIN_MFA_COOKIE_NAME, sessionId, {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: ADMIN_MFA_SESSION_TTL_SEC,
-  })
+  await mintAdminMfaSession(user.id, user.email)
   return Response.json({ ok: true })
 }

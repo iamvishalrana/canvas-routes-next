@@ -95,12 +95,33 @@ function MfaCard() {
   const [showRemoveRecoveryConfirm, setShowRemoveRecoveryConfirm] = useState(false)
   const [removingRecovery, setRemovingRecovery] = useState(false)
 
-  useEffect(() => {
+  // Recovery codes
+  const [codesRemaining, setCodesRemaining] = useState(0)
+  const [generatedCodes, setGeneratedCodes] = useState(null) // shown once, right after generating
+  const [generatingCodes, setGeneratingCodes] = useState(false)
+  const [showRegenConfirm, setShowRegenConfirm] = useState(false)
+  const [codesError, setCodesError] = useState('')
+  const [codesCopied, setCodesCopied] = useState(false)
+
+  // Security questions
+  const [sqSet, setSqSet] = useState(false)
+  const [sqStep, setSqStep] = useState('idle') // idle | editing | saving
+  const [sqInputs, setSqInputs] = useState([{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }])
+  const [sqError, setSqError] = useState('')
+
+  const loadStatus = useCallback(() => {
     fetch('/api/admin/mfa/status')
       .then(r => r.ok ? r.json() : Promise.reject())
-      .then(data => { setEnabled(!!data.enabled); setRecoveryEmail(data.recoveryEmail || null) })
+      .then(data => {
+        setEnabled(!!data.enabled)
+        setRecoveryEmail(data.recoveryEmail || null)
+        setCodesRemaining(data.recoveryCodesRemaining || 0)
+        setSqSet(!!data.securityQuestionsSet)
+      })
       .catch(() => setLoadError(true))
   }, [])
+
+  useEffect(() => { loadStatus() }, [loadStatus])
 
   useEffect(() => {
     if (cooldown <= 0) return
@@ -211,6 +232,43 @@ function MfaCard() {
       setRecoveryError('Network error.')
     } finally {
       setRemovingRecovery(false)
+    }
+  }
+
+  async function generateCodes() {
+    setCodesError(''); setGeneratingCodes(true); setShowRegenConfirm(false)
+    try {
+      const res = await fetch('/api/admin/mfa/recovery-codes/generate', { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { setCodesError(data.error || 'Failed to generate codes.'); return }
+      setGeneratedCodes(data.codes || [])
+      setCodesRemaining((data.codes || []).length)
+    } catch {
+      setCodesError('Network error.')
+    } finally {
+      setGeneratingCodes(false)
+    }
+  }
+
+  async function saveSecurityQuestions() {
+    setSqError('')
+    if (sqInputs.some(x => x.question.trim().length < 3 || x.answer.trim().length < 2)) {
+      setSqError('Fill in all three questions, each with an answer of at least 2 characters.'); return
+    }
+    setSqStep('saving')
+    try {
+      const res = await fetch('/api/admin/mfa/security-questions/set', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions: sqInputs }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setSqError(data.error || 'Failed to save.'); setSqStep('editing'); return }
+      setSqSet(true)
+      setSqStep('idle')
+      setSqInputs([{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }])
+    } catch {
+      setSqError('Network error.')
+      setSqStep('editing')
     }
   }
 
@@ -371,7 +429,104 @@ function MfaCard() {
           )}
 
           {recoveryError && <Err msg={recoveryError} />}
+
+          {/* ── Recovery codes ─────────────────────────────────────────── */}
+          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '0.25rem' }}>Recovery Codes</div>
+            <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.5, marginBottom: '0.75rem' }}>
+              One-time codes to sign in if you can&rsquo;t get an email code. Save them in your password manager — each works once.
+            </div>
+
+            {generatedCodes ? (
+              <div>
+                <div style={{ fontSize: '11px', color: '#8A6535', background: 'rgba(197,168,130,0.1)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '6px', padding: '0.5rem 0.7rem', marginBottom: '0.65rem', lineHeight: 1.5 }}>
+                  Save these now — they won&rsquo;t be shown again.
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.35rem 0.75rem', marginBottom: '0.65rem' }}>
+                  {generatedCodes.map((c, i) => (
+                    <code key={i} style={{ fontFamily: 'monospace', fontSize: '13px', letterSpacing: '0.05em', color: '#1a1a1a', background: '#fafaf9', border: '0.5px solid rgba(0,0,0,0.08)', borderRadius: '4px', padding: '4px 8px', textAlign: 'center' }}>{c}</code>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button type="button"
+                    onClick={() => { try { navigator.clipboard.writeText(generatedCodes.join('\n')); setCodesCopied(true); setTimeout(() => setCodesCopied(false), 2000) } catch {} }}
+                    style={{ padding: '0.4rem 1rem', background: 'transparent', color: '#666', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    {codesCopied ? '✓ Copied' : 'Copy all'}
+                  </button>
+                  <button type="button" onClick={() => setGeneratedCodes(null)}
+                    style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    Done — I&rsquo;ve saved them
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', color: codesRemaining > 0 ? '#444' : '#999', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  {codesRemaining > 0 ? `${codesRemaining} unused code${codesRemaining === 1 ? '' : 's'} remaining` : 'No recovery codes yet'}
+                </span>
+                <button type="button" disabled={generatingCodes}
+                  onClick={() => (codesRemaining > 0 ? setShowRegenConfirm(true) : generateCodes())}
+                  style={{ padding: '0.4rem 1rem', background: 'transparent', color: '#666', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: generatingCodes ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  {generatingCodes ? 'Generating…' : codesRemaining > 0 ? 'Regenerate' : 'Generate codes'}
+                </button>
+              </div>
+            )}
+            {codesError && <Err msg={codesError} />}
+          </div>
+
+          {/* ── Security questions ─────────────────────────────────────── */}
+          <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+            <div style={{ fontSize: '13px', fontWeight: '500', color: '#1a1a1a', fontFamily: 'var(--font-inter),sans-serif', marginBottom: '0.25rem' }}>Security Questions</div>
+            <div style={{ fontSize: '12px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', lineHeight: 1.5, marginBottom: '0.75rem' }}>
+              Answer all three to sign in if you can&rsquo;t get an email code. Choose answers only you&rsquo;d know &mdash; not facts findable online.
+            </div>
+
+            {sqStep === 'editing' ? (
+              <div>
+                {sqInputs.map((x, i) => (
+                  <div key={i} style={{ marginBottom: '0.6rem' }}>
+                    <input style={{ ...inp, marginBottom: '0.35rem' }} value={x.question} maxLength={200} placeholder={`Question ${i + 1} (e.g. First concert you attended?)`}
+                      onChange={e => setSqInputs(a => { const n = [...a]; n[i] = { ...n[i], question: e.target.value }; return n })} />
+                    <input style={inp} value={x.answer} maxLength={200} placeholder="Answer"
+                      onChange={e => setSqInputs(a => { const n = [...a]; n[i] = { ...n[i], answer: e.target.value }; return n })} />
+                  </div>
+                ))}
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button type="button" onClick={saveSecurityQuestions} disabled={sqStep === 'saving'}
+                    style={{ padding: '0.4rem 1rem', background: '#0F1E14', color: '#F5F1EC', border: 'none', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: sqStep === 'saving' ? 'wait' : 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                    {sqStep === 'saving' ? 'Saving…' : 'Save'}
+                  </button>
+                  <button type="button" onClick={() => { setSqStep('idle'); setSqError('') }}
+                    style={{ background: 'none', border: 'none', fontSize: '11px', color: '#888', fontFamily: 'var(--font-inter),sans-serif', cursor: 'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '12px', color: sqSet ? '#3B6B2F' : '#999', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  {sqSet ? 'Security questions are set ✓' : 'Not set up'}
+                </span>
+                <button type="button"
+                  onClick={() => { setSqInputs([{ question: '', answer: '' }, { question: '', answer: '' }, { question: '', answer: '' }]); setSqStep('editing'); setSqError('') }}
+                  style={{ padding: '0.4rem 1rem', background: 'transparent', color: '#666', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '11px', letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'var(--font-inter),sans-serif' }}>
+                  {sqSet ? 'Change' : 'Set up'}
+                </button>
+              </div>
+            )}
+            {sqError && <Err msg={sqError} />}
+          </div>
         </div>
+      )}
+
+      {showRegenConfirm && (
+        <ConfirmDialog
+          title="Regenerate recovery codes?"
+          message="Your existing recovery codes stop working immediately, and a new set is shown once."
+          danger
+          busy={generatingCodes}
+          confirmLabel="Regenerate"
+          onConfirm={generateCodes}
+          onCancel={() => setShowRegenConfirm(false)}
+        />
       )}
 
       {showDisableConfirm && (
