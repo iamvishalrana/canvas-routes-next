@@ -1,13 +1,16 @@
 import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { getRecoveryStatus } from '../../../../../lib/adminMfaRecovery'
+import { captureMessage } from '../../../../../lib/sentry'
 
 export async function GET() {
   const user = await requireAdmin()
   if (!user) return Response.json({ error: 'Forbidden' }, { status: 403 })
   // Recovery status is counts/booleans only (never hashes or answers) and must
-  // never break the Settings card if the read fails — fall back to "none".
+  // never break the Settings card if the read fails — fall back to "none", but
+  // report it so a persistent admin_mfa_recovery read failure isn't invisible.
   let rec = { recoveryCodesRemaining: 0, securityQuestionsSet: false }
-  try { rec = await getRecoveryStatus(user.id) } catch {}
+  try { rec = await getRecoveryStatus(user.id) }
+  catch (err) { captureMessage('admin MFA recovery status read failed', { error: err?.message }, 'warning') }
   return Response.json({
     enabled: !!user.app_metadata?.mfa_enabled,
     email: user.email,

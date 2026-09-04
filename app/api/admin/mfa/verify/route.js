@@ -2,6 +2,7 @@ import { requireAdmin } from '../../../../../lib/supabase/authCheck'
 import { createAdminClient } from '../../../../../lib/supabase/admin'
 import { checkCode } from '../../../../../lib/otp'
 import { captureException } from '../../../../../lib/sentry'
+import { checkRateLimit, getClientIp } from '../../../../../lib/rateLimit'
 import { mintAdminMfaSession } from '../../../../../lib/adminMfaSession'
 
 // Verifies the code sent by send-code/route.js. Handles both first-time
@@ -16,6 +17,13 @@ import { mintAdminMfaSession } from '../../../../../lib/adminMfaSession'
 export async function POST(request) {
   const user = await requireAdmin()
   if (!user) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
+  // Defense-in-depth on top of the OTP's own 5-try-per-code invalidation —
+  // matches the recovery verify routes so no challenge path is unthrottled.
+  const ip = getClientIp(request)
+  if (await checkRateLimit(ip, 15, 60, 'admin-mfa-verify')) {
+    return Response.json({ error: 'Too many attempts. Please wait a moment and try again.' }, { status: 429 })
+  }
 
   const { code, useRecovery } = await request.json().catch(() => ({}))
   const candidate = String(code ?? '').trim()
