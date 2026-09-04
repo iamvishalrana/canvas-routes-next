@@ -1807,12 +1807,12 @@ export default function ExpensesClient() {
         }
         .exp-new { animation: expFadeIn 0.35s cubic-bezier(0.16,1,0.3,1) both; }
         .exp-edit-panel { animation: expPanelIn 0.2s ease both; }
-        /* iOS zooms in when a focused input's font-size is under 16px. These
-           inputs are 13px, so bump them to 16px on touch devices only — keeps
-           desktop density, kills zoom-on-focus in the home-screen app. */
-        @media (pointer: coarse) {
-          .exp-wrap input, .exp-wrap select, .exp-wrap textarea { font-size: 16px !important; }
-        }
+        /* No per-input 16px bump here on purpose: the admin panel already
+           suppresses iOS zoom-on-focus via viewport maximumScale:1 (see
+           app/admin/layout.jsx), so the sitewide .admin-shell 13px mobile
+           density (globals.css) applies. A local 16px override here just made
+           every expenses field visibly bigger than the rest of the admin
+           panel with no benefit. */
         .exp-filter-chip { transition: background 0.15s, color 0.15s, border-color 0.15s; }
         .exp-wrap button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .exp-tap { min-height: 44px; }
@@ -1832,15 +1832,11 @@ export default function ExpensesClient() {
         .exp-wrap input, .exp-wrap select, .exp-wrap textarea { max-width: 100%; box-sizing: border-box; }
         .exp-wrap input[type="date"] { min-width: 0; width: 100%; box-sizing: border-box; }
         .exp-filters > div { min-width: 0; }
-        /* iOS's native date picker needs more than the ~160-170px an
-           auto-fill column can shrink to when it shares a track-sizing rule
-           with narrower fields (Category/Payment Method selects etc.) —
-           this recurs at ANY viewport width where the grid happens to pack
-           a narrow column, not just sub-640px (confirmed recurring on
-           iPhone 13 Pro in landscape, 844px, which the old max-width:640px
-           media query didn't cover). Give the date field its own full row
-           unconditionally instead of chasing every width where it collides. */
-        .exp-date-field { grid-column: 1 / -1; }
+        /* The date field sits in the normal grid like every other field — it
+           no longer spans a full row (that made it look oversized on a phone).
+           The input[type=date] rule above (min-width:0; width:100%;
+           box-sizing) keeps iOS's native date control shrinking to its cell
+           instead of overflowing, so no full-row span is needed to contain it. */
         @media (max-width: 640px) {
           .exp-form-grid { grid-template-columns: 1fr 1fr !important; }
           .exp-actions-row { flex-wrap: wrap; }
