@@ -3,13 +3,14 @@ import { NextResponse } from 'next/server'
 import { isAdminUser } from './lib/adminAccess.js'
 import { createAdminClient } from './lib/supabase/admin.js'
 import { isReservedSlug } from './lib/reservedSlugs.js'
-import { readSession } from './lib/otp.js'
+import { verifyToken } from './lib/adminMfaToken.js'
 import { ADMIN_MFA_COOKIE_NAME } from './lib/adminMfa.js'
 
-// lib/otp.js pulls in Node's `crypto` (randomBytes etc.) — not available
-// under the default Edge runtime, so this middleware opts into Node.js
-// Middleware (supported since Next 15) to reuse it for the admin two-factor
-// session check below rather than duplicating OTP-session logic edge-safe.
+// lib/adminMfaToken.js uses Node's `crypto` (HMAC) — not available under the
+// default Edge runtime, so this middleware opts into Node.js Middleware
+// (supported since Next 15) to validate the self-contained admin two-factor
+// session token below. No Redis is involved in that check, so an MFA login
+// survives a Redis/Upstash outage.
 export const runtime = 'nodejs'
 
 // In-memory cache of events.slug -> id, so a bare short-link path (e.g.
@@ -148,8 +149,13 @@ export async function middleware(request) {
     // actually reach and complete the challenge.
     if (user.app_metadata?.mfa_enabled && !isAdminMfaChallenge && !isAdminMfaApi) {
       const cookieVal = request.cookies.get(ADMIN_MFA_COOKIE_NAME)?.value
-      const verifiedEmail = cookieVal ? await readSession(user.id, cookieVal) : null
-      if (!verifiedEmail || verifiedEmail !== user.email) {
+      const payload = cookieVal ? verifyToken(cookieVal) : null
+      // Valid only if the (signature-verified, unexpired) token is bound to
+      // THIS user and carries the account's current session epoch — so an
+      // email change or an epoch bump ("log out everywhere") invalidates it.
+      const currentEpoch = user.app_metadata?.mfa_session_epoch || 0
+      const valid = payload && payload.uid === user.id && payload.email === user.email && payload.epoch === currentEpoch
+      if (!valid) {
         if (isApiAdmin) return NextResponse.json({ error: 'MFA required' }, { status: 401 })
         const url = request.nextUrl.clone()
         url.pathname = '/admin/mfa-challenge'

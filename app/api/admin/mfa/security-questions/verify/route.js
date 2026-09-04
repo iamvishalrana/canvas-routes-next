@@ -22,7 +22,7 @@ export async function POST(request) {
   try {
     const result = await verifySecurityQuestions(user.id, answers)
     if (result.ok) {
-      await mintAdminMfaSession(user.id, user.email)
+      await mintAdminMfaSession(user)
       alertRecoveryUsed({ user, method: 'security questions' })
       return Response.json({ ok: true })
     }

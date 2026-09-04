@@ -63,6 +63,6 @@ export async function POST(request) {
     return Response.json({ error: 'Something went wrong. Please try again in a moment.' }, { status: 500 })
   }
 
-  await mintAdminMfaSession(user.id, user.email)
+  await mintAdminMfaSession(user)
   return Response.json({ ok: true })
 }

@@ -26,7 +26,7 @@ export async function POST(request) {
   try {
     const ok = await verifyRecoveryCode(user.id, code)
     if (!ok) return Response.json({ error: 'That recovery code is invalid or has already been used.' }, { status: 400 })
-    await mintAdminMfaSession(user.id, user.email)
+    await mintAdminMfaSession(user)
     alertRecoveryUsed({ user, method: 'a recovery code' })
     return Response.json({ ok: true })
   } catch (err) {
