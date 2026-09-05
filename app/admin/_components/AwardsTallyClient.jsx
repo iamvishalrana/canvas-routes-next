@@ -33,6 +33,9 @@ export default function AwardsTallyClient({ eventId }) {
   async function toggleVoting(next) {
     setToggling(true)
     setToggleError(null)
+    // Optimistic — flip the switch immediately, revert if the PATCH fails.
+    const prevEnabled = data?.event?.awards_enabled
+    setData(prev => prev ? { ...prev, event: { ...prev.event, awards_enabled: next } } : prev)
     try {
       const res = await fetch(`/api/admin/events/${eventId}`, {
         method: 'PATCH',
@@ -40,9 +43,12 @@ export default function AwardsTallyClient({ eventId }) {
         body: JSON.stringify({ awards_enabled: next }),
       })
       const d = await res.json().catch(() => ({}))
-      if (!res.ok) { setToggleError(d.error || 'Failed to save.'); return }
-      setData(prev => prev ? { ...prev, event: { ...prev.event, awards_enabled: next } } : prev)
+      if (!res.ok) {
+        setData(prev => prev ? { ...prev, event: { ...prev.event, awards_enabled: prevEnabled } } : prev)
+        setToggleError(d.error || 'Failed to save.')
+      }
     } catch {
+      setData(prev => prev ? { ...prev, event: { ...prev.event, awards_enabled: prevEnabled } } : prev)
       setToggleError('Network error.')
     } finally {
       setToggling(false)

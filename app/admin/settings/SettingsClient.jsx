@@ -589,18 +589,29 @@ export default function SettingsClient() {
   async function saveSetting(key, value) {
     setSaving(p => ({ ...p, [key]: true }))
     setErrors(p => ({ ...p, [key]: null }))
+    // Optimistic — apply immediately so the toggle animates the moment it's
+    // tapped instead of sitting frozen until this PATCH returns. Snapshot the
+    // exact prior state (including "key was absent") to restore on failure.
+    const had = key in settings
+    const prevVal = settings[key]
+    setSettings(p => ({ ...p, [key]: value }))
+    const revert = () => setSettings(p => {
+      const n = { ...p }
+      if (had) n[key] = prevVal; else delete n[key]
+      return n
+    })
     try {
       const res = await fetch('/api/admin/settings', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key, value }),
       })
-      const data = await res.json()
-      if (!res.ok) { setErrors(p => ({ ...p, [key]: data.error || 'Failed to save.' })); return }
-      setSettings(p => ({ ...p, [key]: value }))
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) { revert(); setErrors(p => ({ ...p, [key]: data.error || 'Failed to save.' })); return }
       setSaved(p => ({ ...p, [key]: true }))
       setTimeout(() => setSaved(p => ({ ...p, [key]: false })), 2000)
     } catch {
+      revert()
       setErrors(p => ({ ...p, [key]: 'Network error.' }))
     } finally {
       setSaving(p => ({ ...p, [key]: false }))

@@ -389,82 +389,44 @@ export default function RoadtripsAdminClient() {
     }
   }, [routes])
 
-  async function toggleActive(r) {
+  // Optimistic per-route field PATCH — flips the field on the local row the
+  // instant it's tapped (so the toggle animates immediately even when the
+  // PATCH is slow), merges the server's authoritative row on success, and
+  // reverts to the prior value on failure. Shared by every route toggle.
+  async function patchRouteField(r, field, value, errLabel = 'Failed to update.') {
     setBusyId(r.id)
+    const priorVal = r[field]
+    setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, [field]: value } : x))
     try {
       const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_active: !r.is_active }),
+        body: JSON.stringify({ [field]: value }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-      else alert(data.error || 'Failed to update.')
-    } catch { alert('Network error.') } finally { setBusyId(null) }
+      else {
+        setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, [field]: priorVal } : x))
+        alert(data.error || errLabel)
+      }
+    } catch {
+      setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, [field]: priorVal } : x))
+      alert('Network error.')
+    } finally {
+      setBusyId(null)
+    }
   }
 
-  // Gates the public hello-to-montebello-register form (and the equivalent
-  // per-route registration pages as they're added) — separate from
-  // is_active, which only controls whether the route's tile shows up in
-  // listings at all, and independent from member registration below.
-  async function toggleRegistrationOpen(r) {
-    setBusyId(r.id)
-    try {
-      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registration_open: !(r.registration_open !== false) }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-      else alert(data.error || 'Failed to update.')
-    } catch { alert('Network error.') } finally { setBusyId(null) }
-  }
-
-  // Gates the member-only hello-to-montebello-member-register form —
-  // independent of toggleRegistrationOpen above, so the club can close
-  // registration to the public while keeping it open to members (or vice
-  // versa) once a route is close to full.
-  async function toggleMemberRegistrationOpen(r) {
-    setBusyId(r.id)
-    try {
-      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ member_registration_open: !(r.member_registration_open !== false) }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-      else alert(data.error || 'Failed to update.')
-    } catch { alert('Network error.') } finally { setBusyId(null) }
-  }
-
-  // Visibility toggles — independent of is_active (the existing "Hide From
-  // Site" master switch, which still wins over both) and independent of the
-  // registration toggles above: a route can be listed but not registerable
-  // yet ("coming soon"), or registerable via a direct link while unlisted.
-  async function toggleVisibleToMembers(r) {
-    setBusyId(r.id)
-    try {
-      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible_to_members: !(r.visible_to_members !== false) }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-      else alert(data.error || 'Failed to update.')
-    } catch { alert('Network error.') } finally { setBusyId(null) }
-  }
-
-  async function toggleVisibleToPublic(r) {
-    setBusyId(r.id)
-    try {
-      const res = await fetch(`/api/admin/upcoming-routes/${r.id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible_to_public: !(r.visible_to_public !== false) }),
-      })
-      const data = await res.json().catch(() => ({}))
-      if (res.ok) setRoutes(prev => prev.map(x => x.id === r.id ? { ...x, ...data } : x))
-      else alert(data.error || 'Failed to update.')
-    } catch { alert('Network error.') } finally { setBusyId(null) }
-  }
+  const toggleActive = (r) => patchRouteField(r, 'is_active', !r.is_active)
+  // Public registration — separate from is_active (tile visibility) and from
+  // member registration below, so the club can close it to the public while
+  // keeping it open to members once a route is close to full.
+  const toggleRegistrationOpen = (r) => patchRouteField(r, 'registration_open', !(r.registration_open !== false))
+  const toggleMemberRegistrationOpen = (r) => patchRouteField(r, 'member_registration_open', !(r.member_registration_open !== false))
+  // Visibility — independent of is_active (the master "Hide From Site" switch
+  // still wins) and of the registration toggles: a route can be listed but not
+  // registerable ("coming soon"), or registerable via direct link while unlisted.
+  const toggleVisibleToMembers = (r) => patchRouteField(r, 'visible_to_members', !(r.visible_to_members !== false))
+  const toggleVisibleToPublic = (r) => patchRouteField(r, 'visible_to_public', !(r.visible_to_public !== false))
 
   async function del(id) {
     setBusyId(id)

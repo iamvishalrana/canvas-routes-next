@@ -543,77 +543,38 @@ export default function EventsClient() {
     finally { setUploadingPhoto(null) }
   }
 
-  async function setRegEnabled(id, value) {
+  // Optimistic per-event field PATCH — flips the field on the local row the
+  // instant it's tapped (so the toggle animates immediately even when the
+  // PATCH is slow), then reverts to the prior value if the server rejects it.
+  // Shared by every event toggle so none can regress to the old "thumb frozen
+  // until the server responds" behaviour.
+  async function patchEventField(id, field, value, setToggling, errLabel) {
     setRegToggleError(p => ({ ...p, [id]: null }))
-    setRegToggling(p => ({ ...p, [id]: true }))
+    setToggling(p => ({ ...p, [id]: true }))
+    const prevVal = items.find(ev => ev.id === id)?.[field]
+    setItems(prev => prev.map(ev => ev.id === id ? { ...ev, [field]: value } : ev))
     try {
       const res = await fetch(`/api/admin/events/${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registration_enabled: value }),
+        body: JSON.stringify({ [field]: value }),
       })
-      if (res.ok) {
-        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, registration_enabled: value } : ev))
-      } else {
+      if (!res.ok) {
         const d = await res.json().catch(() => ({}))
-        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update registration.' }))
+        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, [field]: prevVal } : ev))
+        setRegToggleError(p => ({ ...p, [id]: d.error || errLabel }))
       }
-    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
-    finally { setRegToggling(p => ({ ...p, [id]: false })) }
+    } catch {
+      setItems(prev => prev.map(ev => ev.id === id ? { ...ev, [field]: prevVal } : ev))
+      setRegToggleError(p => ({ ...p, [id]: 'Network error.' }))
+    } finally {
+      setToggling(p => ({ ...p, [id]: false }))
+    }
   }
 
-  async function setPublicRegEnabled(id, value) {
-    setRegToggleError(p => ({ ...p, [id]: null }))
-    setPublicRegToggling(p => ({ ...p, [id]: true }))
-    try {
-      const res = await fetch(`/api/admin/events/${id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ public_registration_enabled: value }),
-      })
-      if (res.ok) {
-        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, public_registration_enabled: value } : ev))
-      } else {
-        const d = await res.json().catch(() => ({}))
-        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update registration.' }))
-      }
-    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
-    finally { setPublicRegToggling(p => ({ ...p, [id]: false })) }
-  }
-
-  async function setVisibleToMembers(id, value) {
-    setRegToggleError(p => ({ ...p, [id]: null }))
-    setVisMembersToggling(p => ({ ...p, [id]: true }))
-    try {
-      const res = await fetch(`/api/admin/events/${id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible_to_members: value }),
-      })
-      if (res.ok) {
-        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, visible_to_members: value } : ev))
-      } else {
-        const d = await res.json().catch(() => ({}))
-        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update visibility.' }))
-      }
-    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
-    finally { setVisMembersToggling(p => ({ ...p, [id]: false })) }
-  }
-
-  async function setVisibleToPublic(id, value) {
-    setRegToggleError(p => ({ ...p, [id]: null }))
-    setVisPublicToggling(p => ({ ...p, [id]: true }))
-    try {
-      const res = await fetch(`/api/admin/events/${id}`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ visible_to_public: value }),
-      })
-      if (res.ok) {
-        setItems(prev => prev.map(ev => ev.id === id ? { ...ev, visible_to_public: value } : ev))
-      } else {
-        const d = await res.json().catch(() => ({}))
-        setRegToggleError(p => ({ ...p, [id]: d.error || 'Could not update visibility.' }))
-      }
-    } catch { setRegToggleError(p => ({ ...p, [id]: 'Network error.' })) }
-    finally { setVisPublicToggling(p => ({ ...p, [id]: false })) }
-  }
+  const setRegEnabled = (id, value) => patchEventField(id, 'registration_enabled', value, setRegToggling, 'Could not update registration.')
+  const setPublicRegEnabled = (id, value) => patchEventField(id, 'public_registration_enabled', value, setPublicRegToggling, 'Could not update registration.')
+  const setVisibleToMembers = (id, value) => patchEventField(id, 'visible_to_members', value, setVisMembersToggling, 'Could not update visibility.')
+  const setVisibleToPublic = (id, value) => patchEventField(id, 'visible_to_public', value, setVisPublicToggling, 'Could not update visibility.')
 
   async function del(id) {
     setDeleteEventError(p => ({ ...p, [id]: null }))
