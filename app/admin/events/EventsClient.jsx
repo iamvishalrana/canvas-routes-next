@@ -163,6 +163,62 @@ ${checkinTable}
   w.print()
 }
 
+// Polished, downloadable registrants PDF — real searchable text, a clickable
+// bookmark outline, and clickable email addresses, via the shared pdfKit. The
+// "Interactive PDF" companion to the quick print export above.
+async function exportRegistrantsInteractivePdf(eventName, registrants, hasMemberPrice) {
+  const { exportTablePdf, pdfSlug } = await import('../_components/pdfKit')
+  const ARRIVAL = { opening: 'Arrives at opening', first_hour: 'Arrives within first hour', later: 'Arrives later' }
+  const fmtDate = iso => {
+    if (!iso) return '—'
+    try { return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric', timeZone: MONTREAL_TZ }) } catch { return '—' }
+  }
+
+  const columns = [
+    { header: 'Name' }, { header: 'Email', email: true }, { header: 'Phone' },
+    { header: 'Type' }, { header: 'Status' }, { header: 'Paid', halign: 'right' },
+    { header: 'Car' }, { header: 'Registered' }, { header: 'RSVP' },
+    { header: 'Dietary' }, { header: 'Pax / Guest' }, { header: 'Arrival' },
+  ]
+  const rows = registrants.map(r => {
+    const a = r.rsvpAnswers || {}
+    const pax = a.passengers != null
+      ? (a.passengers <= 1 ? 'Solo' : `${a.passengers}`)
+      : a.bringing_guest != null ? (a.bringing_guest ? 'Guest' : 'No guest') : '—'
+    return [
+      r.name || '—', r.email || '—', r.phone || '—', r.type || '—', r.status || '—',
+      r.amount ? `$${(r.amount / 100).toFixed(2)}` : '—',
+      r.car || '—', fmtDate(r.registeredAt),
+      r.confirmedAt ? fmtDate(r.confirmedAt) : (r.status === 'confirmed' ? 'Yes' : '—'),
+      a.dietary || '—', pax, a.arrival ? (ARRIVAL[a.arrival] || a.arrival) : '—',
+    ]
+  })
+  const sections = [{ label: 'Registrants', columns, rows }]
+
+  const hasCheckin = registrants.some(r => r.wtetCheckin?.completed_at || r.wtetWaiver || r.wtetLunch?.length > 0)
+  if (hasCheckin) {
+    const ciCols = [
+      { header: 'Name' }, { header: 'Email', email: true }, { header: 'Dietary' },
+      { header: 'WhatsApp' }, { header: 'Passengers' }, { header: 'Waiver' }, { header: 'Lunch' }, { header: 'Completed' },
+    ]
+    const ciRows = registrants.filter(r => r.wtetCheckin?.completed_at || r.wtetWaiver || r.wtetLunch?.length > 0).map(r => {
+      const ci = r.wtetCheckin || {}
+      const pax = (ci.passengers_list || []).map(p => `${p.name} (${p.age})`).join(', ') || '—'
+      const waiverStr = r.wtetWaiver ? `Signed by ${r.wtetWaiver.full_name} — ${fmtDate(r.wtetWaiver.signed_at)}` : 'Not signed'
+      const lunchStr = r.wtetLunch?.length > 0 ? r.wtetLunch.map(e => `${e.name ? `${e.name}: ` : ''}${e.dish_name}`).join(', ') : 'Not selected'
+      return [r.name || '—', r.email || '—', ci.dietary || '—', ci.whatsapp || '—', pax, waiverStr, lunchStr, ci.completed_at ? fmtDate(ci.completed_at) : '—']
+    })
+    sections.push({ label: 'Early Check-in Responses', columns: ciCols, rows: ciRows })
+  }
+
+  await exportTablePdf({
+    title: 'Registrants',
+    subtitle: `${eventName} · ${registrants.length} registrant${registrants.length !== 1 ? 's' : ''}`,
+    filename: `${pdfSlug(eventName)}-registrants.pdf`,
+    sections,
+  })
+}
+
 function InviteActions({ app, ev, keyStr, inviting, inviteErr, inviteDone, sendInvite, declining, declineErr, onDecline, onUndecline }) {
   if (app.rsvp?.confirmed_at) {
     return <span style={{ fontSize: '10px', color: '#3B6B2F', letterSpacing: '0.06em' }}>✓ Confirmed</span>
@@ -1389,7 +1445,12 @@ export default function EventsClient() {
                             )}
                             {visibleRegistrants(item.id).length > 0 && (
                               <GhostBtn small onClick={() => exportRegistrantsPdf(item.name, visibleRegistrants(item.id))}>
-                                Export PDF
+                                Print PDF
+                              </GhostBtn>
+                            )}
+                            {visibleRegistrants(item.id).length > 0 && (
+                              <GhostBtn small onClick={() => exportRegistrantsInteractivePdf(item.name, visibleRegistrants(item.id), !!item.member_price)}>
+                                Interactive PDF
                               </GhostBtn>
                             )}
                           </div>

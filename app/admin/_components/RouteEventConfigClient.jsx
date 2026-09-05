@@ -278,6 +278,25 @@ export default function RouteEventConfigClient({ eventId }) {
     setTimeout(() => document.body.removeChild(iframe), 1000)
   }
 
+  // Polished, downloadable lunch PDF — real searchable text, a bookmark
+  // outline and clickable email addresses, via the shared pdfKit. The
+  // "Interactive PDF" companion to the quick print export above; respects the
+  // same active-field selection so the columns match what's on screen.
+  async function exportLunchInteractivePdf() {
+    const active = activeLunchFieldDefs()
+    if (!active.length) return
+    const { exportTablePdf, pdfSlug } = await import('./pdfKit')
+    const dataRows = buildLunchRows(participants, form.checkin_lunch_extras)
+    const columns = active.map(f => ({ header: f.label, email: f.key === 'email' }))
+    const rows = dataRows.map(r => active.map(f => r[f.key] || '—'))
+    await exportTablePdf({
+      title: 'Lunch Selections',
+      subtitle: `${eventName} · ${dataRows.length} order${dataRows.length === 1 ? '' : 's'}`,
+      filename: `${pdfSlug(eventName || 'lunch')}-lunch-selections.pdf`,
+      sections: [{ label: 'Lunch Selections', columns, rows }],
+    })
+  }
+
   // Admin override for a registrant's already-submitted lunch pick (wrong
   // dish, dietary change after the fact) — the public check-in route only
   // lets the registrant themselves edit it, and only before the cutoff.
@@ -523,7 +542,8 @@ export default function RouteEventConfigClient({ eventId }) {
                       </select>
                       <GhostBtn small onClick={exportLunchCSV}>Export CSV</GhostBtn>
                       <GhostBtn small onClick={exportLunchTXT}>Export Text</GhostBtn>
-                      <GhostBtn small onClick={exportLunchPrint}>Print / PDF</GhostBtn>
+                      <GhostBtn small onClick={exportLunchPrint}>Print PDF</GhostBtn>
+                      <GhostBtn small onClick={exportLunchInteractivePdf}>Interactive PDF</GhostBtn>
                     </div>
                   )}
                 </div>
