@@ -204,15 +204,24 @@ test('production DB schema matches code expectations', async ({ request }) => {
 // caught it (nothing in this file exercised /meet/[id] or any short link
 // before now). These two tests would have failed within hours of that
 // deploy instead of only being noticed when someone tried to use the link.
+// ccsept5-2026 is now a PAST event, so its registration page correctly shows
+// the closed state instead of the form. These tests verify the short link
+// still RESOLVES to the meet page (not a 404 / silent break — the original
+// point of the coverage) by accepting either the open form OR the closed
+// message, the same form.or(closed) pattern the other event-page tests use.
+// A genuinely broken short link renders neither and still fails.
 test('event short link resolves to the registration page', async ({ page }) => {
   await page.goto('/ccsept5-2026')
-  await expect(page.getByRole('heading', { name: /request your spot/i })).toBeVisible({ timeout: 15000 })
+  const form = page.locator('#meet-name')
+  const closed = page.getByText(/registration is closed/i)
+  await expect(form.or(closed)).toBeVisible({ timeout: 15000 })
 })
 
-test('meet/[id] registration page loads with a working form', async ({ page }) => {
+test('meet/[id] registration page loads (form or closed state, not a crash)', async ({ page }) => {
   await page.goto('/meet/1a020f09-f618-42ed-b646-75c1927da38a')
-  await expect(page.locator('#meet-name')).toBeVisible({ timeout: 15000 })
-  await expect(page.locator('#meet-email')).toBeVisible()
+  const form = page.locator('#meet-name')
+  const closed = page.getByText(/registration is closed/i)
+  await expect(form.or(closed)).toBeVisible({ timeout: 15000 })
 })
 
 test('public event register API validation works', async ({ request }) => {
