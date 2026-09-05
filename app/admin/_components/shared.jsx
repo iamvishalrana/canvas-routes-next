@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { EVENT_ATTENDANCE_KEYS, EVENT_NAME_ALIASES, normalizeEventName as _normalizeEventName } from '../../../lib/eventMeta.js'
 import { MONTREAL_TZ } from '../../../lib/mtlTime'
@@ -113,31 +114,63 @@ export function DangerBtn({ onClick, small, disabled, children }) {
 
 export function KebabMenu({ items }) {
   const [open, setOpen] = useState(false)
+  // Panel position, computed from the button on open. The panel is rendered in
+  // a portal to <body> (below) with fixed positioning so it escapes any
+  // ancestor's overflow:hidden (which clipped it — e.g. the events list card)
+  // AND any ancestor opacity (which made it render see-through — e.g. an
+  // inactive route row at opacity 0.6). Neither could be fixed with z-index.
+  const [coords, setCoords] = useState(null)
+  const btnRef = useRef(null)
+
   useEffect(() => {
     if (!open) return
-    function onDocClick(e) { if (!e.target.closest('[data-kebab-root]')) setOpen(false) }
+    function onDocClick(e) {
+      if (!e.target.closest('[data-kebab-root]') && !e.target.closest('[data-kebab-panel]')) setOpen(false)
+    }
     function onKey(e) { if (e.key === 'Escape') setOpen(false) }
+    // The panel is fixed-positioned to a point computed at open time, so any
+    // scroll/resize would leave it detached — just close it instead.
+    function onReflow() { setOpen(false) }
     document.addEventListener('click', onDocClick)
     window.addEventListener('keydown', onKey)
-    return () => { document.removeEventListener('click', onDocClick); window.removeEventListener('keydown', onKey) }
+    window.addEventListener('scroll', onReflow, true)
+    window.addEventListener('resize', onReflow)
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onReflow, true)
+      window.removeEventListener('resize', onReflow)
+    }
   }, [open])
 
+  function toggle() {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect()
+      // Right-align the panel to the button's right edge (matches the old
+      // right:0 anchoring), dropped just below it.
+      setCoords({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) })
+    }
+    setOpen(p => !p)
+  }
+
+  const list = items.filter(Boolean)
   return (
     <div data-kebab-root style={{ position: 'relative', display: 'inline-block' }}>
-      <button type="button" onClick={() => setOpen(p => !p)} aria-label="More actions"
+      <button ref={btnRef} type="button" onClick={toggle} aria-label="More actions"
         style={{ width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: open ? 'rgba(197,168,130,0.18)' : 'rgba(197,168,130,0.08)', border: '0.5px solid rgba(197,168,130,0.4)', borderRadius: '10px', cursor: 'pointer', padding: 0, WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" color="#8A6535"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       </button>
-      {open && (
-        <div style={{ position: 'absolute', top: '48px', right: 0, zIndex: 20, minWidth: '180px', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '12px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
-          {items.filter(Boolean).map((it, i) => (
+      {open && coords && createPortal(
+        <div data-kebab-panel style={{ position: 'fixed', top: coords.top, right: coords.right, zIndex: 1000, minWidth: '180px', maxWidth: 'calc(100vw - 1rem)', background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', borderRadius: '12px', boxShadow: '0 6px 24px rgba(0,0,0,0.14)', overflow: 'hidden' }}>
+          {list.map((it, i) => (
             <button key={i} type="button" disabled={it.disabled}
               onClick={() => { setOpen(false); it.onClick() }}
-              style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: '44px', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: i < items.filter(Boolean).length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', color: it.danger ? '#93333E' : '#333', cursor: it.disabled ? 'not-allowed' : 'pointer', opacity: it.disabled ? 0.4 : 1, fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
+              style={{ display: 'flex', alignItems: 'center', width: '100%', minHeight: '44px', textAlign: 'left', padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: i < list.length - 1 ? '0.5px solid rgba(0,0,0,0.06)' : 'none', fontSize: '12px', letterSpacing: '0.06em', textTransform: 'uppercase', color: it.danger ? '#93333E' : '#333', cursor: it.disabled ? 'not-allowed' : 'pointer', opacity: it.disabled ? 0.4 : 1, fontFamily: 'var(--font-inter),sans-serif', WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}>
               {it.label}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
