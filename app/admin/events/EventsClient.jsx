@@ -987,7 +987,8 @@ export default function EventsClient() {
 
   function sortedRegistrants(eventId) {
     const rows = registrantsData[eventId] || []
-    const sort = regSort[eventId] || 'default'
+    // Default to alphabetical A–Z; "Registration order" is still selectable.
+    const sort = regSort[eventId] || 'name_az'
     if (sort === 'default') return rows
     const byName = (a, b) => (a.name || '').localeCompare(b.name || '')
     const time = r => r.registeredAt ? new Date(r.registeredAt).getTime() : 0
@@ -1364,12 +1365,12 @@ export default function EventsClient() {
                             )}
                             {(registrantsData[item.id] || []).length > 1 && (
                               <select
-                                value={regSort[item.id] || 'default'}
+                                value={regSort[item.id] || 'name_az'}
                                 onChange={e => setRegSort(p => ({ ...p, [item.id]: e.target.value }))}
                                 style={{ background: '#fff', border: '0.5px solid rgba(0,0,0,0.15)', fontSize: '10px', letterSpacing: '0.04em', fontFamily: 'var(--font-inter),sans-serif', padding: '4px 6px', cursor: 'pointer', color: '#555', outline: 'none', height: '26px', appearance: 'none', WebkitAppearance: 'none' }}
                               >
-                                <option value="default">Sort: Registration order</option>
-                                <option value="name_az">Name A–Z</option>
+                                <option value="name_az">Sort: Name A–Z</option>
+                                <option value="default">Registration order</option>
                                 <option value="name_za">Name Z–A</option>
                                 <option value="newest">Newest first</option>
                                 <option value="oldest">Oldest first</option>
